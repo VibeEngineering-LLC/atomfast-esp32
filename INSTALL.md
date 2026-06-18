@@ -283,28 +283,53 @@ cp secrets.example.yaml secrets.yaml
 # Windows-эквивалент: copy secrets.example.yaml secrets.yaml
 ```
 
-Открой `secrets.yaml` в редакторе. Что заполнять:
+### 4.1. СНАЧАЛА — сгенерировать ключ и пароли
+
+> ⚠ **Самая частая ошибка установки.** В `secrets.example.yaml` поле `api_encryption_key` стоит с **намеренно невалидной заглушкой** `0000000000000000000000000000000000000000000==`. Если её не заменить, `esphome compile` сразу падает с
+> `Invalid key format, please check it's using base64.` (см. Troubleshooting #1).
+>
+> Сделай это **до** того, как откроешь `secrets.yaml` в редакторе.
+
+`api_encryption_key` — это **AES-256 ключ** для шифрования API-канала между прошивкой и Home Assistant. Он обязан быть ровно **32 байта в base64**, что на выходе — **44 символа** строки (обычно с `=` в конце). Любая другая длина или не-base64-символ → `Invalid key format`. **Тот же ключ потом нужно ввести в Home Assistant** при добавлении устройства (Шаг 9), поэтому сохрани вывод команды куда-нибудь.
+
+Одной командой сразу всё рандомное (`api_encryption_key`, `ota_password`, `web_password`, `ap_password` и S3-аналоги):
+
+```bash
+python -c "import secrets,base64; print('api_encryption_key:    ', base64.b64encode(secrets.token_bytes(32)).decode()); print('ota_password:          ', secrets.token_urlsafe(18)); print('web_password:          ', secrets.token_urlsafe(18)); print('ap_password:           ', secrets.token_urlsafe(12)); print('atomfast_s3_api_key:   ', base64.b64encode(secrets.token_bytes(32)).decode()); print('atomfast_s3_ota_pass:  ', secrets.token_urlsafe(18)); print('atomfast_s3_web_pass:  ', secrets.token_urlsafe(18))"
+```
+
+Если Python не установлен — OpenSSL умеет то же самое для самого ключа:
+
+```bash
+openssl rand -base64 32
+```
+
+Вывод будет вида (значения рандомные, у тебя будут другие):
+
+```
+api_encryption_key:     zsa4j3xzDzlRDpjBFMta/iifKvoYI2UDum88BGzQnoA=
+ota_password:           xK7m_pq9a3-FBd_LRzNvW0eC
+web_password:           fH2g8s7TpMxqW3kL5jR9yNvB
+ap_password:            pE4mW2-Z9aLk
+...
+```
+
+### 4.2. Открой `secrets.yaml` в редакторе и заполни:
 
 | Ключ | Что туда написать |
 |---|---|
 | `wifi_ssid` | Имя твоей WiFi-сети **2.4 ГГц** (5 ГГц ESP32 не поддерживает!). |
 | `wifi_password` | Пароль WiFi. |
-| `ap_password` | Любой пароль ≥ 8 символов. Понадобится, если плата не сможет подключиться к домашней WiFi — поднимет свою AP, на неё ты зайдёшь с телефона с этим паролем. |
-| `api_encryption_key` | Сгенерировать: `python -c "import secrets,base64; print(base64.b64encode(secrets.token_bytes(32)).decode())"` |
-| `ota_password` | Любой пароль ≥ 8 символов. Защищает от случайной перепрошивки. |
-| `web_username` / `web_password` | Логин и пароль для Web UI (Basic Auth). Используется только в arduino-прошивке. |
+| `ap_password` | Из вывода 4.1 (или любой пароль ≥ 8 символов). Понадобится, если плата не подключится к домашней WiFi — поднимет свою AP, на неё ты зайдёшь с телефона с этим паролем. |
+| `api_encryption_key` | **Из вывода 4.1.** Заменить весь плейсхолдер `0000…==` целиком на 44-символьную base64-строку. |
+| `ota_password` | Из вывода 4.1 (или любой пароль ≥ 8 символов). Защищает от случайной перепрошивки. |
+| `web_username` / `web_password` | Логин (любой, например `admin`) и пароль для Web UI (Basic Auth). Используется только в arduino-прошивке. |
 | `atomfast_mac` | MAC твоего AtomFast. UPPERCASE с двоеточиями: `A1:B2:C3:D4:E5:F6`. |
-| `atomfast_s3_api_key` | Только если шьёшь S3-baseline. Та же команда генерации, что и `api_encryption_key`. |
-| `atomfast_s3_ota_pass` | Только S3. Любой пароль ≥ 8 символов. |
-| `atomfast_s3_web_pass` | Только S3. Любой пароль ≥ 8 символов. |
+| `atomfast_s3_api_key` | Только если шьёшь S3-baseline. Из вывода 4.1, отдельная строка `atomfast_s3_api_key`. |
+| `atomfast_s3_ota_pass` | Только S3. Из вывода 4.1. |
+| `atomfast_s3_web_pass` | Только S3. Из вывода 4.1. |
 
 > ⚠ **secrets.yaml в git НЕ коммитить!** В папке уже есть `.gitignore`, который его игнорирует. Не трогай.
-
-Альтернативный быстрый способ сгенерировать все три рандомных пароля сразу:
-
-```bash
-python -c "import secrets,base64; print('api_key:', base64.b64encode(secrets.token_bytes(32)).decode()); print('ota:', secrets.token_urlsafe(18)); print('web:', secrets.token_urlsafe(18))"
-```
 
 ---
 
@@ -606,6 +631,30 @@ HA подхватит все сенсоры автоматически. Если
 ---
 
 ## Troubleshooting
+
+### 0. `Invalid key format, please check it's using base64.` (САМАЯ ЧАСТАЯ)
+
+Полный текст ошибки в логе `esphome compile`:
+
+```
+Invalid key format, please check it's using base64.
+key: !secret api_encryption_key
+```
+
+**Причина.** В `secrets.yaml` оставлено значение из шаблона:
+`0000000000000000000000000000000000000000000==`. Это **намеренно невалидная заглушка** (длина 45, не-валидный base64), чтобы ты не забыл сгенерировать свой ключ. ESPHome не может декодировать её в 32 байта AES-256 и отказывается компилировать.
+
+**Решение.** Вернись к **Шагу 4.1** и сгенерируй валидный ключ:
+
+```bash
+python -c "import secrets,base64; print(base64.b64encode(secrets.token_bytes(32)).decode())"
+```
+
+Получишь строку из **44 символов** (32 байта в base64), обычно с одним `=` в конце, например `zsa4j3xzDzlRDpjBFMta/iifKvoYI2UDum88BGzQnoA=`. Эту строку — **целиком, вместе с `=`** — положи в `secrets.yaml` в строку `api_encryption_key:` (заменив весь плейсхолдер с нулями).
+
+Та же ошибка для S3-варианта означает `atomfast_s3_api_key` — генерация и формат идентичны.
+
+> 💡 Сохрани сгенерированный `api_encryption_key` куда-нибудь надёжно: тот же ключ потом нужно ввести в Home Assistant при добавлении устройства (Шаг 9). Без него HA не сможет подключиться к прошивке.
 
 ### 1. Плата не определяется как COM-порт
 
