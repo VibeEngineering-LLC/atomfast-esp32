@@ -1,0 +1,756 @@
+# ══════════════════════════════════════════════════════════════════════
+#  atomfast_gateway.yaml — AtomFast BLE → ESPHome → CSV (ПК) + Chart.js
+#
+#  Назначение: одиночная узкоспециализированная прошивка для AtomFast.
+#    - MAC и WiFi жёстко в secrets.yaml — никакого UI-онбординга
+#    - auto_connect: true — подключение сразу после boot
+#    - notify CPS/dose-rate раз в 2 сек (period AtomFast)
+#    - агрегация на ESP (среднее за N сек), интервал настраивается слайдером
+#    - график на главной странице Web UI v3 (раскрытием карточки CPS)
+#    - параллельный Python-демон на ПК (scripts/atomfast/logger.py)
+#      пишет CSV + поднимает HTML с большим Chart.js графиком
+#
+#  Протокол AtomFast (из ~/.claude/skills/atomfast-tester/references/
+#  ble-protocol-and-runtime.md):
+#    Characteristic UUID (notify):  70BC767E-7A1A-4304-81ED-14B9AF54F7BD
+#    Service UUID:                  НЕИЗВЕСТЕН — выясняем в этом прогоне
+#                                   через DEBUG-логи ESPHome (он логирует
+#                                   все discovered services в on_connect)
+#    Notify rate:                   0.5 Hz (раз в 2 сек)
+#    Архивная запись (28 байт):
+#      offset 15..18  float32 LE — dose-rate (verified, 0x41000000 = 8.0)
+#      offset 19..22  float32 LE — suspected: CPS or CPM
+#    On-air payload: ≠ архивная запись, нужен реверс (см. raw_atomfast)
+# ══════════════════════════════════════════════════════════════════════
+
+substitutions:
+  device_name: atomfast-gw
+  device_friendly: "AtomFast BLE Gateway"
+  # GATT-карта AtomFast (источник: github.com/Am6er/atomswift,
+  # app/src/main/java/org/fe57/atomtag/GattAttributes.java, 2026-06-12).
+  # Это репо приложения от изготовителя — авторитетный источник.
+  atomfast_service_uuid: "63462a4a-c28c-4ffd-87a4-2d23a1c72581"  # ATOMTAG_SERVICE
+  atomfast_char_uuid:    "70BC767E-7A1A-4304-81ED-14B9AF54F7BD"  # ATOMTAG_MEASUREMENT (notify)
+  # MAC AtomFast используется в lambda сравнения для RSSI sensor.
+  # Подключение идёт через !secret atomfast_mac (см. ble_client ниже).
+  # Заменить на MAC своего прибора (формат UPPERCASE с двоеточиями).
+  atomfast_mac_str: "AA:BB:CC:DD:EE:FF"
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${device_friendly}
+  comment: "AtomFast BLE → CSV (ПК)"
+  # ASCII build-path: GCC ломается на кириллице/пробелах
+  build_path: D:/esp32_atomfast_build/atomfast-gw
+  # Helper-заголовок с дампом GATT через ESP-IDF API.
+  includes:
+    - include/gatt_dump.h
+  on_boot:
+    priority: -300
+    then:
+      - lambda: 'ESP_LOGI("boot", "AtomFast Gateway v0.6.2 booted, web UI: http://%s.local/", "${device_name}");'
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Уровень логирования: INFO в production. DEBUG на ESP32 BLE = UART
+# blocking-writes которые блокируют main loop на 50-200мс и провоцируют
+# supervision timeout → disconnect. См. logs(ble_client_base) на INFO
+# для повторного включения diagnostics — все ключевые события остаются.
+logger:
+  level: INFO
+  baud_rate: 115200
+  # Если нужен debug по конкретной подсистеме — раскомментировать целиком блок:
+  # logs:
+  #   ble_client_base: DEBUG
+  #   esp32_ble_tracker: DEBUG
+
+# Direct STA: оператор хочет «зашитый» WiFi без captive portal.
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  power_save_mode: none
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+  reboot_timeout: 0s
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+  - platform: web_server
+
+web_server:
+  version: 3
+  port: 80
+  include_internal: false
+  local: true
+  sorting_groups:
+    - id: sg_main
+      name: "AtomFast — показания"
+      sorting_weight: 10
+    - id: sg_settings
+      name: "Настройки"
+      sorting_weight: 20
+    - id: sg_narodmon
+      name: "Народмон"
+      sorting_weight: 30
+    - id: sg_re
+      name: "RE / Отладка BLE"
+      sorting_weight: 50
+    - id: sg_diag
+      name: "Диагностика"
+      sorting_weight: 80
+
+mdns:
+  disabled: false
+
+# HTTP-клиент для выгрузки показаний на narodmon.ru/get
+http_request:
+  id: http_client
+  timeout: 10s
+  useragent: "esphome-atomfast-gw/1.0"
+  verify_ssl: false
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
+
+# Аккумулятор CPS за окно агрегации (sum + count → среднее) + флаг GATT-дампа
+globals:
+  - id: g_cps_sum
+    type: float
+    restore_value: false
+    initial_value: "0.0"
+  - id: g_dose_sum
+    type: float
+    restore_value: false
+    initial_value: "0.0"
+  - id: g_samples
+    type: int
+    restore_value: false
+    initial_value: "0"
+  - id: g_gatt_dumped_global
+    type: bool
+    restore_value: false
+    initial_value: "false"
+  # ─── BLE-стабильность ───
+  # restore_value=true — счётчики переживают reboot, но НЕ сбрасываются вручную
+  # (есть кнопка «Сбросить счётчики BLE» в Web UI). Это позволяет считать
+  # uptime-ratio за многие часы прогона.
+  - id: g_disconnects
+    type: uint32_t
+    restore_value: true
+    initial_value: "0"
+  - id: g_connects
+    type: uint32_t
+    restore_value: true
+    initial_value: "0"
+  - id: g_last_connect_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+  - id: g_last_session_s
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+
+# BLE-трекер.
+#
+# ВАЖНО про duty cycle: на ESP32 одна радио-time-slot делится между BLE
+# scan и connection-event'ами уже подключённого клиента. Если window/
+# interval = 100 %, для connection-event'ов времени почти не остаётся →
+# supervision timeout (4 s по дефолту) → disconnect. По эмпирике BLE
+# community, разумный duty cycle ≤ 35 % когда есть activeт connection.
+#
+# AtomFast рекламирует ~ раз в секунду (BLE_DEFAULT_ADV_INTERVAL_FAST).
+# v0.6.2: РЕЗОНАНС — interval 1100 ms почти совпадал с adv-периодом
+# прибора (~1000 ms) → фазовое биение: окна сканирования систематически
+# попадали в «тишину» между advertise'ами → пропуски advert'ов и
+# WiFi-старвейшн (стек WiFi зависал, BLE при этом продолжал работать).
+# Уводим interval НИЖЕ adv-периода: 600 ms / window 180 ms (30 % duty).
+# 600 ≠ кратно 1000 → нет фазовой синхронизации, окно регулярно
+# «накрывает» advertise; 420 ms на connection-event'ы остаётся.
+#
+# active: false — passive scan. SCAN_REQ/RSP не нужны: имя и MAC уже
+# в advertising payload, RSSI — тоже сразу. Меньше радио → стабильнее.
+esp32_ble_tracker:
+  scan_parameters:
+    interval: 600ms
+    window: 180ms
+    active: false
+  on_ble_advertise:
+    - then:
+        - lambda: |-
+            if (x.address_str() == "${atomfast_mac_str}") {
+              id(rssi_atomfast).publish_state((float) x.get_rssi());
+            }
+
+# BLE-клиент: auto_connect, попытка подписки на characteristic.
+# При неверном service_uuid ESPHome ble_client логирует все обнаруженные
+# services в DEBUG — это и есть наш способ найти правильный UUID.
+ble_client:
+  - mac_address: !secret atomfast_mac
+    id: ble_atomfast
+    auto_connect: true
+    on_connect:
+      - lambda: |-
+          id(g_connects) += 1;
+          id(g_last_connect_ms) = millis();
+          ESP_LOGI("atomfast", "===== AtomFast CONNECTED (#%u) =====", id(g_connects));
+    on_disconnect:
+      - lambda: |-
+          // Длительность только что закончившейся сессии (если был успешный connect)
+          if (id(g_last_connect_ms) > 0) {
+            uint32_t now = millis();
+            id(g_last_session_s) = (now - id(g_last_connect_ms)) / 1000;
+            id(g_last_connect_ms) = 0;
+          }
+          id(g_disconnects) += 1;
+          // ESPHome ble_client_base в DEBUG печатает строку:
+          //   "ESP_GATTC_DISCONNECT_EVT, reason 0x08"
+          // Самые частые reason:
+          //   0x08 BLE_HCI_CONNECTION_TIMEOUT — supervision timeout (scan душит коннект)
+          //   0x13 BLE_HCI_REMOTE_USER_TERMINATED — отключил сам прибор (сон, OFF)
+          //   0x16 BLE_HCI_CONN_TERM_BY_LOCAL_HOST — отключили мы (manual reconnect)
+          //   0x3E BLE_HCI_FAILED_TO_ESTABLISH — не дошёл до connected
+          ESP_LOGW("atomfast",
+                   "AtomFast DISCONNECT #%u, последняя сессия %u s — пробую переподключиться.",
+                   id(g_disconnects), id(g_last_session_s));
+
+# ══════════════════════════════════════════════════════════════════════
+#  SENSORS
+# ══════════════════════════════════════════════════════════════════════
+sensor:
+  # ─── МГНОВЕННЫЕ метрики (точка на график каждые 2 с) ───
+  # В Web UI v3 ESPHome клик по карточке раскрывает большой график за час.
+  # Все эти sensor'ы публикуются прямо из lambda raw_value_atomfast.
+
+  - platform: template
+    name: "CPS (мгновенный)"
+    id: cps_instant
+    unit_of_measurement: "cps"
+    accuracy_decimals: 2
+    icon: "mdi:radioactive"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_main
+      sorting_weight: 1
+
+  - platform: template
+    name: "Мощность дозы"
+    id: doserate_usv
+    unit_of_measurement: "µSv/h"
+    accuracy_decimals: 4
+    icon: "mdi:radioactive-circle"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_main
+      sorting_weight: 2
+
+  - platform: template
+    name: "Мощность дозы (µR/h)"
+    id: doserate_ur
+    unit_of_measurement: "µR/h"
+    accuracy_decimals: 2
+    icon: "mdi:radioactive-circle"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_main
+      sorting_weight: 3
+
+  - platform: template
+    name: "Импульсы за 2 с"
+    id: pulses_2s
+    unit_of_measurement: "имп/2с"
+    accuracy_decimals: 0
+    icon: "mdi:counter"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_main
+      sorting_weight: 4
+
+  - platform: template
+    name: "Накопленная доза"
+    id: dose_cum_usv
+    unit_of_measurement: "µSv"
+    accuracy_decimals: 3
+    icon: "mdi:atom"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_main
+      sorting_weight: 5
+
+  # ─── СРЕДНЕЕ за окно агрегации (для долгих наблюдений) ───
+  - platform: template
+    name: "CPS (среднее за окно)"
+    id: cps_atomfast
+    unit_of_measurement: "cps"
+    accuracy_decimals: 3
+    icon: "mdi:radioactive"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_main
+      sorting_weight: 6
+
+  - platform: template
+    name: "Мощность дозы (среднее за окно)"
+    id: dose_atomfast
+    unit_of_measurement: "µSv/h"
+    accuracy_decimals: 4
+    icon: "mdi:radioactive-circle"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_main
+      sorting_weight: 7
+
+  # ─── Диагностика ───
+  - platform: template
+    name: "Батарея AtomFast"
+    id: batt_atomfast
+    unit_of_measurement: "%"
+    device_class: battery
+    accuracy_decimals: 0
+    icon: "mdi:battery"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_diag
+      sorting_weight: 1
+
+  - platform: template
+    name: "Температура AtomFast"
+    id: temp_atomfast
+    unit_of_measurement: "°C"
+    device_class: temperature
+    accuracy_decimals: 0
+    icon: "mdi:thermometer"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_diag
+      sorting_weight: 2
+
+  - platform: template
+    name: "RSSI AtomFast"
+    id: rssi_atomfast
+    unit_of_measurement: "dBm"
+    accuracy_decimals: 0
+    update_interval: never
+    icon: "mdi:signal"
+    web_server:
+      sorting_group_id: sg_diag
+      sorting_weight: 3
+
+  # ── ble_client characteristic-подписка ──
+  # ВНИМАНИЕ: service_uuid пока placeholder. После первого подключения
+  # смотрим лог `[D][ble_client_base:...] Service UUID: ...` и подставляем
+  # реальное значение в substitutions.atomfast_service_uuid.
+  - platform: ble_client
+    type: characteristic
+    ble_client_id: ble_atomfast
+    name: "AtomFast: raw value (debug)"
+    id: raw_value_atomfast
+    service_uuid: ${atomfast_service_uuid}
+    characteristic_uuid: ${atomfast_char_uuid}
+    notify: true
+    # AtomFast разрешает только NOTIFY, не READ. Без update_interval: never
+    # sensor.ble_client дёргает READ раз в 60с → [W][ble_sensor:095] status=2.
+    update_interval: never
+    internal: true        # не показывать в UI как отдельный sensor
+    lambda: |-
+      // Hex-дамп в text_sensor для RE
+      char hex[200]; size_t pos = 0;
+      for (size_t i = 0; i < x.size() && pos < 196; i++)
+        pos += snprintf(hex + pos, 200 - pos, "%02X ", x[i]);
+      id(raw_atomfast).publish_state(std::string(hex));
+
+      // ✅ ПОДТВЕРЖДЁННЫЙ парсер AtomFast on-air payload (13 байт)
+      // Источник: Am6er/atomswift/AtomDeviceNRF.java::broadcastUpdate
+      // (UUID_MEASUREMENT, бит-в-бит совпадает с приложением AtomFast)
+      //
+      //   byte 0       — flags  (bit 3 = re-read config request)
+      //   bytes 1..4   — float32 LE val_dose: накопленная доза (mSv)
+      //   bytes 5..8   — float32 LE val_intensity: мгновенная мощность дозы (µSv/h)
+      //                  >1000 — битая посылка, игнор
+      //   bytes 9..10  — uint16 LE pulses_last_2sec: импульсы за 2 секунды
+      //   byte 11      — int8 battery (%)
+      //   byte 12      — int8 temperature (°C, signed)
+      if (x.size() >= 13) {
+        uint8_t flags = x[0];
+        float val_dose, val_intensity;
+        memcpy(&val_dose,      x.data() + 1, 4);
+        memcpy(&val_intensity, x.data() + 5, 4);
+        uint16_t p2s_val = (uint16_t) x[9] | ((uint16_t) x[10] << 8);
+        int8_t  battery     = (int8_t) x[11];
+        int8_t  temperature = (int8_t) x[12];
+        float cps = (float) p2s_val / 2.0f;
+
+        ESP_LOGI("atomfast",
+                 "flags=0x%02X dose=%.5f mSv  rate=%.4f uSv/h  p2s=%u (cps=%.2f)  batt=%d%%  T=%dC",
+                 flags, val_dose, val_intensity, p2s_val, cps, battery, temperature);
+
+        if (std::isfinite(val_intensity) && val_intensity >= 0 && val_intensity < 1000) {
+          // ── instant публикации (точка на график каждые 2с) ──
+          id(cps_instant).publish_state(cps);
+          id(doserate_usv).publish_state(val_intensity);
+          id(doserate_ur).publish_state(val_intensity * 100.0f);  // µSv/h → µR/h
+          id(pulses_2s).publish_state((float) p2s_val);
+          id(dose_cum_usv).publish_state(val_dose * 1000.0f);     // mSv → µSv
+          id(batt_atomfast).publish_state((float) battery);
+          id(temp_atomfast).publish_state((float) temperature);
+
+          // ── окно агрегации ──
+          id(g_cps_sum)  += cps;
+          id(g_dose_sum) += val_intensity;
+          id(g_samples)  += 1;
+        }
+      }
+      return NAN;
+    filters:
+      - filter_out: nan
+
+  - platform: wifi_signal
+    name: "WiFi сигнал"
+    update_interval: 60s
+    web_server:
+      sorting_group_id: sg_diag
+
+  - platform: uptime
+    name: "Uptime"
+    id: uptime_sec
+    update_interval: 60s
+    web_server:
+      sorting_group_id: sg_diag
+
+  # ─── BLE-стабильность: счётчики и метрики сессий ───
+  # Публикуются раз в 10 с (см. interval ниже).
+  # Сравнение с baseline: если supervision-timeout (reason 0x08) был
+  # частым — после фикса duty cycle scan должен упасть BLE: реконнектов/час.
+  - platform: template
+    name: "BLE: реконнектов всего"
+    id: ble_disconnects
+    accuracy_decimals: 0
+    icon: "mdi:bluetooth-off"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_diag
+      sorting_weight: 10
+
+  - platform: template
+    name: "BLE: успешных коннектов"
+    id: ble_connects
+    accuracy_decimals: 0
+    icon: "mdi:bluetooth-connect"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_diag
+      sorting_weight: 11
+
+  - platform: template
+    name: "BLE: длина последней сессии"
+    id: ble_last_session
+    unit_of_measurement: "сек"
+    accuracy_decimals: 0
+    icon: "mdi:timer-outline"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_diag
+      sorting_weight: 12
+
+# ══════════════════════════════════════════════════════════════════════
+#  BINARY SENSORS
+# ══════════════════════════════════════════════════════════════════════
+binary_sensor:
+  - platform: template
+    name: "BLE: AtomFast подключён"
+    id: ble_connected
+    icon: "mdi:bluetooth"
+    web_server:
+      sorting_group_id: sg_diag
+    lambda: "return id(ble_atomfast).connected();"
+
+# ══════════════════════════════════════════════════════════════════════
+#  TEXT SENSORS
+# ══════════════════════════════════════════════════════════════════════
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "IP адрес"
+      id: ip_addr
+      web_server:
+        sorting_group_id: sg_diag
+    mac_address:
+      name: "ESP32 MAC"
+      id: esp_mac_addr
+      web_server:
+        sorting_group_id: sg_diag
+    ssid:
+      name: "Подключено к WiFi"
+      web_server:
+        sorting_group_id: sg_diag
+
+  - platform: template
+    name: "AtomFast: сырой notify (hex)"
+    id: raw_atomfast
+    update_interval: never
+    icon: "mdi:hexadecimal"
+    web_server:
+      sorting_group_id: sg_re
+
+  # GATT-таблица подключённого устройства (диагностика). Заполняется один
+  # раз после установления связи, в logger как ESP_LOGI("gatt") и здесь —
+  # на главной странице sg_re. Кнопка ниже сбрасывает флаг и перечитывает.
+  - platform: template
+    name: "GATT таблица"
+    id: gatt_dump_text
+    update_interval: never
+    icon: "mdi:database-search"
+    web_server:
+      sorting_group_id: sg_re
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  NUMBER — слайдер интервала агрегации
+# ══════════════════════════════════════════════════════════════════════
+number:
+  - platform: template
+    name: "Интервал агрегации"
+    id: agg_interval_s
+    min_value: 1
+    max_value: 60
+    step: 1
+    initial_value: 5
+    optimistic: true
+    restore_value: true
+    mode: slider
+    unit_of_measurement: "сек"
+    icon: "mdi:timer-cog"
+    web_server:
+      sorting_group_id: sg_settings
+
+# ══════════════════════════════════════════════════════════════════════
+#  BUTTONS
+# ══════════════════════════════════════════════════════════════════════
+button:
+  - platform: restart
+    name: "Перезагрузить"
+    web_server:
+      sorting_group_id: sg_settings
+
+  - platform: template
+    name: "Переподключиться к AtomFast"
+    icon: "mdi:bluetooth-connect"
+    web_server:
+      sorting_group_id: sg_settings
+    on_press:
+      - lambda: |-
+          ESP_LOGI("atomfast", "Manual reconnect");
+          id(ble_atomfast).set_enabled(false);
+      - delay: 1s
+      - lambda: "id(ble_atomfast).set_enabled(true);"
+
+  - platform: template
+    name: "Перечитать GATT"
+    icon: "mdi:database-refresh"
+    web_server:
+      sorting_group_id: sg_re
+    on_press:
+      - lambda: |-
+          id(g_gatt_dumped_global) = false;
+          ESP_LOGI("gatt", "Флаг GATT-дампа сброшен — перечитаю на следующем тике.");
+
+  - platform: template
+    name: "Сбросить счётчики BLE"
+    icon: "mdi:counter"
+    web_server:
+      sorting_group_id: sg_diag
+      sorting_weight: 90
+    on_press:
+      - lambda: |-
+          id(g_disconnects) = 0;
+          id(g_connects) = 0;
+          id(g_last_session_s) = 0;
+          id(ble_disconnects).publish_state(0);
+          id(ble_connects).publish_state(0);
+          id(ble_last_session).publish_state(0);
+          ESP_LOGI("atomfast", "BLE counters reset");
+
+# ══════════════════════════════════════════════════════════════════════
+#  INTERVAL — публикация агрегированного CPS + однократный дамп GATT
+# ══════════════════════════════════════════════════════════════════════
+interval:
+  # ─── v0.6.2 WiFi-watchdog ───
+  # api.reboot_timeout намеренно = 0s (не ребутимся при потере HA).
+  # Но это убирает и единственный авто-recovery от ЗАВИСШЕГО WiFi-стека
+  # (наблюдалось: BLE notify идёт каждые 2s, а ping/HTTP мертвы — стек
+  # WiFi завис, ESP сам не перезагружается). Свой watchdog: если WiFi
+  # не connected суммарно > 180 s — ESP.restart(). Полностью автономно,
+  # не зависит от HA. Счётчик сбрасывается при каждом успешном connect.
+  - interval: 10s
+    then:
+      - lambda: |-
+          static uint32_t wifi_down_s = 0;
+          if (wifi::global_wifi_component->is_connected()) {
+            wifi_down_s = 0;
+          } else {
+            wifi_down_s += 10;
+            ESP_LOGW("wifi_wd", "WiFi down %us (reboot at 180s)", wifi_down_s);
+            if (wifi_down_s >= 180) {
+              ESP_LOGE("wifi_wd", "WiFi hung >180s -> ESP.restart()");
+              ESP.restart();
+            }
+          }
+
+  # Раз в 2 секунды — если клиент в ESTABLISHED и дамп ещё не сделан,
+  # перечислить все сервисы и характеристики через ESP-IDF GATT API
+  # (см. include/gatt_dump.h). Безопасно — connected() => state ESTABLISHED
+  # => discovery завершён.
+  - interval: 2s
+    then:
+      - lambda: |-
+          if (id(g_gatt_dumped_global)) return;
+          if (!id(ble_atomfast).connected()) return;
+          std::string dump = gatt_dump_util::dump_gatt(id(ble_atomfast));
+          id(gatt_dump_text).publish_state(dump);
+          id(g_gatt_dumped_global) = true;
+
+  # ─── Публикация BLE-счётчиков раз в 10 с ───
+  - interval: 10s
+    then:
+      - lambda: |-
+          id(ble_disconnects).publish_state((float) id(g_disconnects));
+          id(ble_connects).publish_state((float) id(g_connects));
+          // Если сейчас в сессии — показываем её live-длительность,
+          // иначе — длительность последней закончившейся сессии.
+          uint32_t live_s = id(g_last_session_s);
+          if (id(g_last_connect_ms) > 0) {
+            live_s = (millis() - id(g_last_connect_ms)) / 1000;
+          }
+          id(ble_last_session).publish_state((float) live_s);
+
+  - interval: 1s
+    then:
+      - lambda: |-
+          static uint32_t last_emit = 0;
+          uint32_t now_s = millis() / 1000;
+          uint32_t window = (uint32_t) id(agg_interval_s).state;
+          if (window < 1) window = 1;
+          if (now_s - last_emit >= window) {
+            last_emit = now_s;
+            if (id(g_samples) > 0) {
+              float avg_cps  = id(g_cps_sum)  / id(g_samples);
+              float avg_dose = id(g_dose_sum) / id(g_samples);
+              id(cps_atomfast).publish_state(avg_cps);
+              id(dose_atomfast).publish_state(avg_dose);
+              ESP_LOGI("atomfast", "AGG window=%us samples=%d cps=%.3f dose=%.3f μR/h",
+                       window, id(g_samples), avg_cps, avg_dose);
+            }
+            id(g_cps_sum)  = 0;
+            id(g_dose_sum) = 0;
+            id(g_samples)  = 0;
+          }
+
+  # ─── Народмон: HTTP GET раз в 5 минут ───
+  # Спецификация: интервал ≥ 5 минут, формат http://narodmon.ru/get?ID=<MAC>&<metric>=<val>...
+  # Имена метрик берутся из редактируемых text-полей (см. секцию text: ниже).
+  # Шлём: R1 = мощность дозы (µR/h, стандарт Народмона), D1 = накопленная
+  # доза (µSv), T1 = температура AtomFast, BAT1 = заряд батареи AtomFast.
+  - interval: 300s
+    then:
+      - if:
+          condition:
+            and:
+              - switch.is_on: narodmon_enabled
+              - wifi.connected:
+              - lambda: "return !std::isnan(id(doserate_ur).state);"
+          then:
+            - http_request.get:
+                url: !lambda |-
+                  char url[320];
+                  snprintf(url, sizeof(url),
+                    "http://narodmon.ru/get?ID=%s&%s=%.2f&%s=%.3f&%s=%.0f&%s=%.0f",
+                    id(esp_mac_addr).state.c_str(),
+                    id(nm_rate).state.c_str(), id(doserate_ur).state,
+                    id(nm_dose).state.c_str(), id(dose_cum_usv).state,
+                    id(nm_temp).state.c_str(), id(temp_atomfast).state,
+                    id(nm_batt).state.c_str(), id(batt_atomfast).state);
+                  ESP_LOGI("narodmon", "GET %s", url);
+                  return std::string(url);
+                capture_response: true
+                on_response:
+                  then:
+                    - lambda: |-
+                        ESP_LOGI("narodmon", "HTTP %d, body: %s",
+                                 response->status_code, body.c_str());
+
+# ══════════════════════════════════════════════════════════════════════
+#  SWITCH — включатель выгрузки на Народмон
+# ══════════════════════════════════════════════════════════════════════
+switch:
+  - platform: template
+    name: "Выгружать на Народмон"
+    id: narodmon_enabled
+    icon: "mdi:cloud-upload"
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    web_server:
+      sorting_group_id: sg_narodmon
+      sorting_weight: 1
+
+# ══════════════════════════════════════════════════════════════════════
+#  TEXT — редактируемые имена метрик Народмона
+# ══════════════════════════════════════════════════════════════════════
+# Префикс метрики задаёт тип величины на сервере narodmon.ru:
+#   R*   — радиация (µR/h)
+#   D*   — накопленная доза (µSv)
+#   T*   — температура (°C)
+#   BAT* — заряд батареи (%)
+# Поменять можно из Web UI без перепрошивки. По умолчанию R1/D1/T1/BAT1.
+text:
+  - platform: template
+    name: "Имя метрики: мощность дозы"
+    id: nm_rate
+    optimistic: true
+    restore_value: true
+    mode: text
+    initial_value: "R1"
+    icon: "mdi:tag-text"
+    web_server:
+      sorting_group_id: sg_narodmon
+      sorting_weight: 10
+  - platform: template
+    name: "Имя метрики: накопленная доза"
+    id: nm_dose
+    optimistic: true
+    restore_value: true
+    mode: text
+    initial_value: "D1"
+    icon: "mdi:tag-text"
+    web_server:
+      sorting_group_id: sg_narodmon
+      sorting_weight: 11
+  - platform: template
+    name: "Имя метрики: температура"
+    id: nm_temp
+    optimistic: true
+    restore_value: true
+    mode: text
+    initial_value: "T1"
+    icon: "mdi:tag-text"
+    web_server:
+      sorting_group_id: sg_narodmon
+      sorting_weight: 12
+  - platform: template
+    name: "Имя метрики: батарея"
+    id: nm_batt
+    optimistic: true
+    restore_value: true
+    mode: text
+    initial_value: "BAT1"
+    icon: "mdi:tag-text"
+    web_server:
+      sorting_group_id: sg_narodmon
+      sorting_weight: 13

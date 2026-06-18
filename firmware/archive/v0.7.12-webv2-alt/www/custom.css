@@ -1,0 +1,16 @@
+/* AtomFast WebUI v2 custom CSS */
+/* Базовый table-stylising; reordering и лог-ограничение делает custom.js */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+table th, table td {
+  padding: 4px 8px;
+  vertical-align: middle;
+}
+/* Резервный селектор — если esp-log будет HTML-элементом без shadow-DOM */
+#log, .log, esp-log {
+  display: block;
+  max-height: 240px;
+  overflow-y: auto;
+}

@@ -1,0 +1,761 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║ AtomFast Gateway — Bluetooth Proxy Base (v0.8.0-step0)                   ║
+# ║ Третий вариант: с нуля от официального ESPHome bluetooth-proxies         ║
+# ║ baseline (esp-idf). Пошаговая инкрементальная сборка по образу Radex     ║
+# ║ v0.3.0 (STEP 0 → STEP 5).                                                ║
+# ║                                                                          ║
+# ║ ИСХОДНЫЙ BASELINE (verbatim upstream):                                   ║
+# ║   github.com/esphome/bluetooth-proxies (branch main, 2026-06-14)         ║
+# ║   raw: https://raw.githubusercontent.com/esphome/bluetooth-proxies/      ║
+# ║        main/esp32-generic/esp32-generic.yaml                             ║
+# ║   SHA-1: 6d0be3a17183d5d43fbcffcd793b6f4facf9e14e (678 B, 35 строк)      ║
+# ║   Локальная копия в проекте:                                             ║
+# ║     firmware/_baseline_btproxy/esp32-generic.yaml                        ║
+# ║     firmware/_baseline_btproxy/README.md (URL/SHA/дата клонирования)     ║
+# ║                                                                          ║
+# ║ Что в baseline (минимум, 35 строк):                                      ║
+# ║   esphome + esp32 esp-idf + wifi.ap + api + logger + ota.esphome +       ║
+# ║   esp32_ble_tracker(scan active:true) + bluetooth_proxy(active:true) +   ║
+# ║   button.safe_mode + button.factory_reset                                ║
+# ║                                                                          ║
+# ║ Этот файл — расширение baseline под наш контекст: secrets, api.          ║
+# ║   encryption, web_server (v3+log:false+auth+sorting_groups), mdns,       ║
+# ║   диагностические sensor/text_sensor, WiFi-watchdog, sdkconfig_options.  ║
+# ║                                                                          ║
+# ║ STEP 0 — clean baseline БЕЗ AtomFast-датчиков:                           ║
+# ║   • esp32_ble_tracker + bluetooth_proxy active:true (HA-нативка фон)     ║
+# ║   • api.encryption + web_server v3 + log:false + auth + sorting_groups   ║
+# ║   • mdns + safe_mode/factory_reset/restart кнопки                        ║
+# ║   • uptime + wifi_signal + heap + min_heap + wifi_info                   ║
+# ║   • WiFi-watchdog 180s App.safe_reboot (INC-01)                          ║
+# ║   • sdkconfig_options: LWIP_MAX_SOCKETS=16 (#9), TASK_WDT_TIMEOUT=60s    ║
+# ║                                                                          ║
+# ║ ⚠ INC-09 override: AtomFast esp-idf был забанен v0.7.0→v0.7.2 (откат на  ║
+# ║   arduino — long-reconnect регрессия). Здесь сознательный возврат:       ║
+# ║   оператор референсит Radex v0.3.0 (esp-idf-baseline стабилен с нуля).   ║
+# ║   Это другой контекст: не миграция существующей arduino-сборки, а свежий ║
+# ║   старт от bt-proxy эталона, где BLE-стек esp-idf изначально устойчив.   ║
+# ║                                                                          ║
+# ║ Обновлено: 2026-06-14 — fresh base from esphome/bluetooth-proxies main.  ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+
+substitutions:
+  device_name: "atomfast-gw-btproxy"
+  friendly_name: "AtomFast (BT-Proxy Base)"
+  build_path: "D:/esp32_atomfast_build/atomfast-btproxy"
+  fw_version: "v0.8.0-step4"
+  # AtomFast BLE: ATOMTAG_SERVICE + ATOMTAG_MEASUREMENT (notify)
+  # Источник: Am6er/atomswift/AtomDeviceNRF.java — UUID_MEASUREMENT, 13-байтовый payload.
+  atomfast_service_uuid: "63462a4a-c28c-4ffd-87a4-2d23a1c72581"
+  atomfast_char_uuid:    "70BC767E-7A1A-4304-81ED-14B9AF54F7BD"
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  min_version: 2026.5.0
+  name_add_mac_suffix: false
+  build_path: ${build_path}
+  on_boot:
+    - priority: -100
+      then:
+        - logger.log:
+            level: WARN
+            format: "AtomFast BT-Proxy Base ${fw_version} (esp-idf, bt-proxy + 13B parser + Народмон 4 опции GET/POST/HTTPS/JSON) booted"
+
+esp32:
+  variant: esp32
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_LWIP_MAX_SOCKETS: "16"
+      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "60"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  power_save_mode: none
+  ap:
+    ssid: "AtomFast-BTProxy Fallback"
+    password: !secret ap_password
+  on_disconnect:
+    - lambda: |-
+        id(g_wifi_reassoc_count) += 1;
+        ESP_LOGW("wifi", "WiFi disconnected — реассоциаций всего: %u", id(g_wifi_reassoc_count));
+
+mdns:
+  disabled: false
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+  reboot_timeout: 0s
+
+logger:
+  level: INFO
+  baud_rate: 115200
+
+ota:
+  - platform: esphome
+    id: ota_esphome
+    password: !secret ota_password
+
+# ── STEP 4: HTTP клиент для Народмон-выгрузки ──
+# Народмон отвечает медленно (до 5-10 с под пиком), таймаут поднят.
+# verify_ssl: false — для HTTPS POST варианта (mbedTLS handshake без проверки CA).
+http_request:
+  useragent: "esphome-atomfast/${fw_version}"
+  timeout: 10s
+  verify_ssl: false
+
+# bt-proxy-фундамент. STEP 0 — только passive forwarding (HA видит окружающие BLE).
+# В STEP 1+ поверх него добавим ble_client к AtomFast (наш парсер 13-байтового кадра).
+esp32_ble_tracker:
+  scan_parameters:
+    active: true
+
+bluetooth_proxy:
+  active: true
+
+# ─────────────────────────────────────────────────────────────────────────
+#  STEP 1: ble_client к AtomFast + raw notify (без парсера; парсер = STEP 2)
+# ─────────────────────────────────────────────────────────────────────────
+globals:
+  - id: g_notify_count
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+  - id: g_connect_count
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+  - id: g_disconnect_count
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+  - id: g_wifi_reassoc_count
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+
+ble_client:
+  - mac_address: !secret atomfast_mac
+    id: ble_atomfast
+    auto_connect: true
+    on_connect:
+      - lambda: |-
+          id(g_connect_count) += 1;
+          ESP_LOGI("atomfast", "===== AtomFast CONNECTED (#%u) =====", id(g_connect_count));
+    on_disconnect:
+      - lambda: |-
+          id(g_disconnect_count) += 1;
+          ESP_LOGW("atomfast", "AtomFast DISCONNECT #%u — auto_connect перепопытается.", id(g_disconnect_count));
+
+web_server:
+  version: 3
+  port: 80
+  log: false
+  include_internal: false
+  auth:
+    username: !secret web_username
+    password: !secret web_password
+  sorting_groups:
+    - id: sg_data
+      name: "Прибор"
+      sorting_weight: 5
+    - id: sg_service
+      name: "Сервис"
+      sorting_weight: 10
+
+button:
+  - platform: safe_mode
+    id: atomfast_safe_mode
+    name: "Safe Mode Boot"
+    web_server:
+      sorting_group_id: sg_service
+      sorting_weight: 80
+
+  - platform: factory_reset
+    id: atomfast_factory_reset
+    name: "Factory reset"
+    web_server:
+      sorting_group_id: sg_service
+      sorting_weight: 90
+
+  - platform: restart
+    id: atomfast_reboot
+    name: "Перезагрузить"
+    web_server:
+      sorting_group_id: sg_service
+      sorting_weight: 70
+
+  - platform: template
+    name: "Сбросить счётчики BLE/WiFi"
+    id: counters_reset
+    icon: "mdi:counter"
+    web_server:
+      sorting_group_id: sg_service
+      sorting_weight: 75
+    on_press:
+      - lambda: |-
+          id(g_connect_count) = 0;
+          id(g_disconnect_count) = 0;
+          id(g_notify_count) = 0;
+          id(g_wifi_reassoc_count) = 0;
+          id(ble_connects).publish_state(0);
+          id(ble_reconnects).publish_state(0);
+          id(notify_count).publish_state(0);
+          id(wifi_reassoc).publish_state(0);
+          ESP_LOGW("atomfast", "===== счётчики BLE/WiFi обнулены оператором =====");
+
+  - platform: template
+    name: "Послать сейчас (Народмон)"
+    id: narodmon_send_now
+    icon: "mdi:upload"
+    web_server:
+      sorting_group_id: sg_service
+      sorting_weight: 210
+    on_press:
+      - script.execute: send_narodmon
+
+# ── STEP 4: Switch управляющий авто-выгрузкой и Select выбора протокола ──
+switch:
+  - platform: template
+    name: "Выгружать на Народмон"
+    id: narodmon_enabled
+    icon: "mdi:cloud-upload"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    web_server:
+      sorting_group_id: sg_service
+      sorting_weight: 200
+
+select:
+  - platform: template
+    name: "Способ отправки на Народмон"
+    id: narodmon_method
+    icon: "mdi:upload-network"
+    optimistic: true
+    restore_value: true
+    initial_option: "JSON POST"
+    options:
+      - "HTTP GET"
+      - "HTTP POST"
+      - "HTTPS POST"
+      - "JSON POST"
+    web_server:
+      sorting_group_id: sg_service
+      sorting_weight: 220
+
+text:
+  - platform: template
+    name: "Имя метрики: мощность"
+    id: nm_intensity
+    optimistic: true
+    restore_value: true
+    mode: text
+    initial_value: "R1"
+    icon: "mdi:tag-text"
+    web_server:
+      sorting_group_id: sg_service
+      sorting_weight: 230
+
+  - platform: template
+    name: "Имя метрики: доза"
+    id: nm_dose
+    optimistic: true
+    restore_value: true
+    mode: text
+    initial_value: "D1"
+    icon: "mdi:tag-text"
+    web_server:
+      sorting_group_id: sg_service
+      sorting_weight: 231
+
+  - platform: template
+    name: "Имя метрики: температура"
+    id: nm_temp
+    optimistic: true
+    restore_value: true
+    mode: text
+    initial_value: "T1"
+    icon: "mdi:tag-text"
+    web_server:
+      sorting_group_id: sg_service
+      sorting_weight: 232
+
+  - platform: template
+    name: "Имя метрики: батарея"
+    id: nm_batt
+    optimistic: true
+    restore_value: true
+    mode: text
+    initial_value: "BAT1"
+    icon: "mdi:tag-text"
+    web_server:
+      sorting_group_id: sg_service
+      sorting_weight: 233
+
+# ── STEP 4: Script send_narodmon (manual + auto), 4 метода ──
+# Источник эталона — Radex v0.3.0-step6g (firmware/radex/radex_gateway.yaml:482-607).
+# Идентификация устройства: esp_mac (text_sensor wifi_info → MAC AA:BB:CC:...).
+# Народмон ожидает MAC без двоеточий — снимаем их в lambda через std::remove.
+# Sensors AtomFast → Народмон ID:
+#   R1   ← intensity_uSv_h (мощность, µSv/h) — главная метрика
+#   D1   ← dose_mSv        (доза накопленная, mSv)
+#   T1   ← temperature_C   (°C)
+#   BAT1 ← battery_pct     (%)
+script:
+  - id: send_narodmon
+    then:
+      - if:
+          condition:
+            and:
+              - wifi.connected:
+              - lambda: "return !std::isnan(id(intensity_uSv_h).state);"
+          then:
+            # ── HTTP GET ──────────────────────────────────────────────
+            - if:
+                condition:
+                  lambda: 'return id(narodmon_method).state == "HTTP GET";'
+                then:
+                  - http_request.get:
+                      url: !lambda |-
+                        char url[384];
+                        std::string mac = id(esp_mac).state;
+                        mac.erase(std::remove(mac.begin(), mac.end(), ':'), mac.end());
+                        // D1 → µSv (×1000 от mSv): согласовано с S3 baseline atomfast_gateway_s3.yaml:618
+                        float dose = std::isnan(id(dose_mSv).state) ? 0.0f : id(dose_mSv).state * 1000.0f;
+                        float temp = std::isnan(id(temperature_C).state) ? 0.0f : id(temperature_C).state;
+                        float batt = std::isnan(id(battery_pct).state)  ? 0.0f : id(battery_pct).state;
+                        snprintf(url, sizeof(url),
+                          "http://narodmon.ru/get?ID=%s&%s=%.4f&%s=%.4f&%s=%.0f&%s=%.0f",
+                          mac.c_str(),
+                          id(nm_intensity).state.c_str(), id(intensity_uSv_h).state,
+                          id(nm_dose).state.c_str(),      dose,
+                          id(nm_temp).state.c_str(),      temp,
+                          id(nm_batt).state.c_str(),      batt);
+                        ESP_LOGI("narodmon", "GET %s", url);
+                        return std::string(url);
+                      capture_response: true
+                      on_response:
+                        then:
+                          - lambda: |-
+                              ESP_LOGI("narodmon", "GET HTTP %d, body: %s",
+                                       response->status_code, body.c_str());
+            # ── HTTP POST ─────────────────────────────────────────────
+            - if:
+                condition:
+                  lambda: 'return id(narodmon_method).state == "HTTP POST";'
+                then:
+                  - http_request.post:
+                      url: "http://narodmon.ru/post"
+                      request_headers:
+                        Content-Type: "application/x-www-form-urlencoded"
+                      body: !lambda |-
+                        char body[384];
+                        std::string mac = id(esp_mac).state;
+                        mac.erase(std::remove(mac.begin(), mac.end(), ':'), mac.end());
+                        // D1 → µSv (×1000 от mSv): согласовано с S3 baseline atomfast_gateway_s3.yaml:618
+                        float dose = std::isnan(id(dose_mSv).state) ? 0.0f : id(dose_mSv).state * 1000.0f;
+                        float temp = std::isnan(id(temperature_C).state) ? 0.0f : id(temperature_C).state;
+                        float batt = std::isnan(id(battery_pct).state)  ? 0.0f : id(battery_pct).state;
+                        snprintf(body, sizeof(body),
+                          "ID=%s&%s=%.4f&%s=%.4f&%s=%.0f&%s=%.0f",
+                          mac.c_str(),
+                          id(nm_intensity).state.c_str(), id(intensity_uSv_h).state,
+                          id(nm_dose).state.c_str(),      dose,
+                          id(nm_temp).state.c_str(),      temp,
+                          id(nm_batt).state.c_str(),      batt);
+                        ESP_LOGI("narodmon", "POST body: %s", body);
+                        return std::string(body);
+                      capture_response: true
+                      on_response:
+                        then:
+                          - lambda: |-
+                              ESP_LOGI("narodmon", "POST HTTP %d, body: %s",
+                                       response->status_code, body.c_str());
+            # ── HTTPS POST ────────────────────────────────────────────
+            - if:
+                condition:
+                  lambda: 'return id(narodmon_method).state == "HTTPS POST";'
+                then:
+                  - http_request.post:
+                      url: "https://narodmon.ru/post"
+                      request_headers:
+                        Content-Type: "application/x-www-form-urlencoded"
+                      body: !lambda |-
+                        char body[384];
+                        std::string mac = id(esp_mac).state;
+                        mac.erase(std::remove(mac.begin(), mac.end(), ':'), mac.end());
+                        // D1 → µSv (×1000 от mSv): согласовано с S3 baseline atomfast_gateway_s3.yaml:618
+                        float dose = std::isnan(id(dose_mSv).state) ? 0.0f : id(dose_mSv).state * 1000.0f;
+                        float temp = std::isnan(id(temperature_C).state) ? 0.0f : id(temperature_C).state;
+                        float batt = std::isnan(id(battery_pct).state)  ? 0.0f : id(battery_pct).state;
+                        snprintf(body, sizeof(body),
+                          "ID=%s&%s=%.4f&%s=%.4f&%s=%.0f&%s=%.0f",
+                          mac.c_str(),
+                          id(nm_intensity).state.c_str(), id(intensity_uSv_h).state,
+                          id(nm_dose).state.c_str(),      dose,
+                          id(nm_temp).state.c_str(),      temp,
+                          id(nm_batt).state.c_str(),      batt);
+                        ESP_LOGI("narodmon", "HTTPS POST body: %s", body);
+                        return std::string(body);
+                      capture_response: true
+                      on_response:
+                        then:
+                          - lambda: |-
+                              ESP_LOGI("narodmon", "HTTPS POST HTTP %d, body: %s",
+                                       response->status_code, body.c_str());
+            # ── JSON POST ─────────────────────────────────────────────
+            # http://narodmon.ru/json, Content-Type application/json.
+            # Тело: {"devices":[{"mac":"<MAC>","sensors":[
+            #         {"id":"<R1>","value":<intensity>},
+            #         {"id":"<D1>","value":<dose>},
+            #         {"id":"<T1>","value":<temp>},
+            #         {"id":"<BAT1>","value":<batt>}]}]}
+            # Минимум по спецификации Народмона: mac + sensors[].id + .value.
+            # Сервер отвечает JSON: {"error":"OK","errno":200} при успехе.
+            - if:
+                condition:
+                  lambda: 'return id(narodmon_method).state == "JSON POST";'
+                then:
+                  - http_request.post:
+                      url: "http://narodmon.ru/json"
+                      request_headers:
+                        Content-Type: "application/json"
+                      body: !lambda |-
+                        std::string mac = id(esp_mac).state;
+                        mac.erase(std::remove(mac.begin(), mac.end(), ':'), mac.end());
+                        // D1 → µSv (×1000 от mSv): согласовано с S3 baseline atomfast_gateway_s3.yaml:618
+                        float dose = std::isnan(id(dose_mSv).state) ? 0.0f : id(dose_mSv).state * 1000.0f;
+                        float temp = std::isnan(id(temperature_C).state) ? 0.0f : id(temperature_C).state;
+                        float batt = std::isnan(id(battery_pct).state)  ? 0.0f : id(battery_pct).state;
+                        float intensity = std::isnan(id(intensity_uSv_h).state) ? 0.0f : id(intensity_uSv_h).state;
+                        std::string body = "{\"devices\":[{\"mac\":\"" + mac + "\",\"sensors\":[";
+                        body += "{\"id\":\"" + id(nm_intensity).state + "\",\"value\":" + std::to_string(intensity) + "},";
+                        body += "{\"id\":\"" + id(nm_dose).state      + "\",\"value\":" + std::to_string(dose)      + "},";
+                        body += "{\"id\":\"" + id(nm_temp).state      + "\",\"value\":" + std::to_string(temp)      + "},";
+                        body += "{\"id\":\"" + id(nm_batt).state      + "\",\"value\":" + std::to_string(batt)      + "}";
+                        body += "]}]}";
+                        ESP_LOGI("narodmon", "JSON POST body (%u bytes): %s", (unsigned)body.size(), body.c_str());
+                        return body;
+                      capture_response: true
+                      on_response:
+                        then:
+                          - lambda: |-
+                              ESP_LOGI("narodmon", "JSON POST HTTP %d, body: %s",
+                                       response->status_code, body.c_str());
+          else:
+            - lambda: 'ESP_LOGW("narodmon", "skip: wifi=%d intensity_nan=%d", wifi::global_wifi_component->is_connected(), std::isnan(id(intensity_uSv_h).state));'
+
+sensor:
+  # ── Прибор AtomFast (raw notify-подписка + 13B парсер) ──
+  # ble_client.characteristic с NOTIFY: каждое уведомление прибора (13 байт) → lambda.
+  # STEP 2: парсер 13-байтового кадра по схеме AtomDeviceNRF.java:
+  #   byte 0     — flags (0x00 норма)
+  #   bytes 1-4  — float32 LE: dose, mSv (накопленная)
+  #   bytes 5-8  — float32 LE: intensity, µSv/h (мощность излучения)
+  #   bytes 9-10 — uint16 LE: pulses_2s (импульсы за 2 секунды; CPS = /2)
+  #   byte 11    — int8: battery, %
+  #   byte 12    — int8: temperature, °C
+  # internal: true — сам ble_client.characteristic не отрисовывается; данные
+  # пробрасываем в продуктовые template sensors + text_sensor raw_notify (debug).
+  - platform: ble_client
+    type: characteristic
+    ble_client_id: ble_atomfast
+    name: "AtomFast raw (debug)"
+    id: raw_value_atomfast
+    service_uuid: ${atomfast_service_uuid}
+    characteristic_uuid: ${atomfast_char_uuid}
+    notify: true
+    update_interval: never
+    internal: true
+    lambda: |-
+      id(g_notify_count) += 1;
+
+      // raw hex для отладки
+      char hex[64]; size_t pos = 0;
+      for (size_t i = 0; i < x.size() && pos + 3 < sizeof(hex); i++)
+        pos += snprintf(hex + pos, sizeof(hex) - pos, "%02X ", x[i]);
+      id(raw_notify).publish_state(std::string(hex));
+      id(notify_count).publish_state((float) id(g_notify_count));
+
+      // STEP 2: разбор 13B кадра — только если длина строго 13
+      if (x.size() != 13) {
+        ESP_LOGW("atomfast", "notify len=%u (expected 13) — skip parse", (unsigned)x.size());
+        return NAN;
+      }
+
+      // dose, mSv (float32 LE @ offset 1)
+      float dose;
+      memcpy(&dose, &x[1], 4);
+
+      // intensity, µSv/h (float32 LE @ offset 5)
+      float intensity;
+      memcpy(&intensity, &x[5], 4);
+
+      // Guard от битых пакетов: intensity вне [0,1000) или nan/inf → не публиковать.
+      // Соответствует спецификации «>1000 = bad» из references/atomfast-onair-protocol.md
+      // и тому же критерию в S3 baseline (atomfast_gateway_s3.yaml:371).
+      if (!std::isfinite(intensity) || intensity < 0 || intensity >= 1000) {
+        ESP_LOGW("atomfast", "битый пакет: intensity=%.4f вне [0,1000) — skip publish", intensity);
+        return NAN;
+      }
+
+      id(dose_mSv).publish_state(dose);
+      id(intensity_uSv_h).publish_state(intensity);
+
+      // pulses за 2 с (uint16 LE @ offset 9), отдельно публикуем CPS = pulses_2s/2
+      uint16_t pulses_2s = (uint16_t)x[9] | ((uint16_t)x[10] << 8);
+      id(pulses_2s_sensor).publish_state((float) pulses_2s);
+      id(cps_sensor).publish_state((float) pulses_2s / 2.0f);
+
+      // battery, % (int8 @ offset 11). Известное ограничение: байт > 127 даёт
+      // отрицательный %; в живом диапазоне 0-100 % это не наблюдается.
+      int8_t batt = (int8_t) x[11];
+      id(battery_pct).publish_state((float) batt);
+
+      // temperature, °C (int8 @ offset 12)
+      int8_t temp = (int8_t) x[12];
+      id(temperature_C).publish_state((float) temp);
+
+      return NAN;
+    filters:
+      - filter_out: nan
+
+  - platform: template
+    name: "Notify получено"
+    id: notify_count
+    accuracy_decimals: 0
+    icon: "mdi:counter"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_service
+      sorting_weight: 22
+
+  # ── продуктовые AtomFast сенсоры (публикуются из парсера выше) ──
+  - platform: template
+    name: "Доза накопленная"
+    id: dose_mSv
+    unit_of_measurement: "mSv"
+    accuracy_decimals: 4
+    icon: "mdi:radioactive"
+    update_interval: never
+    device_class: ""
+    web_server:
+      sorting_group_id: sg_data
+      sorting_weight: 2
+
+  - platform: template
+    name: "Мощность излучения"
+    id: intensity_uSv_h
+    unit_of_measurement: "µSv/h"
+    accuracy_decimals: 4
+    icon: "mdi:radioactive"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_data
+      sorting_weight: 3
+
+  - platform: template
+    name: "CPS (импульсов в секунду)"
+    id: cps_sensor
+    unit_of_measurement: "cps"
+    accuracy_decimals: 1
+    icon: "mdi:atom-variant"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_data
+      sorting_weight: 4
+
+  - platform: template
+    name: "Импульсов за 2 с"
+    id: pulses_2s_sensor
+    unit_of_measurement: "cps×2s"
+    accuracy_decimals: 0
+    icon: "mdi:counter"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_data
+      sorting_weight: 6
+
+  - platform: template
+    name: "Батарея AtomFast"
+    id: battery_pct
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    icon: "mdi:battery"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_data
+      sorting_weight: 7
+
+  - platform: template
+    name: "Температура AtomFast"
+    id: temperature_C
+    unit_of_measurement: "°C"
+    accuracy_decimals: 0
+    icon: "mdi:thermometer"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_data
+      sorting_weight: 8
+
+  - platform: template
+    name: "BLE: коннектов"
+    id: ble_connects
+    accuracy_decimals: 0
+    icon: "mdi:bluetooth-connect"
+    update_interval: 10s
+    lambda: "return (float) id(g_connect_count);"
+    web_server:
+      sorting_group_id: sg_service
+      sorting_weight: 20
+
+  - platform: template
+    name: "BLE: реконнектов"
+    id: ble_reconnects
+    accuracy_decimals: 0
+    icon: "mdi:bluetooth-off"
+    update_interval: 10s
+    lambda: "return (float) id(g_disconnect_count);"
+    web_server:
+      sorting_group_id: sg_service
+      sorting_weight: 21
+
+  - platform: template
+    name: "WiFi реассоциаций"
+    id: wifi_reassoc
+    accuracy_decimals: 0
+    icon: "mdi:wifi-refresh"
+    update_interval: 10s
+    lambda: "return (float) id(g_wifi_reassoc_count);"
+    web_server:
+      sorting_group_id: sg_service
+      sorting_weight: 25
+
+  - platform: uptime
+    name: "Время работы"
+    id: uptime_sec
+    update_interval: 30s
+    web_server:
+      sorting_group_id: sg_service
+      sorting_weight: 20
+
+  - platform: wifi_signal
+    name: "WiFi сигнал"
+    id: wifi_rssi
+    update_interval: 30s
+    web_server:
+      sorting_group_id: sg_service
+      sorting_weight: 30
+
+  - platform: template
+    name: "Свободно heap"
+    id: free_heap
+    accuracy_decimals: 0
+    unit_of_measurement: "B"
+    update_interval: 10s
+    lambda: |-
+      return (float) esp_get_free_heap_size();
+    web_server:
+      sorting_group_id: sg_service
+      sorting_weight: 40
+
+  - platform: template
+    name: "Min free heap"
+    id: min_free_heap
+    accuracy_decimals: 0
+    unit_of_measurement: "B"
+    update_interval: 30s
+    lambda: |-
+      return (float) esp_get_minimum_free_heap_size();
+    web_server:
+      sorting_group_id: sg_service
+      sorting_weight: 50
+
+text_sensor:
+  - platform: template
+    name: "AtomFast raw notify (hex)"
+    id: raw_notify
+    icon: "mdi:hexadecimal"
+    web_server:
+      sorting_group_id: sg_data
+      sorting_weight: 1
+
+  - platform: wifi_info
+    ip_address:
+      name: "IP-адрес"
+      id: ip_addr
+      web_server:
+        sorting_group_id: sg_service
+        sorting_weight: 60
+    ssid:
+      name: "WiFi SSID"
+      id: wifi_ssid_str
+      web_server:
+        sorting_group_id: sg_service
+        sorting_weight: 61
+    bssid:
+      name: "BSSID АП"
+      id: wifi_bssid_str
+      web_server:
+        sorting_group_id: sg_service
+        sorting_weight: 62
+    mac_address:
+      name: "MAC-адрес"
+      id: esp_mac
+      web_server:
+        sorting_group_id: sg_service
+        sorting_weight: 63
+
+binary_sensor:
+  - platform: template
+    name: "BLE подключён"
+    id: ble_connected
+    icon: "mdi:bluetooth"
+    web_server:
+      sorting_group_id: sg_data
+      sorting_weight: 5
+    lambda: "return id(ble_atomfast).connected();"
+
+# WiFi-watchdog: если WiFi отсутствует >180s — App.safe_reboot().
+# Покрывает silent-WiFi-hang (INC-01) на любом фреймворке (ESPHome API кросс-фреймворк).
+# 300с-tick: авто-выгрузка на Народмон, если switch ON + WiFi up + intensity не NaN.
+# 300с — минимально допустимый интервал Народмона (короче → бан IP на 1 час).
+interval:
+  - interval: 10s
+    then:
+      - lambda: |-
+          static uint32_t wifi_down_since_ms = 0;
+          if (wifi::global_wifi_component->is_connected()) {
+            wifi_down_since_ms = 0;
+          } else {
+            if (wifi_down_since_ms == 0) wifi_down_since_ms = millis();
+            uint32_t down_for = millis() - wifi_down_since_ms;
+            if (down_for > 180000) {
+              ESP_LOGE("watchdog", "WiFi down > 180s, restarting");
+              App.safe_reboot();
+            }
+          }
+
+  - interval: 300s
+    then:
+      - if:
+          condition:
+            and:
+              - switch.is_on: narodmon_enabled
+              - wifi.connected:
+              - lambda: "return !std::isnan(id(intensity_uSv_h).state);"
+          then:
+            - logger.log:
+                level: INFO
+                format: "Народмон: 300s-tick → авто-выгрузка"
+            - script.execute: send_narodmon
+          else:
+            - lambda: |-
+                ESP_LOGD("narodmon", "300s-tick skip: enabled=%d wifi=%d intensity_nan=%d",
+                         id(narodmon_enabled).state,
+                         wifi::global_wifi_component->is_connected(),
+                         std::isnan(id(intensity_uSv_h).state));

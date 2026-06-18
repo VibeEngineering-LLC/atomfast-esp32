@@ -1,0 +1,7 @@
+secrets.yaml
+.esphome/
+.pioenvs/
+.piolibdeps/
+*.bin
+*.elf
+*.factory.bin
