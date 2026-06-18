@@ -215,8 +215,26 @@ byte 12      — int8 temperature (°C, signed)
    известна из source-репо изготовителя (Am6er/atomswift, см.
    `references/atomfast-onair-protocol.md`).
 
-2. **MTU 23, не 247.** AtomFast не отвечает на MTU exchange request.
-   Не критично — 13-байт payload влезает в 20 B ATT payload (MTU 23).
+2. **MTU 23, не 247 — hardware limit чипа AtomFast (TI CC2541).** AtomFast
+   построен на TI CC2541 — single-mode BLE 4.0 SoC (datasheet:
+   `1 Mbps, GFSK, 250-kHz deviation`, p.5-6). Это не баг прошивки прибора и
+   не ограничение ESPHome `ble_client` — поднять MTU выше 23 на этом чипе
+   невозможно. Также не доступны BLE 5 фичи: `LE 2M`, `LE Coded`, `S2`, `S8` —
+   не запрашивать. 13-байт payload влезает в 20 B ATT payload (MTU 23), так что
+   практически ограничение не мешает.
+
+   Стратегии тюнинга, которые **имеют смысл** на CC2541-периферии:
+   - стабильный connection interval (LE 1M PHY)
+   - снижение reconnect-storms (см. Issue #0 — supervision-timeout)
+   - аккуратный scan duty cycle (`interval_window` баланс, см. v0.7.12)
+
+   Стратегии, которые **бесполезны** (не работают на CC2541):
+   - запрос PHY upgrade в `ble_client` (LE 2M / Coded)
+   - попытка MTU exchange до 247
+   - попытка активировать high-gain RX mode (`-94 dBm` вместо `-88 dBm`) —
+     управляется TI vendor-specific HCI командой `HCI_EXT_SetRxGainCmd`,
+     которая не доступна через стандартный GATT и не выставлена в shipping
+     firmware AtomFast (нет UART/HCI bridge, PTM или custom-команды).
 
 2a. **`battery` int8 → отрицательный % при байте > 127.** Декодер обеих прошивок
    читает byte 11 как `int8_t` (`atomfast_gateway.yaml:502`,
