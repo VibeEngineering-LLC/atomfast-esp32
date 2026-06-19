@@ -1,0 +1,680 @@
+# ╔══════════════════════════════════════════════════════════════════════╗
+# ║ AtomFast C3 Gateway — ESP32-C3 SuperMini (v0.9.0-c3, эксперимент)     ║
+# ║                                                                       ║
+# ║ Цель: подтвердить совместимость с ESP32-C3 SuperMini после INC-C3-001 ║
+# ║ (ENOSPC при попытке прошить atomfast_gateway_s3.yaml — 16 MB partition║
+# ║ table на 4 MB Flash). Этот YAML — нативный C3-вариант: правильный     ║
+# ║ board id, NimBLE-стек, partition min_spiffs.csv (4 MB Flash, 1.9 MB   ║
+# ║ на каждый OTA-слот), без PSRAM, без bluetooth_proxy.                  ║
+# ║                                                                       ║
+# ║ Отличия от atomfast_gateway_s3.yaml:                                  ║
+# ║   • variant esp32c3 / board esp32-c3-devkitm-1 (не esp32s3 / DevKitC) ║
+# ║   • framework arduino (на C3 esp-idf тоже работает, но arduino —      ║
+# ║     более ровный путь для NimBLE-only чипа; синхронно с классическим  ║
+# ║     atomfast_gateway.yaml v0.7.12)                                    ║
+# ║   • partition min_spiffs.csv через platformio_options (для 4 MB Flash)║
+# ║   • БЕЗ psram: (C3 SuperMini не имеет PSRAM, только 400 KB SRAM)      ║
+# ║   • web_server.log: false — HARD default (без PSRAM SSE-флуд → OOM)   ║
+# ║   • scan_parameters 1024/16 ms (duty 1.5%) вместо 640/32 (duty 5%)    ║
+# ║     — C3 single-band, более низкий duty снижает WiFi-старвейшн        ║
+# ║   • Убран sg_re + raw_atomfast text_sensor — экономия heap на 400 KB  ║
+# ║     SRAM (для RE при необходимости — отдельная debug-сборка)          ║
+# ║                                                                       ║
+# ║ Сохраняется из S3-варианта:                                           ║
+# ║   • bluetooth_proxy НЕ ДОБАВЛЕНО — шлюз обслуживает только AtomFast   ║
+# ║   • switch narodmon_enabled: restore_mode: ALWAYS_OFF (HARD 2026-06-17║
+# ║     + БАН Народмон HARD HOLD 2026-06-14)                              ║
+# ║   • WiFi-watchdog 180 с → arch_restart() (кросс-фреймворковый)        ║
+# ║   • SNTP Europe/Moscow, mDNS, captive_portal, Basic-Auth на Web UI    ║
+# ║                                                                       ║
+# ║ Протокол AtomFast (Am6er/atomswift, 2026-06-12):                      ║
+# ║   ATOMTAG_SERVICE  63462a4a-c28c-4ffd-87a4-2d23a1c72581               ║
+# ║   ATOMTAG_MEASURE  70BC767E-7A1A-4304-81ED-14B9AF54F7BD (NOTIFY)      ║
+# ║   On-air payload 13 байт: flags(1) + dose_mSv(f32 LE,4) +              ║
+# ║                            intensity_uSv/h(f32 LE,4) + p2s(u16 LE,2) + ║
+# ║                            battery(i8,1) + temperature(i8,1)            ║
+# ║                                                                       ║
+# ║ ВНИМАНИЕ. Этот файл — экспериментальная заготовка под C3 SuperMini.   ║
+# ║ Compile/upload в первый раз — выполнить вручную; если стабильно ≥5 мин║
+# ║ — публикация в VibeEngineering-LLC/atomfast-esp32/firmware/.          ║
+# ╚══════════════════════════════════════════════════════════════════════╝
+
+substitutions:
+  device_name: atomfast-gw-c3
+  device_friendly: "AtomFast C3 Gateway"
+  fw_version: "v0.9.0-c3"
+  # build_path: убран — ESPHome сложит сборку в ~/.esphome/build/<name>/ по умолчанию.
+  # Если хочешь свой путь — раскомментируй и подставь, e.g. build_path: ./_build/atomfast-gw-c3
+  atomfast_service_uuid: "63462a4a-c28c-4ffd-87a4-2d23a1c72581"
+  atomfast_char_uuid:    "70BC767E-7A1A-4304-81ED-14B9AF54F7BD"
+  atomfast_mac_str:      "AA:BB:CC:DD:EE:FF"
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${device_friendly}
+  min_version: 2026.5.0
+  name_add_mac_suffix: false
+  # ESP32-C3 SuperMini = 4 MB Flash. ESPHome сам выберет partition table под
+  # 4 MB через pioarduino-platform — default для board esp32-c3-devkitm-1
+  # это ~1.3 MB на OTA-слот. Если бинарник упрётся в этот лимит ("App too
+  # large") — на step2 поднимем кастомный partition csv по абсолютному пути
+  # (опция `platformio_options.board_build.partitions:` принимает либо имя
+  # встроенного preset, либо абсолютный путь — относительный к build_path не
+  # резолвится в этой версии PlatformIO).
+  on_boot:
+    - priority: -100
+      then:
+        - logger.log:
+            level: WARN
+            format: "AtomFast C3 Gateway ${fw_version} (arduino, NimBLE, BEZ bluetooth_proxy, log:false, Narodmon switch=ALWAYS_OFF) booted"
+
+esp32:
+  variant: esp32c3
+  board: esp32-c3-devkitm-1
+  framework:
+    type: arduino
+
+# psram: НЕ ДОБАВЛЕНО — ESP32-C3 SuperMini не имеет PSRAM. Только 400 KB SRAM.
+# Все настройки ниже (log: false, упрощённый Web UI без sg_re, scan_parameters
+# 1024/16) подобраны с расчётом на эту память.
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  power_save_mode: none
+  ap:
+    ssid: "AtomFast-C3 Fallback"
+    password: !secret ap_password
+
+captive_portal:
+
+api:
+  encryption:
+    key: !secret atomfast_c3_api_key
+  reboot_timeout: 0s
+
+logger:
+  level: INFO
+  baud_rate: 115200
+
+ota:
+  - platform: esphome
+    password: !secret atomfast_c3_ota_pass
+  - platform: web_server
+
+web_server:
+  version: 3
+  port: 80
+  include_internal: false
+  local: true
+  log: false     # HARD default для платы без PSRAM (json:111 / OOM иначе)
+  auth:
+    username: admin
+    password: !secret atomfast_c3_web_pass
+  sorting_groups:
+    - id: sg_main
+      name: "AtomFast — показания"
+      sorting_weight: 10
+    - id: sg_settings
+      name: "Настройки"
+      sorting_weight: 20
+    - id: sg_narodmon
+      name: "Народмон"
+      sorting_weight: 30
+    - id: sg_diag
+      name: "Диагностика"
+      sorting_weight: 80
+
+mdns:
+  disabled: false
+
+# HTTP-клиент для Народмона. Инфраструктура присутствует, но switch
+# narodmon_enabled на boot ВСЕГДА OFF (restore_mode: ALWAYS_OFF) — реального
+# POST'а не произойдёт без явного включения оператором.
+http_request:
+  id: http_client
+  timeout: 10s
+  useragent: "esphome-atomfast-c3-gw/1.0"
+  verify_ssl: false
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Moscow
+
+globals:
+  - id: g_cps_sum
+    type: float
+    restore_value: false
+    initial_value: "0.0"
+  - id: g_dose_sum
+    type: float
+    restore_value: false
+    initial_value: "0.0"
+  - id: g_samples
+    type: int
+    restore_value: false
+    initial_value: "0"
+  # BLE-стабильность: счётчики переживают reboot (restore_value true).
+  - id: g_disconnects
+    type: uint32_t
+    restore_value: true
+    initial_value: "0"
+  - id: g_connects
+    type: uint32_t
+    restore_value: true
+    initial_value: "0"
+  - id: g_last_connect_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+  - id: g_last_session_s
+    type: uint32_t
+    restore_value: false
+    initial_value: "0"
+
+# BLE-трекер. Scan 1024/16 (duty ~1.5 %) — заниженный относительно S3 (640/32,
+# duty 5 %). Причина: C3 — single-band SoC, BLE и WiFi делят один радиочастный
+# тракт через time-multiplexing; высокий BLE duty на C3 чаще приводит к WiFi-
+# старвейшну и rsn 0x08. Если 1024/16 даст реконнекты AtomFast реже 1/мин —
+# можно поднять до 800/24 (duty 3 %). active: false — passive scan.
+esp32_ble_tracker:
+  scan_parameters:
+    interval: 1024ms
+    window: 16ms
+    active: false
+  on_ble_advertise:
+    - then:
+        - lambda: |-
+            if (x.address_str() == "${atomfast_mac_str}") {
+              id(rssi_atomfast).publish_state((float) x.get_rssi());
+            }
+
+# bluetooth_proxy НЕ ДОБАВЛЕНО (синхронно с S3-вариантом, operator 2026-06-18:
+# «откличи сторонние устройства»). Шлюз обслуживает ТОЛЬКО один ble_client
+# ниже (по MAC из !secret atomfast_mac).
+
+ble_client:
+  - mac_address: !secret atomfast_mac
+    id: ble_atomfast
+    auto_connect: true
+    on_connect:
+      - lambda: |-
+          id(g_connects) += 1;
+          id(g_last_connect_ms) = millis();
+          ESP_LOGI("atomfast", "===== AtomFast CONNECTED (#%u) =====", id(g_connects));
+    on_disconnect:
+      - lambda: |-
+          if (id(g_last_connect_ms) > 0) {
+            uint32_t now = millis();
+            id(g_last_session_s) = (now - id(g_last_connect_ms)) / 1000;
+            id(g_last_connect_ms) = 0;
+          } else {
+            id(g_last_session_s) = 0;
+          }
+          id(g_disconnects) += 1;
+          ESP_LOGW("atomfast",
+                   "AtomFast DISCONNECT #%u, последняя сессия %u s — пробую переподключиться.",
+                   id(g_disconnects), id(g_last_session_s));
+
+# ══════════════════════════════════════════════════════════════════════
+#  SENSORS
+# ══════════════════════════════════════════════════════════════════════
+sensor:
+  # ─── МГНОВЕННЫЕ метрики (точка на график каждые 2 с) ───
+  - platform: template
+    name: "CPS (мгновенный)"
+    id: cps_instant
+    unit_of_measurement: "cps"
+    accuracy_decimals: 2
+    icon: "mdi:radioactive"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_main
+      sorting_weight: 1
+
+  - platform: template
+    name: "Мощность дозы"
+    id: doserate_usv
+    unit_of_measurement: "µSv/h"
+    accuracy_decimals: 4
+    icon: "mdi:radioactive-circle"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_main
+      sorting_weight: 2
+
+  - platform: template
+    name: "Мощность дозы (µR⁄h)"
+    id: doserate_ur
+    unit_of_measurement: "µR/h"
+    accuracy_decimals: 2
+    icon: "mdi:radioactive-circle"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_main
+      sorting_weight: 3
+
+  - platform: template
+    name: "Импульсы за 2 с"
+    id: pulses_2s
+    unit_of_measurement: "имп/2с"
+    accuracy_decimals: 0
+    icon: "mdi:counter"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_main
+      sorting_weight: 4
+
+  - platform: template
+    name: "Накопленная доза"
+    id: dose_cum_usv
+    unit_of_measurement: "µSv"
+    accuracy_decimals: 3
+    icon: "mdi:atom"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_main
+      sorting_weight: 5
+
+  # ─── СРЕДНЕЕ за окно агрегации ───
+  - platform: template
+    name: "CPS (среднее за окно)"
+    id: cps_atomfast
+    unit_of_measurement: "cps"
+    accuracy_decimals: 3
+    icon: "mdi:radioactive"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_main
+      sorting_weight: 6
+
+  - platform: template
+    name: "Мощность дозы (среднее за окно)"
+    id: dose_atomfast
+    unit_of_measurement: "µSv/h"
+    accuracy_decimals: 4
+    icon: "mdi:radioactive-circle"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_main
+      sorting_weight: 7
+
+  # ─── Диагностика прибора ───
+  - platform: template
+    name: "Батарея AtomFast"
+    id: batt_atomfast
+    unit_of_measurement: "%"
+    device_class: battery
+    accuracy_decimals: 0
+    icon: "mdi:battery"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_diag
+      sorting_weight: 1
+
+  - platform: template
+    name: "Температура AtomFast"
+    id: temp_atomfast
+    unit_of_measurement: "°C"
+    device_class: temperature
+    accuracy_decimals: 0
+    icon: "mdi:thermometer"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_diag
+      sorting_weight: 2
+
+  - platform: template
+    name: "RSSI AtomFast"
+    id: rssi_atomfast
+    unit_of_measurement: "dBm"
+    accuracy_decimals: 0
+    update_interval: never
+    icon: "mdi:signal"
+    web_server:
+      sorting_group_id: sg_diag
+      sorting_weight: 3
+
+  # ── ble_client characteristic-подписка (NOTIFY) ──
+  # На C3 БЕЗ сохранения raw-hex в text_sensor — экономия heap.
+  # Парсер 13B payload отрабатывает inline в lambda.
+  - platform: ble_client
+    type: characteristic
+    ble_client_id: ble_atomfast
+    name: "AtomFast: raw value (debug)"
+    id: raw_value_atomfast
+    service_uuid: ${atomfast_service_uuid}
+    characteristic_uuid: ${atomfast_char_uuid}
+    notify: true
+    update_interval: never
+    internal: true
+    lambda: |-
+      // Парсер 13B payload (Am6er/atomswift::broadcastUpdate).
+      if (x.size() >= 13) {
+        uint8_t flags = x[0];
+        float val_dose, val_intensity;
+        memcpy(&val_dose,      x.data() + 1, 4);
+        memcpy(&val_intensity, x.data() + 5, 4);
+        uint16_t p2s_val = (uint16_t) x[9] | ((uint16_t) x[10] << 8);
+        int8_t  battery     = (int8_t) x[11];
+        int8_t  temperature = (int8_t) x[12];
+        float cps = (float) p2s_val / 2.0f;
+
+        ESP_LOGI("atomfast",
+                 "flags=0x%02X dose=%.5f mSv  rate=%.4f uSv/h  p2s=%u (cps=%.2f)  batt=%d%%  T=%dC",
+                 flags, val_dose, val_intensity, p2s_val, cps, battery, temperature);
+
+        if (std::isfinite(val_intensity) && val_intensity >= 0 && val_intensity < 1000) {
+          id(cps_instant).publish_state(cps);
+          id(doserate_usv).publish_state(val_intensity);
+          id(doserate_ur).publish_state(val_intensity * 100.0f);
+          id(pulses_2s).publish_state((float) p2s_val);
+          id(dose_cum_usv).publish_state(val_dose * 1000.0f);
+          id(batt_atomfast).publish_state((float) battery);
+          id(temp_atomfast).publish_state((float) temperature);
+
+          id(g_cps_sum)  += cps;
+          id(g_dose_sum) += val_intensity;
+          id(g_samples)  += 1;
+        }
+      }
+      return NAN;
+    filters:
+      - filter_out: nan
+
+  - platform: wifi_signal
+    name: "WiFi сигнал"
+    update_interval: 60s
+    web_server:
+      sorting_group_id: sg_diag
+
+  - platform: uptime
+    name: "Uptime"
+    id: uptime_sec
+    update_interval: 60s
+    web_server:
+      sorting_group_id: sg_diag
+
+  - platform: template
+    name: "BLE: реконнектов всего"
+    id: ble_disconnects
+    accuracy_decimals: 0
+    icon: "mdi:bluetooth-off"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_diag
+      sorting_weight: 10
+
+  - platform: template
+    name: "BLE: успешных коннектов"
+    id: ble_connects
+    accuracy_decimals: 0
+    icon: "mdi:bluetooth-connect"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_diag
+      sorting_weight: 11
+
+  - platform: template
+    name: "BLE: длина последней сессии"
+    id: ble_last_session
+    unit_of_measurement: "сек"
+    accuracy_decimals: 0
+    icon: "mdi:timer-outline"
+    update_interval: never
+    web_server:
+      sorting_group_id: sg_diag
+      sorting_weight: 12
+
+# ══════════════════════════════════════════════════════════════════════
+#  BINARY SENSORS
+# ══════════════════════════════════════════════════════════════════════
+binary_sensor:
+  - platform: template
+    name: "BLE: AtomFast подключён"
+    id: ble_connected
+    icon: "mdi:bluetooth"
+    web_server:
+      sorting_group_id: sg_diag
+    lambda: "return id(ble_atomfast).connected();"
+
+# ══════════════════════════════════════════════════════════════════════
+#  TEXT SENSORS
+# ══════════════════════════════════════════════════════════════════════
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "IP адрес"
+      id: ip_addr
+      web_server:
+        sorting_group_id: sg_diag
+    mac_address:
+      name: "ESP32 MAC"
+      id: esp_mac_addr
+      web_server:
+        sorting_group_id: sg_diag
+    ssid:
+      name: "Подключено к WiFi"
+      web_server:
+        sorting_group_id: sg_diag
+
+# ══════════════════════════════════════════════════════════════════════
+#  NUMBER — слайдер интервала агрегации
+# ══════════════════════════════════════════════════════════════════════
+number:
+  - platform: template
+    name: "Интервал агрегации"
+    id: agg_interval_s
+    min_value: 1
+    max_value: 60
+    step: 1
+    initial_value: 5
+    optimistic: true
+    restore_value: true
+    mode: slider
+    unit_of_measurement: "сек"
+    icon: "mdi:timer-cog"
+    web_server:
+      sorting_group_id: sg_settings
+
+# ══════════════════════════════════════════════════════════════════════
+#  BUTTONS
+# ══════════════════════════════════════════════════════════════════════
+button:
+  - platform: safe_mode
+    id: button_safe_mode
+    name: "Safe Mode Boot"
+    web_server:
+      sorting_group_id: sg_settings
+
+  - platform: factory_reset
+    id: factory_reset_btn
+    name: "Factory reset"
+    web_server:
+      sorting_group_id: sg_settings
+
+  - platform: restart
+    name: "Перезагрузить"
+    web_server:
+      sorting_group_id: sg_settings
+
+  - platform: template
+    name: "Переподключиться к AtomFast"
+    icon: "mdi:bluetooth-connect"
+    web_server:
+      sorting_group_id: sg_settings
+    on_press:
+      - lambda: |-
+          ESP_LOGI("atomfast", "Manual reconnect");
+          id(ble_atomfast).set_enabled(false);
+      - delay: 1s
+      - lambda: "id(ble_atomfast).set_enabled(true);"
+
+  - platform: template
+    name: "Сбросить счётчики BLE"
+    icon: "mdi:counter"
+    web_server:
+      sorting_group_id: sg_diag
+      sorting_weight: 90
+    on_press:
+      - lambda: |-
+          id(g_disconnects) = 0;
+          id(g_connects) = 0;
+          id(g_last_session_s) = 0;
+          id(ble_disconnects).publish_state(0);
+          id(ble_connects).publish_state(0);
+          id(ble_last_session).publish_state(0);
+          ESP_LOGI("atomfast", "BLE counters reset");
+
+# ══════════════════════════════════════════════════════════════════════
+#  INTERVAL — WiFi-watchdog + BLE-счётчики + агрегация CPS + Народмон
+# ══════════════════════════════════════════════════════════════════════
+interval:
+  # WiFi-watchdog: если WiFi не connected > 180 с подряд — arch_restart().
+  - interval: 10s
+    then:
+      - lambda: |-
+          static uint32_t wifi_down_s = 0;
+          if (wifi::global_wifi_component->is_connected()) {
+            wifi_down_s = 0;
+          } else {
+            wifi_down_s += 10;
+            ESP_LOGW("wifi_wd", "WiFi down %us (reboot at 180s)", wifi_down_s);
+            if (wifi_down_s >= 180) {
+              ESP_LOGE("wifi_wd", "WiFi hung >180s -> arch_restart()");
+              arch_restart();
+            }
+          }
+
+  # Публикация BLE-счётчиков раз в 10 с.
+  - interval: 10s
+    then:
+      - lambda: |-
+          id(ble_disconnects).publish_state((float) id(g_disconnects));
+          id(ble_connects).publish_state((float) id(g_connects));
+          uint32_t live_s = id(g_last_session_s);
+          if (id(g_last_connect_ms) > 0) {
+            live_s = (millis() - id(g_last_connect_ms)) / 1000;
+          }
+          id(ble_last_session).publish_state((float) live_s);
+
+  # Окно агрегации CPS/dose (период из slider'а agg_interval_s).
+  - interval: 1s
+    then:
+      - lambda: |-
+          static uint32_t last_emit = 0;
+          uint32_t now_s = millis() / 1000;
+          uint32_t window = (uint32_t) id(agg_interval_s).state;
+          if (window < 1) window = 1;
+          if (now_s - last_emit >= window) {
+            last_emit = now_s;
+            if (id(g_samples) > 0) {
+              float avg_cps  = id(g_cps_sum)  / id(g_samples);
+              float avg_dose = id(g_dose_sum) / id(g_samples);
+              id(cps_atomfast).publish_state(avg_cps);
+              id(dose_atomfast).publish_state(avg_dose);
+              ESP_LOGI("atomfast", "AGG window=%us samples=%d cps=%.3f dose=%.4f uSv/h",
+                       window, id(g_samples), avg_cps, avg_dose);
+            }
+            id(g_cps_sum)  = 0;
+            id(g_dose_sum) = 0;
+            id(g_samples)  = 0;
+          }
+
+  # Народмон: HTTP GET раз в 5 минут. Условно — стартует ТОЛЬКО если switch
+  # narodmon_enabled включён вручную (на boot = OFF по ALWAYS_OFF).
+  - interval: 300s
+    then:
+      - if:
+          condition:
+            and:
+              - switch.is_on: narodmon_enabled
+              - wifi.connected:
+              - lambda: "return !std::isnan(id(doserate_ur).state);"
+          then:
+            - http_request.get:
+                url: !lambda |-
+                  char url[320];
+                  snprintf(url, sizeof(url),
+                    "http://narodmon.ru/get?ID=%s&%s=%.2f&%s=%.3f&%s=%.0f&%s=%.0f",
+                    id(esp_mac_addr).state.c_str(),
+                    id(nm_rate).state.c_str(), id(doserate_ur).state,
+                    id(nm_dose).state.c_str(), id(dose_cum_usv).state,
+                    id(nm_temp).state.c_str(), id(temp_atomfast).state,
+                    id(nm_batt).state.c_str(), id(batt_atomfast).state);
+                  ESP_LOGI("narodmon", "GET %s", url);
+                  return std::string(url);
+                capture_response: true
+                on_response:
+                  then:
+                    - lambda: |-
+                        ESP_LOGI("narodmon", "HTTP %d, body: %s",
+                                 response->status_code, body.c_str());
+
+# ══════════════════════════════════════════════════════════════════════
+#  SWITCH — включатель выгрузки на Народмон
+# ══════════════════════════════════════════════════════════════════════
+# HARD-правило 2026-06-17 + БАН Народмон HARD HOLD 2026-06-14:
+# restore_mode: ALWAYS_OFF — после reboot / safe-mode / factory_reset / OTA
+# switch ГАРАНТИРОВАННО возвращается в OFF.
+switch:
+  - platform: template
+    name: "Выгружать на Народмон"
+    id: narodmon_enabled
+    icon: "mdi:cloud-upload"
+    restore_mode: ALWAYS_OFF
+    optimistic: true
+    web_server:
+      sorting_group_id: sg_narodmon
+      sorting_weight: 1
+
+# ══════════════════════════════════════════════════════════════════════
+#  TEXT — редактируемые имена метрик Народмона (default R1/D1/T1/BAT1)
+# ══════════════════════════════════════════════════════════════════════
+text:
+  - platform: template
+    name: "Имя метрики: мощность дозы"
+    id: nm_rate
+    optimistic: true
+    restore_value: true
+    mode: text
+    initial_value: "R1"
+    icon: "mdi:tag-text"
+    web_server:
+      sorting_group_id: sg_narodmon
+      sorting_weight: 10
+  - platform: template
+    name: "Имя метрики: накопленная доза"
+    id: nm_dose
+    optimistic: true
+    restore_value: true
+    mode: text
+    initial_value: "D1"
+    icon: "mdi:tag-text"
+    web_server:
+      sorting_group_id: sg_narodmon
+      sorting_weight: 11
+  - platform: template
+    name: "Имя метрики: температура"
+    id: nm_temp
+    optimistic: true
+    restore_value: true
+    mode: text
+    initial_value: "T1"
+    icon: "mdi:tag-text"
+    web_server:
+      sorting_group_id: sg_narodmon
+      sorting_weight: 12
+  - platform: template
+    name: "Имя метрики: батарея"
+    id: nm_batt
+    optimistic: true
+    restore_value: true
+    mode: text
+    initial_value: "BAT1"
+    icon: "mdi:tag-text"
+    web_server:
+      sorting_group_id: sg_narodmon
+      sorting_weight: 13
