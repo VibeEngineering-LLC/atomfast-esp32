@@ -12,14 +12,19 @@
 
 | Плата | Чип | Flash | PSRAM | Антенна | YAML | Заметки |
 |---|---|---|---|---|---|---|
-| **ESP32-S3-DevKitC-1 N16R8** ⭐ | ESP32-S3 dual-core 240 MHz | 16 MB | 8 MB embedded octal | PCB + **U.FL/IPEX** | `atomfast_gateway_s3.yaml` (esp-idf baseline) | **Рекомендованная плата.** Стабильна на esp-idf, PSRAM решает `json:111`, U.FL позволяет внешнюю антенну (важно если AtomFast >5 м или за стеной). USB-C. |
-| **ESP32-DevKitC v4 (WROOM-32)** | ESP32 classic dual-core 240 MHz | 4 MB | — | PCB | `atomfast_gateway.yaml` (**только arduino**) | ⚠ Архивная сборка. arduino-стек стабилен, **esp-idf на этой плате — НЕТ** (см. INC-09/12 в README). Брать только если плата уже в руках. |
+| **ESP32-S3-DevKitC-1 N16R8** ⭐ | ESP32-S3 dual-core 240 MHz | 16 MB | 8 MB embedded octal | PCB + **U.FL/IPEX** | `esp32-s3-devkitc/atomfast_gateway_s3.yaml` (esp-idf baseline) | **Рекомендованная плата.** Стабильна на esp-idf, PSRAM решает `json:111`, U.FL позволяет внешнюю антенну (важно если AtomFast >5 м или за стеной). USB-C. |
+| **ESP32-DevKitC v4 (WROOM-32)** | ESP32 classic dual-core 240 MHz | 4 MB | — | PCB | `esp32-classic/atomfast_gateway.yaml` (**только arduino**) | ⚠ Архивная сборка. arduino-стек стабилен, **esp-idf на этой плате — НЕТ** (см. INC-09/12 в README). Брать только если плата уже в руках. |
+
+### ⚠ Compile PASS / smoke pending (используй с оглядкой)
+
+| Плата | Чип | Flash | PSRAM | YAML | Статус |
+|---|---|---|---|---|---|
+| **ESP32-C3 SuperMini** | ESP32-C3 single-core RISC-V 160 MHz | 4 MB | — | `esp32-c3-supermini/atomfast_gateway_c3.yaml` (arduino + NimBLE) | ⚠ **Compile SUCCESS** (с v0.9.0-c3, 2026-06-19), **smoke у клиента pending**. Flash занят на **92.3 %** (1.69 МБ из 1.83 МБ) — узкий запас 142 KB на рост Web UI. Mini-форм-фактор ≈ 22×18 мм. Single-band 2.4 ГГц coex настроен через `scan_parameters: 1024/16` (duty 1.5 %). **Не пытаться** прошить S3 YAML на C3 — INC-C3-001. |
 
 ### ❌ НЕ работает / не подходит
 
 | Плата | Причина |
 |---|---|
-| **ESP32-C3 SuperMini** | См. **INC-C3-001** ниже. Готового C3-YAML в скилле нет; попытка прошить наш S3-вариант → `OSError: [Errno 28] No space left on device`. |
 | **ESP32-S2** | Нет BLE — физически не может быть BLE-шлюзом к AtomFast. |
 | **ESP8266 (любой)** | Нет BLE. |
 
@@ -27,7 +32,7 @@
 
 | Плата | Ожидание |
 |---|---|
-| **XIAO ESP32-C3** (Seeed) | Для AtomFast не пробовали. На соседнем radon-шлюзе работает стабильно, но потребуется отдельный YAML — текущие наши под C3 не пойдут (см. INC-C3-001). |
+| **XIAO ESP32-C3** (Seeed) | Для AtomFast не пробовали напрямую, но `esp32-c3-supermini/atomfast_gateway_c3.yaml` сделан под `board: esp32-c3-devkitm-1` с такой же 4 MB Flash без PSRAM — можно попробовать как стартовую точку (нужна верификация GPIO-маппинга и встроенного LED). |
 | **ESP32-C6 / H2** | BLE 5.0 есть, NimBLE-стек поддерживается, но YAML под них в скилле не написан. |
 | **ESP32-S3-DevKitC-1 N8R2 / N4R2** | Меньше Flash/PSRAM. `atomfast_gateway_s3.yaml` ориентирован на N16R8; на меньших ревизиях нужно править `flash_size`, `partition` и `psram: mode`. |
 | **«Голый» ESP32-S3 без PSRAM или с QSPI PSRAM** | Меняй `psram.mode: octal` → `quad` или убирай блок целиком; `web_server.log: false`. Лучше взять оригинальную N16R8 от Espressif. |
@@ -36,10 +41,10 @@
 
 ## 2. Рекомендации по выбору железа
 
-1. **Покупаешь новую плату под продакшен**: **ESP32-S3-DevKitC-1 N16R8** (Espressif оригинал). Стабильна, есть запас по памяти, есть U.FL для внешней BLE-антенны, USB-C. Прошивка — `atomfast_gateway_s3.yaml`.
-2. **Уже есть классический ESP32-DevKitC v4**: можно использовать `atomfast_gateway.yaml` (arduino). На esp-idf эту плату с AtomFast **не поднять** — известная регрессия INC-09/12.
-3. **Что не брать**:
-   - ESP32-C3 SuperMini (плохая PCB-антенна у части партий + готового YAML нет).
+1. **Покупаешь новую плату под продакшен**: **ESP32-S3-DevKitC-1 N16R8** (Espressif оригинал). Стабильна, есть запас по памяти, есть U.FL для внешней BLE-антенны, USB-C. Прошивка — `esp32-s3-devkitc/atomfast_gateway_s3.yaml`.
+2. **Уже есть классический ESP32-DevKitC v4**: можно использовать `esp32-classic/atomfast_gateway.yaml` (arduino). На esp-idf эту плату с AtomFast **не поднять** — известная регрессия INC-09/12.
+3. **Нужен mini-шлюз (носимый / встройка)**: **ESP32-C3 SuperMini** с прошивкой `esp32-c3-supermini/atomfast_gateway_c3.yaml`. Compile PASS на v0.9.0-c3, smoke у клиента pending. Учти узкий запас Flash (92.3 %) и слабую PCB-антенну у части партий — для уверенного приёма прибор должен быть ≤ 5 м.
+4. **Что не брать**:
    - ESP32-S2 / ESP8266 (нет BLE).
    - Безымянные клоны S3 без PSRAM или с QSPI PSRAM (поломанный baseline).
 
@@ -52,8 +57,9 @@
 - **Дата:** 2026-06-19
 - **Скилл:** atomfast-esp32 (и radex-esp32 — симптом тот же)
 - **Severity:** блокирует прошивку
+- **Статус:** ✅ **Решено в v0.9.0-c3** — отдельный YAML `esp32-c3-supermini/atomfast_gateway_c3.yaml` под 4 MB Flash + NimBLE. Compile PASS, smoke у клиента pending.
 
-**Симптом.** При попытке `esphome run --device COMx atomfast_gateway_s3.yaml` (или другой YAML с разметкой на 16 MB Flash) на плату **ESP32-C3 SuperMini** в логе появляется:
+**Симптом.** При попытке `esphome run --device COMx esp32-s3-devkitc/atomfast_gateway_s3.yaml` (или другой YAML с разметкой на 16 MB Flash) на плату **ESP32-C3 SuperMini** в логе появляется:
 
 ```
 OSError: [Errno 28] No space left on device
@@ -73,9 +79,9 @@ OSError: [Errno 28] No space left on device
 
 **Решение.**
 
-- **Не пытаться прошить существующие YAML на ESP32-C3** — ни `_s3.yaml`, ни классический. Они не для C3.
-- Для AtomFast→HA шлюза на C3 нужен **отдельный YAML** под `board: esp32-c3-devkitm-1`, `framework: arduino`, partition `min_spiffs.csv` (даёт OTA по ~1.9 MB), NimBLE-стек, **без** `bluetooth_proxy`, упрощённый Web UI. На момент 2026-06-19 такого YAML в репо нет.
-- **Рабочая альтернатива:** перейти на **ESP32-S3-DevKitC-1 N16R8** и использовать готовый `atomfast_gateway_s3.yaml`.
+- ✅ **С v0.9.0-c3 в скилле есть отдельный YAML** `firmware/esp32-c3-supermini/atomfast_gateway_c3.yaml` под C3: `board: esp32-c3-devkitm-1`, `framework: arduino`, `bt_stack: NimBLE`, partition `min_spiffs.csv` (OTA-зона ≈ 1.9 МБ), **без** `bluetooth_proxy:`, **без** `sg_re`/`raw_atomfast`, `web_server.log: false`, `scan_parameters: 1024/16` (single-band coex). Flash занят на 92.3 % — рост Web UI требует кастомного partition CSV.
+- **Не пытаться** прошить `_s3.yaml` или классический `atomfast_gateway.yaml` на ESP32-C3 — они не совместимы с C3.
+- **Рабочая альтернатива** (если C3 не подходит по причине узкого Flash или слабой PCB-антенны): перейти на **ESP32-S3-DevKitC-1 N16R8** и использовать готовый `esp32-s3-devkitc/atomfast_gateway_s3.yaml`.
 
 **Профилактика.** Перед прошивкой незнакомой платы проверь физический Flash:
 

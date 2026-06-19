@@ -42,7 +42,8 @@
 substitutions:
   device_name: "atomfast-gw-btproxy"
   friendly_name: "AtomFast (BT-Proxy Base)"
-  build_path: "D:/esp32_atomfast_build/atomfast-btproxy"
+  # build_path: убран — ESPHome сложит сборку в ~/.esphome/build/<name>/ по умолчанию.
+  # Если хочешь свой путь — раскомментируй и подставь, e.g. build_path: ./_build/atomfast-btproxy
   fw_version: "v0.8.0-step4"
   # AtomFast BLE: ATOMTAG_SERVICE + ATOMTAG_MEASUREMENT (notify)
   # Источник: Am6er/atomswift/AtomDeviceNRF.java — UUID_MEASUREMENT, 13-байтовый payload.
@@ -54,7 +55,6 @@ esphome:
   friendly_name: ${friendly_name}
   min_version: 2026.5.0
   name_add_mac_suffix: false
-  build_path: ${build_path}
   on_boot:
     - priority: -100
       then:

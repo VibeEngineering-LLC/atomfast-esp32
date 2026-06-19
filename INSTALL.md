@@ -49,7 +49,7 @@
   - Открыть приложение **AtomSwift** на телефоне → подключиться к прибору → меню → информация о приборе → строка «BT address» / «MAC».
   - Или через BLE-сканер на компьютере: на Windows — [Bluetooth LE Explorer](https://apps.microsoft.com/detail/9N0ZTKF1QD98), на Linux — `bluetoothctl scan on`, на macOS — приложение «LightBlue» из App Store, на смартфоне — [nRF Connect](https://play.google.com/store/apps/details?id=no.nordicsemi.android.mcp).
 
-### Плата ESP32 — два варианта на выбор
+### Плата ESP32 — три варианта на выбор
 
 > **Если сомневаешься — бери первый вариант (ESP32-S3-DevKitC-1 N16R8).** Это актуальная рекомендуемая платформа: стабильна на esp-idf, есть PSRAM и разъём для внешней антенны.
 
@@ -63,7 +63,7 @@
 - **Wi-Fi 2.4 ГГц + Bluetooth 5 LE** (один радиочастотный фронт-энд; S3-чип имеет ровный coex, INC-09/12 на классическом DevKitC не воспроизводятся).
 - **Разъём антенны: U.FL / IPEX (IPX)** — можно подключить внешнюю штыревую антенну для большей дальности до AtomFast (на платке штатно стоит керамическая чип-антенна, но её можно перепаять/переключить на IPEX-разъём 0-Ω резистором).
 - USB-Serial: **USB-C** разъём «UART» (через CH343 или аналог) для прошивки + второй **USB-C** «OTG» для нативного USB прямо в чип (CDC ACM, драйвер обычно встроен в ОС). Для прошивки используй UART-разъём.
-- Прошивка для этой платы: **`firmware/atomfast_gateway_s3.yaml`** (esp-idf, baseline ESPHome bluetooth-proxies upstream).
+- Прошивка для этой платы: **`firmware/esp32-s3-devkitc/atomfast_gateway_s3.yaml`** (esp-idf, baseline ESPHome bluetooth-proxies upstream).
 - Цена: ~700–1500 ₽ на Ali (ищи именно «**ESP32-S3-DevKitC-1 N16R8**» — буква-цифра конфигурация в названии), ~2500–3500 ₽ в радиомагазинах.
 
 > **Не бери дешёвые S3-клоны без PSRAM или с QSPI вместо octal.** В YAML `atomfast_gateway_s3.yaml` есть блок `psram: mode: octal, speed: 80MHz` — на плате без PSRAM компиляция пройдёт, но Web UI с включённым логом упадёт в OOM при первом же F5. На N16R8 PSRAM ровно та, которую ожидает YAML — поэтому ищи маркировку **N16R8** в названии товара.
@@ -77,13 +77,31 @@
 - RAM: 320 КБ (**без PSRAM**).
 - USB-Serial мост: **CH340** или **CP2102** (зависит от партии).
 - Цена: ~300–500 ₽ на Ali, ~1500 ₽ в радиомагазинах.
-- Прошивка для этой платы: **`firmware/atomfast_gateway.yaml`** (arduino-baseline; работает стабильно). **С esp-idf на этой плате — нестабильно**: INC-09 (rsn 0x3e, медленные коннекты), INC-12 (Auth Expired), INC-05 (json:111 без PSRAM). См. раздел «Стабильность фреймворков» в [README.md](README.md).
+- Прошивка для этой платы: **`firmware/esp32-classic/atomfast_gateway.yaml`** (arduino-baseline; работает стабильно). **С esp-idf на этой плате — нестабильно**: INC-09 (rsn 0x3e, медленные коннекты), INC-12 (Auth Expired), INC-05 (json:111 без PSRAM). См. раздел «Стабильность фреймворков» в [README.md](README.md).
 
 > **`atomfast_gateway_s3.yaml` на классической DevKitC НЕ работает** — там нет PSRAM, нет S3-чипа, активная esp-idf coex-подсистема ломает реконнекты. Не пробуй кросс-комбинацию: каждый YAML строго под свою плату.
+
+#### Вариант 3 — ESP32-C3 SuperMini (mini-baseline, smoke pending)
+
+Микро-плата на чипе **ESP32-C3** (один RISC-V @ 160 МГц) в форм-факторе ≈ 22×18 мм. **Compile PASS, smoke у клиента pending.** Подходит для носимых / mini-шлюзов где габариты критичнее запаса памяти.
+
+- Чип: **ESP32-C3** (одноядерный RISC-V @ 160 МГц, BLE 5.0, **только NimBLE**-стек).
+- Flash: **4 МБ** (partition `min_spiffs.csv`, OTA-зона ≈ 1.9 МБ).
+- RAM: **400 КБ SRAM, без PSRAM**.
+- Wi-Fi: **только 2.4 ГГц** (single-band).
+- USB-Serial: **встроенный USB-CDC ACM** в чип, USB-C разъём. Драйверы встроены в ОС (Windows 10+, Linux, macOS).
+- Антенна: PCB-чип-антенна (без разъёма IPEX).
+- Прошивка: **`firmware/esp32-c3-supermini/atomfast_gateway_c3.yaml`** (arduino + NimBLE, `web_server.log:false`, `scan_parameters: 1024/16` ≈ 1.5 % duty для single-band coex, **без** `bluetooth_proxy:`, **без** `sg_re`/`raw_atomfast`).
+- Цена: ~150–250 ₽ на Ali.
+
+> **⚠ Узкий запас Flash.** Прошивка занимает **92.3 %** Flash (1.69 МБ из 1.83 МБ доступных под app). Если планируешь добавлять кастомные сенсоры или расширять Web UI — возможно придётся подгонять partition CSV вручную.
+
+> **⚠ НЕ пробуй прошить `atomfast_gateway_s3.yaml` на ESP32-C3** — partition table рассчитана на 16 MB Flash, esptool вернёт `OSError: [Errno 28] No space left on device` (INC-C3-001, см. [KNOWN_ISSUES.md](KNOWN_ISSUES.md)).
 
 ### Кабель USB
 
 - **USB → USB-C** для S3-DevKitC-1 N16R8 (современный разъём; на плате **два USB-C** — UART-разъём через CH343 для прошивки и нативный OTG-разъём в чип).
+- **USB → USB-C** для ESP32-C3 SuperMini (нативный USB-CDC прямо в чип, ОС-драйверы встроены).
 - **USB → Micro-USB** для классического DevKitC v4 (старый разъём).
 - **Важно**: кабель должен быть **с данными**, не только-питание (cheap charging-only кабели не передают serial). Если у тебя в столе несколько кабелей и непонятно какой какой — пробуй кабелем от смартфона или внешнего диска, они почти всегда с данными.
 
@@ -257,13 +275,17 @@ esphome version
 ```bash
 git clone https://github.com/VibeEngineering-LLC/atomfast-esp32.git
 cd atomfast-esp32/firmware
-ls
-# atomfast_gateway.yaml          ← для классического DevKitC (arduino)
-# atomfast_gateway_s3.yaml       ← для ESP32-S3-DevKitC-1 (esp-idf)
-# secrets.example.yaml           ← шаблон секретов
-# CHANGELOG.md                   ← история версий
-# archive/                       ← старые версии для отката
-# include/gatt_dump.h            ← helper для GATT-дампа
+ls -F
+# esp32-classic/                  ← классический DevKitC (arduino):
+#   atomfast_gateway.yaml             — основной YAML
+#   include/gatt_dump.h               — helper для GATT-дампа (для архивных версий)
+# esp32-s3-devkitc/               ← ESP32-S3-DevKitC-1 N16R8 (esp-idf):
+#   atomfast_gateway_s3.yaml          — рекомендуемый baseline ⭐
+# esp32-c3-supermini/             ← ESP32-C3 SuperMini (arduino+NimBLE):
+#   atomfast_gateway_c3.yaml          — mini-baseline (compile PASS, smoke pending)
+# secrets.example.yaml            ← общий шаблон секретов на все 3 платы
+# CHANGELOG.md                    ← история версий
+# archive/                        ← старые версии для отката
 ```
 
 ### Без git (через ZIP)
@@ -335,13 +357,18 @@ ap_password:            pE4mW2-Z9aLk
 
 ## Шаг 5: Подставить MAC AtomFast
 
-В YAML-файле (`atomfast_gateway.yaml` ИЛИ `atomfast_gateway_s3.yaml`, в зависимости от твоей платы) есть строка:
+В YAML-файле (выбери по своей плате из подпапки `firmware/<тип-платы>/`) есть строка:
 
 ```yaml
 substitutions:
   ...
   atomfast_mac_str: "AA:BB:CC:DD:EE:FF"
 ```
+
+Возможные пути:
+- `firmware/esp32-s3-devkitc/atomfast_gateway_s3.yaml` (S3 N16R8, рекомендуется)
+- `firmware/esp32-classic/atomfast_gateway.yaml` (классика, arduino)
+- `firmware/esp32-c3-supermini/atomfast_gateway_c3.yaml` (C3 SuperMini)
 
 Заменить `AA:BB:CC:DD:EE:FF` на свой реальный MAC (тот же, что в `secrets.yaml::atomfast_mac`). Эта substitution используется в лямбде для фильтра RSSI sensor'а — она сравнивает строку, поэтому нужна именно текстом, не через `!secret`.
 
@@ -411,10 +438,13 @@ https://github.com/VibeEngineering-LLC/atomfast-esp32 (папка atomfast-esp32
 1. Спроси у меня, какая у меня плата:
    - ⭐ ESP32-S3-DevKitC-1 N16R8 (чёрная плата с двумя USB-C, разъём U.FL/IPEX
      для антенны) — РЕКОМЕНДУЕТСЯ →
-     прошивка atomfast_gateway_s3.yaml (esp-idf baseline bluetooth-proxies, стабильна);
+     прошивка esp32-s3-devkitc/atomfast_gateway_s3.yaml (esp-idf baseline bluetooth-proxies, стабильна);
    - классический ESP32-DevKitC v4 (синяя плата с micro-USB, без PSRAM) →
-     прошивка atomfast_gateway.yaml (arduino-baseline; archive, только если плата
-     уже есть на руках — с esp-idf нестабильна).
+     прошивка esp32-classic/atomfast_gateway.yaml (arduino-baseline; archive, только если плата
+     уже есть на руках — с esp-idf нестабильна);
+   - ESP32-C3 SuperMini (мини-плата ≈ 22×18 мм, один USB-C, без PSRAM) →
+     прошивка esp32-c3-supermini/atomfast_gateway_c3.yaml (arduino+NimBLE; compile PASS,
+     smoke у клиента pending; Flash 92.3% — узкий запас на рост Web UI).
    Запомни выбор и используй везде дальше. Если оператор не уверен — рекомендуй S3 N16R8.
 
 2. Проверь, что репо уже клонирован (cwd — папка firmware/). Если нет — клонируй:
@@ -433,7 +463,8 @@ https://github.com/VibeEngineering-LLC/atomfast-esp32 (папка atomfast-esp32
    - сгенерируй ota_password и web_password через
      python -c "import secrets; print(secrets.token_urlsafe(18))"
    - если выбрана S3-прошивка — сгенерируй ещё три ключа
-     (atomfast_s3_api_key, atomfast_s3_ota_pass, atomfast_s3_web_pass)
+     (atomfast_s3_api_key, atomfast_s3_ota_pass, atomfast_s3_web_pass);
+     если C3-прошивка — atomfast_c3_api_key, atomfast_c3_ota_pass, atomfast_c3_web_pass
    - спроси MAC моего AtomFast (формат UPPERCASE с двоеточиями); если не знаю
      — предложи открыть приложение AtomSwift → информация о приборе → BT address.
    Запиши всё в secrets.yaml. Покажи мне финальный файл (пароли можешь замаскировать).
@@ -462,15 +493,16 @@ https://github.com/VibeEngineering-LLC/atomfast-esp32 (папка atomfast-esp32
 9. После прошивки — расскажи что плата сейчас сделала:
    - перезагрузилась через RTS;
    - попыталась подключиться к WiFi из secrets.yaml;
-   - если не вышло — подняла AP «AtomFast-S3 Fallback» (для S3) или
-     «atomfast-gw Fallback» (для arduino).
+   - если не вышло — подняла AP «AtomFast-S3 Fallback» (S3), «atomfast-gw Fallback» (classic)
+     или «AtomFast-C3 Fallback» (C3 SuperMini).
    Объясни мне, как зайти на captive portal с телефона если нужно.
 
 10. После того как плата в сети — открой
-    http://atomfast-gw.local/ (arduino) или http://atomfast-gw-s3.local/ (S3)
-    в браузере. Запроси Basic Auth: username = admin (для S3) или то что я задал
-    (для arduino), пароль из secrets.yaml. Помоги мне убедиться, что Web UI
-    отвечает и в нём есть карточка «BLE: AtomFast подключён» = ON.
+    http://atomfast-gw.local/ (classic), http://atomfast-gw-s3.local/ (S3)
+    или http://atomfast-gw-c3.local/ (C3) в браузере. Запроси Basic Auth:
+    username = admin (для S3/C3) или то что я задал (classic), пароль из secrets.yaml.
+    Помоги мне убедиться, что Web UI отвечает и в нём есть карточка
+    «BLE: AtomFast подключён» = ON.
 
 11. Если что-то идёт не так на любом шаге — сначала задай уточняющий вопрос,
     не делай destructive-операций без подтверждения (не удаляй файлы, не
@@ -495,38 +527,44 @@ https://github.com/VibeEngineering-LLC/atomfast-esp32 (папка atomfast-esp32
 
 В папке `firmware/`:
 
+Сначала подставь свой YAML по типу платы (примеры ниже — для классического DevKitC; для S3 и C3 замени путь на `esp32-s3-devkitc/atomfast_gateway_s3.yaml` или `esp32-c3-supermini/atomfast_gateway_c3.yaml`).
+
 ```bash
 # Только проверка YAML (без компиляции):
-esphome config atomfast_gateway.yaml
+esphome config esp32-classic/atomfast_gateway.yaml
 
 # Скомпилировать (займёт 3-5 минут первый раз, потом ~1 мин с кэшем):
-esphome compile atomfast_gateway.yaml
+esphome compile esp32-classic/atomfast_gateway.yaml
 
 # Прошить через USB:
 #   Windows:
-esphome upload atomfast_gateway.yaml --device COM7
+esphome upload esp32-classic/atomfast_gateway.yaml --device COM7
 #   Linux:
-esphome upload atomfast_gateway.yaml --device /dev/ttyUSB0
+esphome upload esp32-classic/atomfast_gateway.yaml --device /dev/ttyUSB0
 #   macOS:
-esphome upload atomfast_gateway.yaml --device /dev/cu.usbserial-0001
+esphome upload esp32-classic/atomfast_gateway.yaml --device /dev/cu.usbserial-0001
 
 # Или одной командой (compile + upload):
-esphome run atomfast_gateway.yaml --device COM7
+esphome run esp32-classic/atomfast_gateway.yaml --device COM7
 ```
 
 После первой прошивки плата получит OTA-обновления **по воздуху**:
 
 ```bash
-esphome run atomfast_gateway.yaml --device atomfast-gw.local
+esphome run esp32-classic/atomfast_gateway.yaml --device atomfast-gw.local
 # или по IP:
-esphome run atomfast_gateway.yaml --device 192.168.1.42
+esphome run esp32-classic/atomfast_gateway.yaml --device 192.168.1.42
+
+# S3 / C3 — то же самое с другим путём и mDNS-именем:
+esphome run esp32-s3-devkitc/atomfast_gateway_s3.yaml      --device atomfast-gw-s3.local
+esphome run esp32-c3-supermini/atomfast_gateway_c3.yaml    --device atomfast-gw-c3.local
 ```
 
 Логи (UART, **не** для arduino-прошивки на esp-idf — там DTR/RTS повесит плату):
 
 ```bash
 # По воздуху (безопасно):
-esphome logs atomfast_gateway.yaml --device atomfast-gw.local
+esphome logs esp32-classic/atomfast_gateway.yaml --device atomfast-gw.local
 
 # Через USB — НЕ ИСПОЛЬЗУЙ на этой прошивке!
 # esphome logs --device COM7  ← DTR/RTS периодически дёргает RESET, плата перезагружается
@@ -548,7 +586,7 @@ esphome logs atomfast_gateway.yaml --device atomfast-gw.local
 - **Windows**: `~/.esphome/build/atomfast-gw/.pioenvs/atomfast-gw/firmware.factory.bin`
 - **Linux/macOS**: `~/.esphome/build/atomfast-gw/.pioenvs/atomfast-gw/firmware.factory.bin`
 
-(для S3 — `atomfast-gw-s3` вместо `atomfast-gw`)
+(для S3 — `atomfast-gw-s3` вместо `atomfast-gw`; для C3 — `atomfast-gw-c3`)
 
 Дальше:
 
@@ -571,9 +609,9 @@ esphome logs atomfast_gateway.yaml --device atomfast-gw.local
 Плата увидит твою WiFi, подключится, получит IP по DHCP. Через ~15 секунд после `Hard reset RTS` она уже в сети. Пингани:
 
 ```bash
-ping atomfast-gw.local
-# или
-ping atomfast-gw-s3.local
+ping atomfast-gw.local      # classic
+ping atomfast-gw-s3.local   # S3
+ping atomfast-gw-c3.local   # C3 SuperMini
 ```
 
 Если ответ есть — переходи к Шагу 8.
@@ -582,7 +620,7 @@ ping atomfast-gw-s3.local
 
 Плата не подключится к домашней WiFi за 60 с и **поднимет свою AP**:
 
-- SSID: `atomfast-gw Fallback` (arduino) или `AtomFast-S3 Fallback` (S3)
+- SSID: `atomfast-gw Fallback` (arduino) / `AtomFast-S3 Fallback` (S3) / `AtomFast-C3 Fallback` (C3)
 - пароль: `ap_password` из твоего `secrets.yaml`
 
 С телефона/ноута подключись к этой AP — браузер автоматически откроет **captive portal** на `192.168.4.1`. Введи правильные SSID + пароль домашней WiFi → плата сохранит их в NVS, перезагрузится, в этот раз подключится.
@@ -596,11 +634,12 @@ ping atomfast-gw-s3.local
 ## Шаг 8: Открыть Web UI
 
 ```
-http://atomfast-gw.local/        (arduino)
-http://atomfast-gw-s3.local/     (esp-idf S3)
+http://atomfast-gw.local/        (arduino, классика)
+http://atomfast-gw-s3.local/     (esp-idf, S3 N16R8)
+http://atomfast-gw-c3.local/     (arduino+NimBLE, C3 SuperMini)
 ```
 
-Браузер спросит Basic Auth — введи `web_username`/`web_password` (для arduino) или `admin`/`atomfast_s3_web_pass` (для S3) из своего `secrets.yaml`.
+Браузер спросит Basic Auth — введи `web_username`/`web_password` (для arduino), `admin`/`atomfast_s3_web_pass` (для S3) или `admin`/`atomfast_c3_web_pass` (для C3) из своего `secrets.yaml`.
 
 Что ты должен увидеть:
 
@@ -622,9 +661,9 @@ http://atomfast-gw-s3.local/     (esp-idf S3)
 
 | Поле | Значение |
 |---|---|
-| Host | `atomfast-gw.local` (или `atomfast-gw-s3.local`, или IP) |
+| Host | `atomfast-gw.local` (или `atomfast-gw-s3.local`, `atomfast-gw-c3.local`, или IP) |
 | Port | `6053` (не менять) |
-| Encryption key | значение `api_encryption_key` (для arduino) или `atomfast_s3_api_key` (для S3) из твоего `secrets.yaml` |
+| Encryption key | значение `api_encryption_key` (arduino), `atomfast_s3_api_key` (S3), `atomfast_c3_api_key` (C3) из твоего `secrets.yaml` |
 
 HA подхватит все сенсоры автоматически. Если хочешь — настрой автоматизации (например, push в Telegram при превышении 0.5 µSv/h).
 
@@ -679,6 +718,7 @@ python -c "import secrets,base64; print(base64.b64encode(secrets.token_bytes(32)
 
 - Скорее всего — `psram:` блок при отсутствии PSRAM на плате. Проверь: `esp32-s3-devkitc-1` ОФИЦИАЛЬНЫЙ от Espressif — с PSRAM. Дешёвые клоны с надписью «ESP32-S3-DevKitC-1» иногда без неё. Проверка: открой `Get-Help esptool.py` → `esptool.py flash_id` — покажет flash size и наличие PSRAM. Если PSRAM нет — убирай блок `psram:` из YAML.
 - Или: `min_free_heap` упал в 0 — `web_server.log: true` на DevKitC без PSRAM (см. README раздел «Стабильность»). Меняй на `log: false`.
+- На **ESP32-C3 SuperMini**: если `esphome upload esp32-s3-devkitc/atomfast_gateway_s3.yaml` (или другой 16-MB-YAML) на C3 → `OSError: [Errno 28] No space left on device`. Это INC-C3-001 — partition table не помещается в 4 MB Flash C3. Используй `esp32-c3-supermini/atomfast_gateway_c3.yaml` — он специально под C3 с `min_spiffs.csv` partition.
 
 ### 5. Web UI открывается, но карточек нет / пустые
 

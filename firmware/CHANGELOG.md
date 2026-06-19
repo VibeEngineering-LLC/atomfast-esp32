@@ -9,6 +9,80 @@
 Все версии валидированы на ESP32-DevKitC (WROOM-32, CH340C) с AtomFast Plus2.
 Начиная с **v0.9.0-s3** — параллельная ветка baseline на **ESP32-S3-DevKitC-1
 N16R8** (esp-idf, отдельный YAML `atomfast_gateway_s3.yaml`).
+С **v0.9.0-c3** — третья параллельная ветка под **ESP32-C3 SuperMini** (arduino +
+NimBLE, отдельный YAML `atomfast_gateway_c3.yaml`).
+
+---
+
+## v0.9.0-c3 (2026-06-19) — ESP32-C3 SuperMini baseline (arduino + NimBLE, отдельный YAML)
+
+**Что:** введён **третий параллельный baseline** для **ESP32-C3 SuperMini**
+(4 МБ Flash, 400 КБ SRAM, **без PSRAM**, single-band 2.4 ГГц, **NimBLE-only**) —
+[`esp32-c3-supermini/atomfast_gateway_c3.yaml`](esp32-c3-supermini/atomfast_gateway_c3.yaml),
+`fw_version: "v0.9.0-c3"`. Не заменяет `esp32-classic/atomfast_gateway.yaml` и
+`esp32-s3-devkitc/atomfast_gateway_s3.yaml` — все три сборки сосуществуют
+параллельно под разные платформы.
+
+**Почему C3-ветка:** после INC-C3-001 (попытка прошить `atomfast_gateway_s3.yaml`
+на C3 → `OSError: [Errno 28] No space left on device` — 16 MB partition table
+на 4 MB Flash) понадобился нативный C3-вариант. ESP32-C3 SuperMini — самая
+компактная (≈ 22×18 мм) ESP-плата с BLE+WiFi, ~150 ₽ в розницу. Подходит для
+носимых / mini-шлюзов, где габариты критичнее запаса памяти.
+
+**Изменения от `atomfast_gateway_s3.yaml`:**
+
+1. **Плата**: `esp32: variant: esp32c3, board: esp32-c3-devkitm-1`.
+2. **Framework**: **arduino** (на C3 esp-idf тоже работает, но arduino — более
+   ровный путь для NimBLE-only чипа; синхронно с классическим
+   `atomfast_gateway.yaml` v0.7.12 в плане стека).
+3. **PSRAM не указан** — ESP32-C3 SuperMini не имеет PSRAM, только 400 КБ SRAM.
+4. **`web_server.log: false`** — HARD default для платы без PSRAM (без него
+   SSE-флуд от Debug Log → json:111 → OOM на 400 КБ SRAM).
+5. **`scan_parameters: 1024/16` (duty ~1.5 %)** — заниженный относительно S3
+   (640/32, duty 5 %). C3 — single-band SoC, BLE и WiFi делят один радиочастный
+   тракт через time-multiplexing; высокий BLE duty чаще приводит к WiFi-старвейшну.
+6. **`sg_re` group + `raw_atomfast` text_sensor убраны** — экономия heap на 400 КБ
+   SRAM (для RE при необходимости — отдельная debug-сборка).
+7. **bluetooth_proxy НЕ ДОБАВЛЕНО** (синхронно с S3-вариантом, по запросу
+   оператора 2026-06-18: «отключи сторонние устройства»). Шлюз обслуживает
+   ТОЛЬКО один `ble_client` по MAC из `!secret atomfast_mac`.
+
+**Сохраняется из S3-варианта:**
+
+- switch `narodmon_enabled`: `restore_mode: ALWAYS_OFF` (HARD 2026-06-17 + БАН
+  Народмон HARD HOLD 2026-06-14).
+- WiFi-watchdog 180 с → `arch_restart()` (кросс-фреймворковый).
+- SNTP `Europe/Moscow`, mDNS, captive_portal, Basic-Auth на Web UI.
+- 13B payload-парсер AtomFast (Am6er/atomswift).
+- Слайдер `agg_interval_s` (1..60 с, init 5 с, mode slider).
+
+**Stability target (на 2026-06-19):**
+
+- `esphome compile`: **SUCCESS**. Flash: **92.3 %** (1 693 104 / 1 835 008 байт)
+  — узкий запас 142 KB. RAM: 19 %.
+- ⚠ **Flash 92.3 % warning**: если в будущих ревизиях добавлять Web UI элементы,
+  компиляция упрётся в "App too large". Кастомный partition CSV
+  (см. комментарий в YAML под `esphome:` блоком) — на будущий step2 если
+  понадобится. Сейчас работает на дефолтном `min_spiffs.csv`.
+- **Прогон на железе у клиента — pending**. Smoke-тест на C3 SuperMini ещё не
+  выполнен (репортить через [issues](https://github.com/VibeEngineering-LLC/atomfast-esp32/issues)).
+
+**Раскладка `firmware/` (с этой ревизии):**
+
+Все три YAML-варианта переведены в индивидуальные подпапки по типу платы:
+
+```
+firmware/
+├── esp32-classic/         atomfast_gateway.yaml + include/gatt_dump.h
+├── esp32-s3-devkitc/      atomfast_gateway_s3.yaml
+├── esp32-c3-supermini/    atomfast_gateway_c3.yaml ⬅ новое
+├── secrets.example.yaml   (общий шаблон секретов)
+├── CHANGELOG.md           (этот файл)
+├── archive/               (исторические версии)
+└── .gitignore
+```
+
+**Файл:** `firmware/esp32-c3-supermini/atomfast_gateway_c3.yaml`.
 
 ---
 
