@@ -1,5 +1,5 @@
 # ╔══════════════════════════════════════════════════════════════════════╗
-# ║ AtomFast C3 Gateway — ESP32-C3 SuperMini (v0.9.0-c3, эксперимент)     ║
+# ║ AtomFast C3 Gateway — ESP32-C3 SuperMini (v0.9.1-c3, эксперимент)     ║
 # ║                                                                       ║
 # ║ Цель: подтвердить совместимость с ESP32-C3 SuperMini после INC-C3-001 ║
 # ║ (ENOSPC при попытке прошить atomfast_gateway_s3.yaml — 16 MB partition║
@@ -42,12 +42,14 @@
 substitutions:
   device_name: atomfast-gw-c3
   device_friendly: "AtomFast C3 Gateway"
-  fw_version: "v0.9.0-c3"
+  fw_version: "v0.9.1-c3"
   # build_path: убран — ESPHome сложит сборку в ~/.esphome/build/<name>/ по умолчанию.
   # Если хочешь свой путь — раскомментируй и подставь, e.g. build_path: ./_build/atomfast-gw-c3
   atomfast_service_uuid: "63462a4a-c28c-4ffd-87a4-2d23a1c72581"
   atomfast_char_uuid:    "70BC767E-7A1A-4304-81ED-14B9AF54F7BD"
-  atomfast_mac_str:      "AA:BB:CC:DD:EE:FF"
+  # MAC AtomFast — ОДИН источник истины: secrets.yaml::atomfast_mac (!secret).
+  # Substitution atomfast_mac_str снят с v0.9.1-c3 (был дубль), фильтр RSSI
+  # ниже работает через esp32_ble_tracker.on_ble_advertise.mac_address.
 
 esphome:
   name: ${device_name}
@@ -185,11 +187,12 @@ esp32_ble_tracker:
     window: 16ms
     active: false
   on_ble_advertise:
-    - then:
+    # Фильтр по MAC — на уровне трекера (поддерживает !secret). Внутри lambda
+    # уже не нужно сверять адрес: триггер срабатывает только для AtomFast.
+    - mac_address: !secret atomfast_mac
+      then:
         - lambda: |-
-            if (x.address_str() == "${atomfast_mac_str}") {
-              id(rssi_atomfast).publish_state((float) x.get_rssi());
-            }
+            id(rssi_atomfast).publish_state((float) x.get_rssi());
 
 # bluetooth_proxy НЕ ДОБАВЛЕНО (синхронно с S3-вариантом, operator 2026-06-18:
 # «откличи сторонние устройства»). Шлюз обслуживает ТОЛЬКО один ble_client

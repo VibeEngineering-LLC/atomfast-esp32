@@ -85,24 +85,34 @@ side-by-side сравнение «экран приложения vs Web UI шл
 > Здесь — короткая шпаргалка для тех, у кого уже стоит ESPHome.
 > **Полная инструкция с нуля (требования к Windows/Linux/macOS, два пути установки: через Claude Code или через стандартный ESPHome Web Installer)** — в [`INSTALL.md`](INSTALL.md).
 
+> 🔑 **Правило: настраиваем ТОЛЬКО `secrets.yaml`. YAML-конфиги копируются как есть, внутрь не лезем.**
+> С `v0.9.1` MAC прибора задаётся **в одном месте** — `secrets.yaml::atomfast_mac`. Никаких substitution в YAML править не надо. WiFi, пароли, MAC, API-ключ — всё ТОЛЬКО `secrets.yaml`.
+
 ```bash
 # 1. Скопировать прошивку к себе
 git clone https://github.com/VibeEngineering-LLC/atomfast-esp32.git
 cd atomfast-esp32/firmware
 
-# 2. Заполнить секреты
+# 2. Заполнить секреты — ЕДИНСТВЕННЫЙ файл, который ты редактируешь
 cp secrets.example.yaml secrets.yaml
-# Открыть secrets.yaml в редакторе, вписать SSID, пароль WiFi, MAC прибора
+# Открыть secrets.yaml в редакторе, заполнить ВСЕ поля:
+#   wifi_ssid, wifi_password, ap_password,
+#   api_encryption_key (см. INSTALL.md Шаг 4.1 — обязательно сгенерировать!),
+#   ota_password, web_username, web_password,
+#   atomfast_mac (MAC твоего AtomFast),
+#   atomfast_s3_*  / atomfast_c3_* — если шьёшь S3- или C3-вариант.
 
-# 3. Подставить MAC AtomFast в substitution (для RSSI sensor)
-#    Открыть один из трёх YAML по типу платы:
-#      esp32-s3-devkitc/atomfast_gateway_s3.yaml      (рекомендуется)
-#      esp32-classic/atomfast_gateway.yaml            (архивная классика)
-#      esp32-c3-supermini/atomfast_gateway_c3.yaml    (mini, smoke pending)
-#    Найти substitutions.atomfast_mac_str и заменить
-#    AA:BB:CC:DD:EE:FF на свой MAC.
+# 3. ВАЖНО: положить secrets.yaml В ПОДПАПКУ платы, которую шьёшь
+#    ESPHome ищет !secret в той же папке, что и YAML.
+#    Если шьёшь S3:
+cp secrets.yaml esp32-s3-devkitc/secrets.yaml
+#    Если шьёшь C3:
+cp secrets.yaml esp32-c3-supermini/secrets.yaml
+#    Если шьёшь classic:
+cp secrets.yaml esp32-classic/secrets.yaml
+#    (Файл уже в .gitignore — в git не попадёт.)
 
-# 4. Прошить через USB
+# 4. Прошить через USB — YAML-файлы НЕ ПРАВИМ, они работают как есть
 #    a) ESP32-S3-DevKitC-1 N16R8, esp-idf, baseline bluetooth-proxies upstream (РЕКОМЕНДУЕТСЯ):
 esphome run --device COM3 esp32-s3-devkitc/atomfast_gateway_s3.yaml          # Windows
 esphome run --device /dev/ttyUSB0 esp32-s3-devkitc/atomfast_gateway_s3.yaml  # Linux
@@ -113,12 +123,17 @@ esphome run --device COM3 esp32-classic/atomfast_gateway.yaml
 #    c) ESP32-C3 SuperMini (mini-baseline, arduino + NimBLE, без bt-proxy):
 esphome run --device COM3 esp32-c3-supermini/atomfast_gateway_c3.yaml
 
-# 5. Открыть Web UI
+# 5. Открыть Web UI (логин/пароль = web_username / web_password из secrets.yaml)
 # http://atomfast-gw-s3.local/   (mDNS, для esp-idf S3 baseline — РЕКОМЕНДУЕТСЯ)
 # http://atomfast-gw.local/      (mDNS, для arduino-прошивки на классическом DevKitC)
 # http://atomfast-gw-c3.local/   (mDNS, для C3 SuperMini)
 # или   http://<IP-ESP-в-сети>/
 ```
+
+> ⚠ **Если Web UI не пускает или WiFi не подцепился** — почти всегда `secrets.yaml`
+> лежит не в той папке. ESPHome ищет `!secret` в той же подпапке, что и YAML
+> прошивки (`esp32-c3-supermini/`, `esp32-s3-devkitc/`, `esp32-classic/`), а не
+> только в корне `firmware/`. См. Шаг 3 выше.
 
 После первой прошивки следующие обновления — **по воздуху (OTA)**:
 ```bash

@@ -243,10 +243,14 @@ byte 12      — int8 temperature (°C, signed)
    прошивка прибора начнёт писать в этот байт другие сигналы — выход уйдёт
    в отрицательную область. Это известный, но не рабочий риск.
 
-3. **Сервис UUID атрибута substitutions ≠ secret** — substitution делается
-   на этапе компиляции, реальный MAC должен быть в `atomfast_mac_str`
-   substitution (lambda сравнение), и в `!secret atomfast_mac` для
-   `ble_client.mac_address`. Это дублирование осознанное.
+3. **MAC AtomFast — один источник истины (`!secret atomfast_mac`)** — c `v0.9.1`
+   substitution `atomfast_mac_str` удалена из обоих современных YAML (c3 + s3).
+   Фильтр RSSI sensor'а теперь работает через
+   `esp32_ble_tracker.on_ble_advertise.mac_address: !secret atomfast_mac`
+   (параметр трекера поддерживает `!secret` напрямую). До `v0.9.0` MAC
+   приходилось задавать в **двух** местах — substitution и `!secret` — это
+   было известное дублирование, теперь убрано. `esp32-classic/atomfast_gateway.yaml`
+   (`v0.8.0-step4`) никогда не использовал substitution `atomfast_mac_str`.
 
 4. **ASCII build-path на Windows.** GCC ломается на пути с кириллицей
    или пробелами. Если папка проекта — например

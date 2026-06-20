@@ -14,6 +14,76 @@ NimBLE, отдельный YAML `atomfast_gateway_c3.yaml`).
 
 ---
 
+## v0.9.1 (2026-06-20) — единый источник MAC (`!secret atomfast_mac`); substitution `atomfast_mac_str` удалена
+
+**Что:** в `esp32-c3-supermini/atomfast_gateway_c3.yaml` (→ `v0.9.1-c3`) и
+`esp32-s3-devkitc/atomfast_gateway_s3.yaml` (→ `v0.9.1-s3`) убран дубль MAC.
+Раньше MAC AtomFast приходилось задавать в **двух** местах:
+
+- `secrets.yaml::atomfast_mac` — для `ble_client.mac_address` (`!secret`);
+- `substitutions.atomfast_mac_str` в самом YAML — для `if (x.address_str() == ...)`
+  в lambda фильтра RSSI sensor'а.
+
+Это путало пользователей при установке: «логин/пароль и WiFi из secrets берёт,
+а MAC просит править прямо в YAML — где истинный источник?». Теперь MAC задаётся
+**только в `secrets.yaml`** (один ключ `atomfast_mac`), а фильтр RSSI sensor'а
+работает через `esp32_ble_tracker.on_ble_advertise.mac_address: !secret atomfast_mac`
+(параметр трекера, поддерживает `!secret` напрямую).
+
+**Изменения в YAML:**
+
+```yaml
+# Было (v0.9.0):
+substitutions:
+  atomfast_mac_str: "AA:BB:CC:DD:EE:FF"   # дубль MAC из secrets.yaml
+esp32_ble_tracker:
+  on_ble_advertise:
+    - then:
+        - lambda: |-
+            if (x.address_str() == "${atomfast_mac_str}") {
+              id(rssi_atomfast).publish_state((float) x.get_rssi());
+            }
+
+# Стало (v0.9.1):
+# substitution atomfast_mac_str УДАЛЕНА
+esp32_ble_tracker:
+  on_ble_advertise:
+    - mac_address: !secret atomfast_mac          # фильтр трекера
+      then:
+        - lambda: |-
+            id(rssi_atomfast).publish_state((float) x.get_rssi());
+```
+
+Поведение RSSI sensor'а **идентично**: триггер `on_ble_advertise` срабатывает
+только на advertise-пакеты с MAC AtomFast (фильтр трекера эффективнее, чем
+сравнение строки в lambda).
+
+**Применимость:** `esp32-c3-supermini/atomfast_gateway_c3.yaml` и
+`esp32-s3-devkitc/atomfast_gateway_s3.yaml`. `esp32-classic/atomfast_gateway.yaml`
+никогда не использовал substitution `atomfast_mac_str` (там фильтра RSSI sensor'а
+не было) — версия классика не двигается, осталась `v0.8.0-step4`.
+
+**Миграция с v0.9.0:**
+
+1. `git pull` (или скачать новый ZIP) — заменит YAML на v0.9.1.
+2. Никаких изменений в `secrets.yaml` НЕ требуется (`atomfast_mac` уже там).
+3. Если у тебя в локальном чекауте был отредактирован `atomfast_mac_str` в YAML —
+   просто оставь как есть, ESPHome теперь игнорирует эту substitution (она удалена
+   из YAML). Можно вычистить — необязательно.
+4. `esphome compile` + OTA (или USB) → проверь Web UI «RSSI AtomFast» — публикуется
+   значение в dBm = всё работает.
+
+**Compile-check (на 2026-06-20):**
+
+- ✅ `atomfast_gateway_c3.yaml` (v0.9.1-c3) — `esphome config` PASS, `on_ble_advertise.mac_address: !secret atomfast_mac` резолвится правильно.
+- ✅ `atomfast_gateway_s3.yaml` (v0.9.1-s3) — `esphome config` PASS.
+- ✅ `atomfast_gateway.yaml` (v0.8.0-step4) — без изменений, `esphome config` PASS.
+
+**Документация:** README.md и INSTALL.md обновлены — Шаг 5 «Подставить MAC в substitution YAML» убран. Теперь Шаги: (1) клон, (2) генерация ключей,
+(3) заполнить `secrets.yaml`, (4) compile + upload. **Ни одной правки в самих YAML делать не нужно.**
+
+---
+
 ## v0.9.0-c3 (2026-06-19) — ESP32-C3 SuperMini baseline (arduino + NimBLE, отдельный YAML)
 
 **Что:** введён **третий параллельный baseline** для **ESP32-C3 SuperMini**

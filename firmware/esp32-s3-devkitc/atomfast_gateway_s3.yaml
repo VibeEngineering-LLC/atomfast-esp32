@@ -1,5 +1,5 @@
 # ╔══════════════════════════════════════════════════════════════════════╗
-# ║ AtomFast S3 Gateway — на базе ESPHome bluetooth-proxies (v0.9.0-s3)   ║
+# ║ AtomFast S3 Gateway — на базе ESPHome bluetooth-proxies (v0.9.1-s3)   ║
 # ║                                                                       ║
 # ║ База: firmware/_baseline_btproxy/esp32-generic.yaml — verbatim клон   ║
 # ║   из github.com/esphome/bluetooth-proxies (esphome upstream, esp-idf-  ║
@@ -36,14 +36,14 @@
 substitutions:
   device_name: atomfast-gw-s3
   device_friendly: "AtomFast S3 Gateway"
-  fw_version: "v0.9.0-s3"
+  fw_version: "v0.9.1-s3"
   # build_path: убран — ESPHome сложит сборку в ~/.esphome/build/<name>/ по умолчанию.
   # Если хочешь свой путь — раскомментируй и подставь, e.g. build_path: ./_build/atomfast-gw-s3
   atomfast_service_uuid: "63462a4a-c28c-4ffd-87a4-2d23a1c72581"
   atomfast_char_uuid:    "70BC767E-7A1A-4304-81ED-14B9AF54F7BD"
-  # MAC твоего AtomFast — placeholder. Узнай через приложение AtomSwift
-  # (Настройки → информация о приборе) или BLE-сканер.
-  atomfast_mac_str:      "AA:BB:CC:DD:EE:FF"
+  # MAC AtomFast — ОДИН источник истины: secrets.yaml::atomfast_mac (!secret).
+  # Substitution atomfast_mac_str снят с v0.9.1-s3 (был дубль), фильтр RSSI
+  # ниже работает через esp32_ble_tracker.on_ble_advertise.mac_address.
 
 esphome:
   name: ${device_name}
@@ -181,11 +181,12 @@ esp32_ble_tracker:
     window: 32ms
     active: false
   on_ble_advertise:
-    - then:
+    # Фильтр по MAC — на уровне трекера (поддерживает !secret). Внутри lambda
+    # уже не нужно сверять адрес: триггер срабатывает только для AtomFast.
+    - mac_address: !secret atomfast_mac
+      then:
         - lambda: |-
-            if (x.address_str() == "${atomfast_mac_str}") {
-              id(rssi_atomfast).publish_state((float) x.get_rssi());
-            }
+            id(rssi_atomfast).publish_state((float) x.get_rssi());
 
 # ⚠ bluetooth_proxy: НЕ ДОБАВЛЕНО (operator 2026-06-18: «откличи
 # сторонние устройства»). В исходном baseline ESPHome bluetooth-proxies
