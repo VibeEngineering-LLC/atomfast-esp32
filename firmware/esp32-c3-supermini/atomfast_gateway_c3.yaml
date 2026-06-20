@@ -85,6 +85,7 @@ wifi:
   password: !secret wifi_password
   fast_connect: true
   power_save_mode: none
+  output_power: 8.5dB
   ap:
     ssid: "AtomFast-C3 Fallback"
     password: !secret ap_password
@@ -532,9 +533,27 @@ button:
           ESP_LOGI("atomfast", "BLE counters reset");
 
 # ══════════════════════════════════════════════════════════════════════
+#  OUTPUT — heartbeat LED (GPIO10 inverted, built-in on C3 SuperMini)
+# ══════════════════════════════════════════════════════════════════════
+output:
+  - platform: gpio
+    pin:
+      number: GPIO10
+      inverted: true
+    id: heartbeat_led
+
+# ══════════════════════════════════════════════════════════════════════
 #  INTERVAL — WiFi-watchdog + BLE-счётчики + агрегация CPS + Народмон
 # ══════════════════════════════════════════════════════════════════════
 interval:
+  # Heartbeat: 100ms flash every 2s — visual board-alive indicator.
+  - interval: 2s
+    then:
+      - output.turn_on: heartbeat_led
+      - delay: 100ms
+      - output.turn_off: heartbeat_led
+
+
   # WiFi-watchdog: если WiFi не connected > 180 с подряд — arch_restart().
   - interval: 10s
     then:

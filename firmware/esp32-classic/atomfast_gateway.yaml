@@ -75,6 +75,7 @@ wifi:
   password: !secret wifi_password
   fast_connect: true
   power_save_mode: none
+  output_power: 8.5dB
   ap:
     ssid: "AtomFast-BTProxy Fallback"
     password: !secret ap_password
@@ -114,8 +115,7 @@ esp32_ble_tracker:
   scan_parameters:
     active: true
 
-bluetooth_proxy:
-  active: true
+# bluetooth_proxy УБРАН (2026-06-21): WiFi-интерференция 2.4 ГГц → мешает соседним WiFi-устройствам.
 
 # ─────────────────────────────────────────────────────────────────────────
 #  STEP 1: ble_client к AtomFast + raw notify (без парсера; парсер = STEP 2)
@@ -720,11 +720,25 @@ binary_sensor:
       sorting_weight: 5
     lambda: "return id(ble_atomfast).connected();"
 
+# ── OUTPUT: heartbeat LED (GPIO2, built-in blue LED on classic DevKitC) ──
+output:
+  - platform: gpio
+    pin: GPIO2
+    id: heartbeat_led
+
 # WiFi-watchdog: если WiFi отсутствует >180s — App.safe_reboot().
 # Покрывает silent-WiFi-hang (INC-01) на любом фреймворке (ESPHome API кросс-фреймворк).
 # 300с-tick: авто-выгрузка на Народмон, если switch ON + WiFi up + intensity не NaN.
 # 300с — минимально допустимый интервал Народмона (короче → бан IP на 1 час).
 interval:
+  # Heartbeat: 100ms flash every 2s — visual board-alive indicator.
+  - interval: 2s
+    then:
+      - output.turn_on: heartbeat_led
+      - delay: 100ms
+      - output.turn_off: heartbeat_led
+
+
   - interval: 10s
     then:
       - lambda: |-
