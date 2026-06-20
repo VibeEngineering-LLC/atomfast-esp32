@@ -14,6 +14,15 @@ NimBLE, отдельный YAML `atomfast_gateway_c3.yaml`).
 
 ---
 
+## [unreleased]
+
+### Changed
+- Removed `bluetooth_proxy` from classic YAML (WiFi 2.4 GHz interference with nearby devices).
+- Reduced WiFi TX power from 20 dBm to 8.5 dBm (`output_power: 8.5dB`) across all YAMLs.
+- Added LED heartbeat (100ms flash every 2s) to all YAMLs for visual board-alive indication.
+
+---
+
 ## v0.9.1 (2026-06-20) — единый источник MAC (`!secret atomfast_mac`); substitution `atomfast_mac_str` удалена
 
 **Что:** в `esp32-c3-supermini/atomfast_gateway_c3.yaml` (→ `v0.9.1-c3`) и
