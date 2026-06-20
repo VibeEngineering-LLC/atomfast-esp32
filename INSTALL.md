@@ -15,7 +15,7 @@
 5. [Шаг 2: Установить Python и ESPHome](#шаг-2-установить-python-и-esphome)
 6. [Шаг 3: Получить файлы прошивки](#шаг-3-получить-файлы-прошивки)
 7. [Шаг 4: Заполнить `secrets.yaml`](#шаг-4-заполнить-secretsyaml)
-8. [Шаг 5: Подставить MAC AtomFast](#шаг-5-подставить-mac-atomfast)
+8. [Шаг 5: Положить `secrets.yaml` в подпапку платы](#шаг-5-положить-secretsyaml-в-подпапку-платы-важно)
 9. [Шаг 6: Прошить плату — выбери путь А или Б](#шаг-6-прошить-плату--выбери-путь-а-или-б)
 10. [Путь А: через Claude Code](#путь-а-через-claude-code)
 11. [Путь Б: через стандартный ESPHome (CLI, Web Installer, Dashboard)](#путь-б-через-стандартный-esphome)
@@ -296,7 +296,11 @@ ls -F
 
 ---
 
-## Шаг 4: Заполнить `secrets.yaml`
+## Шаг 4: Заполнить `secrets.yaml` — **единственный файл, который ты редактируешь**
+
+> 🔑 **Правило установки:** настраиваем ТОЛЬКО `secrets.yaml`. YAML-конфиги прошивок
+> (`atomfast_gateway*.yaml`) копируются как есть — внутрь YAML не лезем. С `v0.9.1`
+> MAC AtomFast тоже берётся из `!secret` (substitution `atomfast_mac_str` удалена).
 
 В папке `firmware/` есть файл-шаблон `secrets.example.yaml`. Скопируй его и заполни:
 
@@ -345,32 +349,55 @@ ap_password:            pE4mW2-Z9aLk
 | `ap_password` | Из вывода 4.1 (или любой пароль ≥ 8 символов). Понадобится, если плата не подключится к домашней WiFi — поднимет свою AP, на неё ты зайдёшь с телефона с этим паролем. |
 | `api_encryption_key` | **Из вывода 4.1.** Заменить весь плейсхолдер `0000…==` целиком на 44-символьную base64-строку. |
 | `ota_password` | Из вывода 4.1 (или любой пароль ≥ 8 символов). Защищает от случайной перепрошивки. |
-| `web_username` / `web_password` | Логин (любой, например `admin`) и пароль для Web UI (Basic Auth). Используется только в arduino-прошивке. |
-| `atomfast_mac` | MAC твоего AtomFast. UPPERCASE с двоеточиями: `A1:B2:C3:D4:E5:F6`. |
+| `web_username` / `web_password` | Логин (любой, например `admin`) и пароль для Web UI (Basic Auth). Берётся всеми тремя YAML (classic / S3 / C3). |
+| `atomfast_mac` | MAC твоего AtomFast. UPPERCASE с двоеточиями: `A1:B2:C3:D4:E5:F6`. **Это единственное место, где задаётся MAC** — substitution в YAML удалена с `v0.9.1`. |
 | `atomfast_s3_api_key` | Только если шьёшь S3-baseline. Из вывода 4.1, отдельная строка `atomfast_s3_api_key`. |
 | `atomfast_s3_ota_pass` | Только S3. Из вывода 4.1. |
 | `atomfast_s3_web_pass` | Только S3. Из вывода 4.1. |
+| `atomfast_c3_api_key` | Только если шьёшь C3 SuperMini. Из вывода 4.1, аналогично S3. |
+| `atomfast_c3_ota_pass` | Только C3. Из вывода 4.1. |
+| `atomfast_c3_web_pass` | Только C3. Из вывода 4.1. |
 
 > ⚠ **secrets.yaml в git НЕ коммитить!** В папке уже есть `.gitignore`, который его игнорирует. Не трогай.
 
 ---
 
-## Шаг 5: Подставить MAC AtomFast
+## Шаг 5: Положить `secrets.yaml` в подпапку платы (важно!)
 
-В YAML-файле (выбери по своей плате из подпапки `firmware/<тип-платы>/`) есть строка:
+> ⚠ **Самая частая ошибка после Шага 4** — `secrets.yaml` остаётся в `firmware/`,
+> но ESPHome ищет `!secret` **в той же подпапке**, что и YAML прошивки. В итоге
+> при compile/flash WiFi и логин Web UI не подтягиваются, плата уходит в
+> fallback-AP, или Web UI не пускает по правильному паролю.
 
-```yaml
-substitutions:
-  ...
-  atomfast_mac_str: "AA:BB:CC:DD:EE:FF"
+YAML-файлы прошивок лежат в подпапках по типу платы. Скопируй (или симлинкни)
+`secrets.yaml` в **ту подпапку, которую будешь шить**:
+
+```bash
+# Шьёшь S3-baseline (рекомендуется):
+cp secrets.yaml esp32-s3-devkitc/secrets.yaml
+
+# Шьёшь ESP32-C3 SuperMini:
+cp secrets.yaml esp32-c3-supermini/secrets.yaml
+
+# Шьёшь классику (ESP32-DevKitC v4):
+cp secrets.yaml esp32-classic/secrets.yaml
 ```
 
-Возможные пути:
-- `firmware/esp32-s3-devkitc/atomfast_gateway_s3.yaml` (S3 N16R8, рекомендуется)
-- `firmware/esp32-classic/atomfast_gateway.yaml` (классика, arduino)
-- `firmware/esp32-c3-supermini/atomfast_gateway_c3.yaml` (C3 SuperMini)
+`.gitignore` уже включает `secrets.yaml` — копии в подпапках в git тоже НЕ попадут.
 
-Заменить `AA:BB:CC:DD:EE:FF` на свой реальный MAC (тот же, что в `secrets.yaml::atomfast_mac`). Эта substitution используется в лямбде для фильтра RSSI sensor'а — она сравнивает строку, поэтому нужна именно текстом, не через `!secret`.
+Альтернатива (Linux/macOS — один источник истины через симлинк):
+
+```bash
+cd esp32-s3-devkitc
+ln -s ../secrets.yaml secrets.yaml
+```
+
+> ℹ️ Современные версии ESPHome (≥ 2026.5) умеют искать `!secret` вверх по
+> родительским папкам, но поведение зависит от платформы и версии. Простая
+> копия в подпапку платы — самый надёжный способ.
+
+**Никаких правок в самих `atomfast_gateway*.yaml` делать НЕ нужно.** MAC, WiFi,
+пароли, API-ключ — всё уже взято из `secrets.yaml` через `!secret`.
 
 ---
 
@@ -469,7 +496,10 @@ https://github.com/VibeEngineering-LLC/atomfast-esp32 (папка atomfast-esp32
      — предложи открыть приложение AtomSwift → информация о приборе → BT address.
    Запиши всё в secrets.yaml. Покажи мне финальный файл (пароли можешь замаскировать).
 
-5. Подставь MAC AtomFast в substitutions.atomfast_mac_str в выбранном YAML.
+5. Скопируй secrets.yaml в подпапку платы (esp32-s3-devkitc/, esp32-c3-supermini/
+   или esp32-classic/) — ESPHome ищет !secret в той же папке, что и YAML.
+   Внутрь YAML-конфигов лезть НЕ нужно, MAC AtomFast уже взят из !secret
+   atomfast_mac (substitution atomfast_mac_str удалена с v0.9.1).
 
 6. Определи COM-порт платы:
    - Windows (PowerShell):
