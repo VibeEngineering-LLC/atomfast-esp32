@@ -13,13 +13,8 @@
 | Плата | Чип | Flash | PSRAM | Антенна | YAML | Заметки |
 |---|---|---|---|---|---|---|
 | **ESP32-S3-DevKitC-1 N16R8** ⭐ | ESP32-S3 dual-core 240 MHz | 16 MB | 8 MB embedded octal | PCB + **U.FL/IPEX** | `esp32-s3-devkitc/atomfast_gateway_s3.yaml` (esp-idf baseline) | **Рекомендованная плата.** Стабильна на esp-idf, PSRAM решает `json:111`, U.FL позволяет внешнюю антенну (важно если AtomFast >5 м или за стеной). USB-C. |
+| **ESP32-C3 SuperMini** | ESP32-C3 single-core RISC-V 160 MHz | 4 MB | — | `esp32-c3-supermini/atomfast_gateway_c3.yaml` (arduino + NimBLE) | ✅ **Smoke у клиента PASS** (v0.9.1, 2026-06-20): WiFi + Web UI + BLE-коннект к AtomFast подтверждены. Compile с v0.9.0-c3 (2026-06-19). Flash занят на **92.3 %** (1.69 МБ из 1.83 МБ) — узкий запас 142 KB на рост Web UI. Mini-форм-фактор ≈ 22×18 мм. Single-band 2.4 ГГц coex настроен через `scan_parameters: 1024/16` (duty 1.5 %). **Не пытаться** прошить S3 YAML на C3 — INC-C3-001. |
 | **ESP32-DevKitC v4 (WROOM-32)** | ESP32 classic dual-core 240 MHz | 4 MB | — | PCB | `esp32-classic/atomfast_gateway.yaml` (**только arduino**) | ⚠ Архивная сборка. arduino-стек стабилен, **esp-idf на этой плате — НЕТ** (см. INC-09/12 в README). Брать только если плата уже в руках. |
-
-### ⚠ Compile PASS / smoke pending (используй с оглядкой)
-
-| Плата | Чип | Flash | PSRAM | YAML | Статус |
-|---|---|---|---|---|---|
-| **ESP32-C3 SuperMini** | ESP32-C3 single-core RISC-V 160 MHz | 4 MB | — | `esp32-c3-supermini/atomfast_gateway_c3.yaml` (arduino + NimBLE) | ⚠ **Compile SUCCESS** (с v0.9.0-c3, 2026-06-19), **smoke у клиента pending**. Flash занят на **92.3 %** (1.69 МБ из 1.83 МБ) — узкий запас 142 KB на рост Web UI. Mini-форм-фактор ≈ 22×18 мм. Single-band 2.4 ГГц coex настроен через `scan_parameters: 1024/16` (duty 1.5 %). **Не пытаться** прошить S3 YAML на C3 — INC-C3-001. |
 
 ### ❌ НЕ работает / не подходит
 
@@ -43,7 +38,7 @@
 
 1. **Покупаешь новую плату под продакшен**: **ESP32-S3-DevKitC-1 N16R8** (Espressif оригинал). Стабильна, есть запас по памяти, есть U.FL для внешней BLE-антенны, USB-C. Прошивка — `esp32-s3-devkitc/atomfast_gateway_s3.yaml`.
 2. **Уже есть классический ESP32-DevKitC v4**: можно использовать `esp32-classic/atomfast_gateway.yaml` (arduino). На esp-idf эту плату с AtomFast **не поднять** — известная регрессия INC-09/12.
-3. **Нужен mini-шлюз (носимый / встройка)**: **ESP32-C3 SuperMini** с прошивкой `esp32-c3-supermini/atomfast_gateway_c3.yaml`. Compile PASS на v0.9.0-c3, smoke у клиента pending. Учти узкий запас Flash (92.3 %) и слабую PCB-антенну у части партий — для уверенного приёма прибор должен быть ≤ 5 м.
+3. **Нужен mini-шлюз (носимый / встройка)**: **ESP32-C3 SuperMini** с прошивкой `esp32-c3-supermini/atomfast_gateway_c3.yaml`. Compile PASS на v0.9.0-c3, **smoke у клиента ✅ на v0.9.1 (2026-06-20)**. Учти узкий запас Flash (92.3 %) и слабую PCB-антенну у части партий — для уверенного приёма прибор должен быть ≤ 5 м.
 4. **Что не брать**:
    - ESP32-S2 / ESP8266 (нет BLE).
    - Безымянные клоны S3 без PSRAM или с QSPI PSRAM (поломанный baseline).
