@@ -375,7 +375,9 @@ sensor:
           id(doserate_usv).publish_state(val_intensity);
           id(doserate_ur).publish_state(val_intensity * 100.0f);
           id(pulses_2s).publish_state((float) p2s_val);
-          id(dose_cum_usv).publish_state(val_dose * 1000.0f);
+          // dose-guard: спека references/atomfast-onair-protocol.md (val_dose<0 → игнор).
+          if (std::isfinite(val_dose) && val_dose >= 0)
+            id(dose_cum_usv).publish_state(val_dose * 1000.0f);
           id(batt_atomfast).publish_state((float) battery);
           id(temp_atomfast).publish_state((float) temperature);
 

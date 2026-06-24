@@ -20,7 +20,7 @@
 # ║                                                                          ║
 # ║ Этот файл — расширение baseline под наш контекст: secrets, api.          ║
 # ║   encryption, web_server (v3+log:false+auth+sorting_groups), mdns,       ║
-# ║   диагностические sensor/text_sensor, WiFi-watchdog, sdkconfig_options.  ║
+# ║   диагностические sensor/text_sensor, WiFi-watchdog (framework arduino). ║
 # ║                                                                          ║
 # ║ STEP 0 — clean baseline БЕЗ AtomFast-датчиков:                           ║
 # ║   • esp32_ble_tracker + bluetooth_proxy active:true (HA-нативка фон)     ║
@@ -28,20 +28,22 @@
 # ║   • mdns + safe_mode/factory_reset/restart кнопки                        ║
 # ║   • uptime + wifi_signal + heap + min_heap + wifi_info                   ║
 # ║   • WiFi-watchdog 180s App.safe_reboot (INC-01)                          ║
-# ║   • sdkconfig_options: LWIP_MAX_SOCKETS=16 (#9), TASK_WDT_TIMEOUT=60s    ║
+# ║   • framework arduino (esp-idf sdkconfig-тюнинг снят — см. ⚠ ниже)        ║
 # ║                                                                          ║
-# ║ ⚠ INC-09 override: AtomFast esp-idf был забанен v0.7.0→v0.7.2 (откат на  ║
-# ║   arduino — long-reconnect регрессия). Здесь сознательный возврат:       ║
-# ║   оператор референсит Radex v0.3.0 (esp-idf-baseline стабилен с нуля).   ║
-# ║   Это другой контекст: не миграция существующей arduino-сборки, а свежий ║
-# ║   старт от bt-proxy эталона, где BLE-стек esp-idf изначально устойчив.   ║
-# ║                                                                          ║
-# ║ Обновлено: 2026-06-14 — fresh base from esphome/bluetooth-proxies main.  ║
+# ║ ⚠ FRAMEWORK = arduino (аудит P1, откат esp-idf→arduino, 2026-06-25):     ║
+# ║   esp-idf-on-classic был гипотезой («свежий bt-proxy baseline устойчив»),║
+# ║   но многочасового приборного прогона classic+esp-idf в репо НЕ было —   ║
+# ║   только перенос вывода с Radex-S3. На WROOM-32 без PSRAM esp-idf даёт    ║
+# ║   INC-09 (rsn 0x3e) и INC-12 (Auth Expired). Поэтому classic приведён к  ║
+# ║   arduino + scan 600/180, как предписывают README / KNOWN_ISSUES.        ║
+# ║   Проверенный esp-idf-таргет — ESP32-S3 N16R8 (4-суточный приборный      ║
+# ║   прогон: references/run-logs/atomfast-s3-soak-2026-06-25.md).           ║
+# ║ Обновлено: 2026-06-25 — P1-фикс аудита: esp-idf→arduino на classic.      ║
 # ╚══════════════════════════════════════════════════════════════════════════╝
 
 substitutions:
-  device_name: "atomfast-gw-btproxy"
-  friendly_name: "AtomFast (BT-Proxy Base)"
+  device_name: "atomfast-gw-classic"
+  friendly_name: "AtomFast Gateway (Classic)"
   # build_path: убран — ESPHome сложит сборку в ~/.esphome/build/<name>/ по умолчанию.
   # Если хочешь свой путь — раскомментируй и подставь, e.g. build_path: ./_build/atomfast-btproxy
   fw_version: "v0.8.0-step4"
@@ -60,15 +62,16 @@ esphome:
       then:
         - logger.log:
             level: WARN
-            format: "AtomFast BT-Proxy Base ${fw_version} (esp-idf, bt-proxy + 13B parser + Народмон 4 опции GET/POST/HTTPS/JSON) booted"
+            format: "AtomFast Gateway ${fw_version} (arduino, 13B parser + Народмон 4 опции GET/POST/HTTPS/JSON) booted"
 
 esp32:
   variant: esp32
   framework:
-    type: esp-idf
-    sdkconfig_options:
-      CONFIG_LWIP_MAX_SOCKETS: "16"
-      CONFIG_ESP_TASK_WDT_TIMEOUT_S: "60"
+    # arduino — стабильный baseline для классического DevKitC / WROOM-32 без PSRAM.
+    # esp-idf на этой плате воспроизводимо даёт INC-09 (rsn 0x3e) и INC-12 (Auth Expired) — см. README.
+    # Бывшие sdkconfig_options (LWIP_MAX_SOCKETS=16 / TASK_WDT=60s) — это esp-idf-тюнинг,
+    # на arduino-фреймворке не применяются (arduino-esp32 сам задаёт пул сокетов и WDT).
+    type: arduino
 
 wifi:
   ssid: !secret wifi_ssid
@@ -77,7 +80,7 @@ wifi:
   power_save_mode: none
   output_power: 8.5dB
   ap:
-    ssid: "AtomFast-BTProxy Fallback"
+    ssid: "AtomFast-Classic Fallback"
     password: !secret ap_password
   on_disconnect:
     - lambda: |-
@@ -113,6 +116,11 @@ http_request:
 # В STEP 1+ поверх него добавим ble_client к AtomFast (наш парсер 13-байтового кадра).
 esp32_ble_tracker:
   scan_parameters:
+    # arduino HARD-правило (README → INC-12): персональные окна 600ms/180ms (duty 30%).
+    # На esp-idf было active:true (coex сам балансирует короткие окна), но classic
+    # вернулся на arduino — здесь нужны явные interval/window, иначе BLE стартует медленно.
+    interval: 600ms
+    window: 180ms
     active: true
 
 # bluetooth_proxy УБРАН (2026-06-21): WiFi-интерференция 2.4 ГГц → мешает соседним WiFi-устройствам.
@@ -225,7 +233,9 @@ switch:
     id: narodmon_enabled
     icon: "mdi:cloud-upload"
     optimistic: true
-    restore_mode: RESTORE_DEFAULT_OFF
+    # HARD (CLAUDE.md 2026-06-17): switch Народмона ВСЕГДА ALWAYS_OFF —
+    # после reboot / safe-mode / factory_reset / OTA гарантированно OFF.
+    restore_mode: ALWAYS_OFF
     web_server:
       sorting_group_id: sg_service
       sorting_weight: 200
@@ -301,7 +311,8 @@ text:
 # Идентификация устройства: esp_mac (text_sensor wifi_info → MAC AA:BB:CC:...).
 # Народмон ожидает MAC без двоеточий — снимаем их в lambda через std::remove.
 # Sensors AtomFast → Народмон ID:
-#   R1   ← intensity_uSv_h (мощность, µSv/h) — главная метрика
+#   R1   ← intensity_uSv_h × 100 (мощность, µR/h) — главная метрика;
+#         единица унифицирована с S3/C3 (там doserate_ur = val_intensity*100)
 #   D1   ← dose_mSv        (доза накопленная, mSv)
 #   T1   ← temperature_C   (°C)
 #   BAT1 ← battery_pct     (%)
@@ -324,14 +335,14 @@ script:
                         char url[384];
                         std::string mac = id(esp_mac).state;
                         mac.erase(std::remove(mac.begin(), mac.end(), ':'), mac.end());
-                        // D1 → µSv (×1000 от mSv): согласовано с S3 baseline atomfast_gateway_s3.yaml:618
+                        // D1 → µSv (×1000 от mSv); R1 → µR/h (×100 от µSv/h) — единицы унифицированы с S3/C3
                         float dose = std::isnan(id(dose_mSv).state) ? 0.0f : id(dose_mSv).state * 1000.0f;
                         float temp = std::isnan(id(temperature_C).state) ? 0.0f : id(temperature_C).state;
                         float batt = std::isnan(id(battery_pct).state)  ? 0.0f : id(battery_pct).state;
                         snprintf(url, sizeof(url),
                           "http://narodmon.ru/get?ID=%s&%s=%.4f&%s=%.4f&%s=%.0f&%s=%.0f",
                           mac.c_str(),
-                          id(nm_intensity).state.c_str(), id(intensity_uSv_h).state,
+                          id(nm_intensity).state.c_str(), id(intensity_uSv_h).state * 100.0f,
                           id(nm_dose).state.c_str(),      dose,
                           id(nm_temp).state.c_str(),      temp,
                           id(nm_batt).state.c_str(),      batt);
@@ -356,14 +367,14 @@ script:
                         char body[384];
                         std::string mac = id(esp_mac).state;
                         mac.erase(std::remove(mac.begin(), mac.end(), ':'), mac.end());
-                        // D1 → µSv (×1000 от mSv): согласовано с S3 baseline atomfast_gateway_s3.yaml:618
+                        // D1 → µSv (×1000 от mSv); R1 → µR/h (×100 от µSv/h) — единицы унифицированы с S3/C3
                         float dose = std::isnan(id(dose_mSv).state) ? 0.0f : id(dose_mSv).state * 1000.0f;
                         float temp = std::isnan(id(temperature_C).state) ? 0.0f : id(temperature_C).state;
                         float batt = std::isnan(id(battery_pct).state)  ? 0.0f : id(battery_pct).state;
                         snprintf(body, sizeof(body),
                           "ID=%s&%s=%.4f&%s=%.4f&%s=%.0f&%s=%.0f",
                           mac.c_str(),
-                          id(nm_intensity).state.c_str(), id(intensity_uSv_h).state,
+                          id(nm_intensity).state.c_str(), id(intensity_uSv_h).state * 100.0f,
                           id(nm_dose).state.c_str(),      dose,
                           id(nm_temp).state.c_str(),      temp,
                           id(nm_batt).state.c_str(),      batt);
@@ -388,14 +399,14 @@ script:
                         char body[384];
                         std::string mac = id(esp_mac).state;
                         mac.erase(std::remove(mac.begin(), mac.end(), ':'), mac.end());
-                        // D1 → µSv (×1000 от mSv): согласовано с S3 baseline atomfast_gateway_s3.yaml:618
+                        // D1 → µSv (×1000 от mSv); R1 → µR/h (×100 от µSv/h) — единицы унифицированы с S3/C3
                         float dose = std::isnan(id(dose_mSv).state) ? 0.0f : id(dose_mSv).state * 1000.0f;
                         float temp = std::isnan(id(temperature_C).state) ? 0.0f : id(temperature_C).state;
                         float batt = std::isnan(id(battery_pct).state)  ? 0.0f : id(battery_pct).state;
                         snprintf(body, sizeof(body),
                           "ID=%s&%s=%.4f&%s=%.4f&%s=%.0f&%s=%.0f",
                           mac.c_str(),
-                          id(nm_intensity).state.c_str(), id(intensity_uSv_h).state,
+                          id(nm_intensity).state.c_str(), id(intensity_uSv_h).state * 100.0f,
                           id(nm_dose).state.c_str(),      dose,
                           id(nm_temp).state.c_str(),      temp,
                           id(nm_batt).state.c_str(),      batt);
@@ -427,11 +438,11 @@ script:
                       body: !lambda |-
                         std::string mac = id(esp_mac).state;
                         mac.erase(std::remove(mac.begin(), mac.end(), ':'), mac.end());
-                        // D1 → µSv (×1000 от mSv): согласовано с S3 baseline atomfast_gateway_s3.yaml:618
+                        // D1 → µSv (×1000 от mSv); R1 → µR/h (×100 от µSv/h) — единицы унифицированы с S3/C3
                         float dose = std::isnan(id(dose_mSv).state) ? 0.0f : id(dose_mSv).state * 1000.0f;
                         float temp = std::isnan(id(temperature_C).state) ? 0.0f : id(temperature_C).state;
                         float batt = std::isnan(id(battery_pct).state)  ? 0.0f : id(battery_pct).state;
-                        float intensity = std::isnan(id(intensity_uSv_h).state) ? 0.0f : id(intensity_uSv_h).state;
+                        float intensity = std::isnan(id(intensity_uSv_h).state) ? 0.0f : id(intensity_uSv_h).state * 100.0f;
                         std::string body = "{\"devices\":[{\"mac\":\"" + mac + "\",\"sensors\":[";
                         body += "{\"id\":\"" + id(nm_intensity).state + "\",\"value\":" + std::to_string(intensity) + "},";
                         body += "{\"id\":\"" + id(nm_dose).state      + "\",\"value\":" + std::to_string(dose)      + "},";
@@ -503,7 +514,10 @@ sensor:
         return NAN;
       }
 
-      id(dose_mSv).publish_state(dose);
+      // dose-guard: спека references/atomfast-onair-protocol.md (val_dose<0 → игнор).
+      // Публикуем накопленную дозу только если конечна и неотрицательна.
+      if (std::isfinite(dose) && dose >= 0)
+        id(dose_mSv).publish_state(dose);
       id(intensity_uSv_h).publish_state(intensity);
 
       // pulses за 2 с (uint16 LE @ offset 9), отдельно публикуем CPS = pulses_2s/2
