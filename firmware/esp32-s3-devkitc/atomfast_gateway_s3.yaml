@@ -1,5 +1,5 @@
 # ╔══════════════════════════════════════════════════════════════════════╗
-# ║ AtomFast S3 Gateway — на базе ESPHome bluetooth-proxies (v0.9.1-s3)   ║
+# ║ AtomFast S3 Gateway — на базе ESPHome bluetooth-proxies (v0.9.2-s3)   ║
 # ║                                                                       ║
 # ║ База: firmware/_baseline_btproxy/esp32-generic.yaml — verbatim клон   ║
 # ║   из github.com/esphome/bluetooth-proxies (esphome upstream, esp-idf-  ║
@@ -8,7 +8,7 @@
 # ║ Адаптация под нашу задачу (2026-06-18):                                ║
 # ║   • ESP32-S3-DevKitC-1 (variant esp32s3) вместо esp32-классик          ║
 # ║   • 8 MB embedded octal PSRAM (плата 2026-06-18)                       ║
-# ║   • AtomFast BLE-клиент (один целевой прибор по MAC из secrets)        ║
+# ║   • AtomFast BLE-клиент (один целевой прибор, MAC из NVS/Web UI/флешера)║
 # ║   • Web Server v3 + Basic Auth + sorting_groups + лог в браузере       ║
 # ║   • Народмон-инфраструктура (switch ALWAYS_OFF, не активировать)       ║
 # ║   • WiFi-watchdog (180 с → arch_restart) — кросс-фреймворковый         ║
@@ -17,7 +17,7 @@
 # ║ Три ограничения оператора (2026-06-18):                                ║
 # ║   1. bluetooth_proxy: — НЕ ДОБАВЛЕНО (откличить сторонние BLE).        ║
 # ║      В baseline оно есть; мы сознательно опускаем секцию. Останется    ║
-# ║      только ble_client на конкретный AtomFast по MAC из !secret.       ║
+# ║      только ble_client на AtomFast по MAC из NVS (g_af_mac).           ║
 # ║   2. web_server.log: true — системный лог в браузере работает.         ║
 # ║      Явное исключение из HARD default log:false. На S3 (8 MB PSRAM)    ║
 # ║      риск json:111 / OOM минимален.                                    ║
@@ -36,14 +36,14 @@
 substitutions:
   device_name: atomfast-gw-s3
   device_friendly: "AtomFast S3 Gateway"
-  fw_version: "v0.9.1-s3"
+  fw_version: "v0.9.2-s3"
   # build_path: убран — ESPHome сложит сборку в ~/.esphome/build/<name>/ по умолчанию.
   # Если хочешь свой путь — раскомментируй и подставь, e.g. build_path: ./_build/atomfast-gw-s3
   atomfast_service_uuid: "63462a4a-c28c-4ffd-87a4-2d23a1c72581"
   atomfast_char_uuid:    "70BC767E-7A1A-4304-81ED-14B9AF54F7BD"
-  # MAC AtomFast — ОДИН источник истины: secrets.yaml::atomfast_mac (!secret).
-  # Substitution atomfast_mac_str снят с v0.9.1-s3 (был дубль), фильтр RSSI
-  # ниже работает через esp32_ble_tracker.on_ble_advertise.mac_address.
+  # MAC AtomFast — ОДИН источник истины: глобал g_af_mac (restore_value, NVS).
+  # Задаётся в Web UI (text «MAC прибора AtomFast») или флешером (запись NVS).
+  # От !secret не зависит. Фильтр RSSI — в lambda esp32_ble_tracker.on_ble_advertise.
 
 esphome:
   name: ${device_name}
@@ -51,6 +51,35 @@ esphome:
   min_version: 2026.5.0
   name_add_mac_suffix: false
   on_boot:
+    # Priority 600: ниже globals (HARDWARE=800, значение из NVS уже загружено),
+    # выше BLE-клиента/трекера (AFTER_BLUETOOTH=300) — адрес задаётся до старта BLE.
+    - priority: 600
+      then:
+        - lambda: |-
+            if (id(g_af_mac) != 0) {
+              id(ble_atomfast).set_address(id(g_af_mac));
+            }
+    # Priority -90: после BLEClient::setup() (300), который ставит enabled=true;
+    # только после него set_enabled(false) реально отключает клиента при нулевом MAC.
+    - priority: -90
+      then:
+        - lambda: |-
+            if (id(g_af_mac) == 0) {
+              id(ble_atomfast).set_enabled(false);
+              ESP_LOGI("atomfast", "MAC прибора не задан — укажите в Web UI или во флешере");
+            }
+            if (id(g_af_mac) != 0) {
+              char buf[18];
+              uint64_t a = id(g_af_mac);
+              snprintf(buf, sizeof(buf), "%02X:%02X:%02X:%02X:%02X:%02X",
+                       (unsigned) ((a >> 40) & 0xFF), (unsigned) ((a >> 32) & 0xFF),
+                       (unsigned) ((a >> 24) & 0xFF), (unsigned) ((a >> 16) & 0xFF),
+                       (unsigned) ((a >> 8) & 0xFF), (unsigned) (a & 0xFF));
+              id(af_mac_active).publish_state(buf);
+              id(af_mac_input).publish_state(buf);
+            } else {
+              id(af_mac_active).publish_state("не задан");
+            }
     - priority: -100
       then:
         - logger.log:
@@ -67,6 +96,9 @@ esp32:
       CONFIG_LWIP_MAX_SOCKETS: "16"
       # Подъём task_wdt с 5 → 60 с на случай долгого BLE-handshake'а.
       CONFIG_ESP_TASK_WDT_TIMEOUT_S: "60"
+      # Мощность BLE-передатчика P20 (+20 dBm), #PWR-1: EFF=15 для P20.
+      CONFIG_BT_CTRL_DFT_TX_POWER_LEVEL_P20: y
+      CONFIG_BT_CTRL_DFT_TX_POWER_LEVEL_EFF: "15"
 
 # 8 MB embedded PSRAM (octal-SPI) на новой ESP32-S3-DevKitC-1 v0.2.
 psram:
@@ -143,6 +175,12 @@ time:
     timezone: Europe/Moscow
 
 globals:
+  # MAC прибора (48 бит в uint64), NVS; 0 = не задан (клиент отключается
+  # в on_boot -90, после BLEClient::setup(); адрес 0 и так не подключается).
+  - id: g_af_mac
+    type: uint64_t
+    restore_value: true
+    initial_value: "0"
   - id: g_cps_sum
     type: float
     restore_value: false
@@ -173,30 +211,32 @@ globals:
     restore_value: false
     initial_value: "0"
 
-# BLE-трекер. Scan 640/32 (duty ~5 %) — стабильная конфигурация Radex
-# v0.3.0-step2 и AtomFast v0.7.12 (anti-rsn-0x08, supervision-timeout).
+# BLE-трекер. Scan 160/80 мс (duty ~50 %). Прежние 640/32 (~5 %) давали
+# первое подключение к прибору в среднем ~100 с (замер 10 перезагрузок,
+# 3 из них с разрывом rsn 0x08); на 160/80 — медиана ~18 с, час без разрывов.
+# Цена — больше эфирного времени у Bluetooth при совместной работе с Wi-Fi.
 # active: false — passive scan (RSSI берётся из advertising payload).
 esp32_ble_tracker:
   scan_parameters:
-    interval: 640ms
-    window: 32ms
+    interval: 160ms
+    window: 80ms
     active: false
   on_ble_advertise:
-    # Фильтр по MAC — на уровне трекера (поддерживает !secret). Внутри lambda
-    # уже не нужно сверять адрес: триггер срабатывает только для AtomFast.
-    - mac_address: !secret atomfast_mac
-      then:
+    # Фильтр по MAC — в lambda: адрес пакета сверяется с g_af_mac (без аллокаций).
+    - then:
         - lambda: |-
-            id(rssi_atomfast).publish_state((float) x.get_rssi());
+            if (id(g_af_mac) != 0 && x.address_uint64() == id(g_af_mac))
+              id(rssi_atomfast).publish_state((float) x.get_rssi());
 
 # ⚠ bluetooth_proxy: НЕ ДОБАВЛЕНО (operator 2026-06-18: «откличи
 # сторонние устройства»). В исходном baseline ESPHome bluetooth-proxies
 # здесь была секция `bluetooth_proxy: active: true` — мы её сознательно
 # опускаем. Сторонние BLE-устройства через шлюз в HA не пропускаются.
-# Шлюз обслуживает ТОЛЬКО один ble_client ниже (по MAC из !secret).
+# Шлюз обслуживает ТОЛЬКО один ble_client ниже (по MAC из g_af_mac, NVS).
 
 ble_client:
-  - mac_address: !secret atomfast_mac
+  # Нулевая заглушка схемы; фактический адрес ставится в on_boot из g_af_mac.
+  - mac_address: "00:00:00:00:00:00"
     id: ble_atomfast
     auto_connect: true
     on_connect:
@@ -450,6 +490,15 @@ binary_sensor:
 #  TEXT SENSORS
 # ══════════════════════════════════════════════════════════════════════
 text_sensor:
+  - platform: template
+    name: "AtomFast: MAC в работе"
+    id: af_mac_active
+    update_interval: never
+    icon: "mdi:bluetooth-settings"
+    web_server:
+      sorting_group_id: sg_settings
+      sorting_weight: 2
+
   - platform: wifi_info
     ip_address:
       name: "IP адрес"
@@ -523,10 +572,17 @@ button:
       sorting_group_id: sg_settings
     on_press:
       - lambda: |-
-          ESP_LOGI("atomfast", "Manual reconnect");
-          id(ble_atomfast).set_enabled(false);
+          if (id(g_af_mac) == 0) {
+            ESP_LOGW("atomfast", "Переподключение невозможно: MAC прибора не задан");
+          } else {
+            ESP_LOGI("atomfast", "Manual reconnect");
+            id(ble_atomfast).set_enabled(false);
+          }
       - delay: 1s
-      - lambda: "id(ble_atomfast).set_enabled(true);"
+      - lambda: |-
+          if (id(g_af_mac) != 0) {
+            id(ble_atomfast).set_enabled(true);
+          }
 
   - platform: template
     name: "Сбросить счётчики BLE"
@@ -667,9 +723,9 @@ interval:
 switch:
   - platform: template
     name: "Выгружать на Народмон"
+    restore_mode: ALWAYS_OFF
     id: narodmon_enabled
     icon: "mdi:cloud-upload"
-    restore_mode: ALWAYS_OFF
     optimistic: true
     web_server:
       sorting_group_id: sg_narodmon
@@ -679,6 +735,72 @@ switch:
 #  TEXT — редактируемые имена метрик Народмона (default R1/D1/T1/BAT1)
 # ══════════════════════════════════════════════════════════════════════
 text:
+  # MAC прибора: формат AA:BB:CC:DD:EE:FF. Верный — в g_af_mac, NVS sync, reboot.
+  - platform: template
+    name: "MAC прибора AtomFast"
+    id: af_mac_input
+    mode: text
+    optimistic: false
+    icon: "mdi:bluetooth-settings"
+    web_server:
+      sorting_group_id: sg_settings
+      sorting_weight: 1
+    set_action:
+      - lambda: |-
+          // Как parse_mac флешера: пробелы по краям обрезаются, регистр любой,
+          // '-' равен ':', нулевой MAC отвергается.
+          std::string t = x;
+          size_t b = t.find_first_not_of(" \t\r\n");
+          size_t e = t.find_last_not_of(" \t\r\n");
+          t = (b == std::string::npos) ? std::string() : t.substr(b, e - b + 1);
+          bool ok = (t.size() == 17);
+          uint64_t v = 0;
+          for (size_t i = 0; ok && i < 17; i++) {
+            char c = t[i];
+            if (i % 3 == 2) {
+              if (c != ':' && c != '-') ok = false;
+            } else {
+              int d = (c >= '0' && c <= '9') ? c - '0'
+                    : (c >= 'a' && c <= 'f') ? c - 'a' + 10
+                    : (c >= 'A' && c <= 'F') ? c - 'A' + 10 : -1;
+              if (d < 0) ok = false; else v = (v << 4) | (uint64_t) d;
+            }
+          }
+          // Поле text optimistic:false само состояние не публикует: после разбора
+          // публикуем принятое значение (канонический вид) либо прежнее при отказе.
+          char cur[18];
+          uint64_t a = id(g_af_mac);
+          snprintf(cur, sizeof(cur), "%02X:%02X:%02X:%02X:%02X:%02X",
+                   (unsigned) ((a >> 40) & 0xFF), (unsigned) ((a >> 32) & 0xFF),
+                   (unsigned) ((a >> 24) & 0xFF), (unsigned) ((a >> 16) & 0xFF),
+                   (unsigned) ((a >> 8) & 0xFF), (unsigned) (a & 0xFF));
+          if (!ok) {
+            ESP_LOGW("atomfast", "Неверный формат MAC (нужен AA:BB:CC:DD:EE:FF), игнорирую");
+            id(af_mac_input).publish_state(a != 0 ? cur : "");
+          } else if (v == 0) {
+            ESP_LOGW("atomfast", "Нулевой MAC недопустим, игнорирую");
+            id(af_mac_input).publish_state(a != 0 ? cur : "");
+          } else if (v == a) {
+            ESP_LOGI("atomfast", "MAC не изменился, запись и перезагрузка не нужны");
+            id(af_mac_input).publish_state(cur);
+          } else {
+            id(g_af_mac) = v;
+            g_af_mac->update();
+            if (global_preferences->sync()) {
+              char nb[18];
+              snprintf(nb, sizeof(nb), "%02X:%02X:%02X:%02X:%02X:%02X",
+                       (unsigned) ((v >> 40) & 0xFF), (unsigned) ((v >> 32) & 0xFF),
+                       (unsigned) ((v >> 24) & 0xFF), (unsigned) ((v >> 16) & 0xFF),
+                       (unsigned) ((v >> 8) & 0xFF), (unsigned) (v & 0xFF));
+              id(af_mac_input).publish_state(nb);
+              ESP_LOGW("atomfast", "MAC прибора записан в NVS, перезагрузка");
+              App.safe_reboot();
+            } else {
+              ESP_LOGE("atomfast", "Не удалось записать MAC в NVS, перезагрузки не будет");
+              id(af_mac_input).publish_state(a != 0 ? cur : "");
+            }
+          }
+
   - platform: template
     name: "Имя метрики: мощность дозы"
     id: nm_rate
