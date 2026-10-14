@@ -62,6 +62,21 @@ AtomFast ─BLE notify(13B/2s)─► ESP32 ─Web UI v3─► браузер / H
 [`references/version-history.md`](references/version-history.md). Альтернативный Web UI v2 (single-table,
 custom.css/js) — [`references/alt-firmware-webv2.md`](references/alt-firmware-webv2.md).
 
+## Датчик GY-BMP280 / BME280 (S3 baseline, опционально)
+
+Только `atomfast_gateway_s3.yaml`: I2C SDA=GPIO8, SCL=GPIO9 (на S3-DevKitC-1 N16R8 свободны, PSRAM — GPIO35–37),
+опрос 30 с, адрес `0x76` (`scan: true` покажет реальный в логе). Модуль питать от **3V3**
+(5V-версия модуля допускает 3.3–5 В, но GPIO S3 не 5V-tolerant).
+Схема: VIN→3V3, GND→GND, SCL→GPIO9, SDA→GPIO8.
+**Тип чипа ≠ надпись на плате.** Модуль с маркировкой «BME/BMP280» может быть BMP280 (ID `0x58`): тогда платформа
+`bme280_i2c` не стартует и все сенсоры остаются `NA` на любом адресе. На плате оператора (2026-10-14) — BMP280:
+`bmp280_i2c`, температура + давление, без влажности. BME280 (ID `0x60`) — `bme280_i2c` + `humidity`.
+Давление публикуется в **мм рт. ст.** (фильтр `multiply: 0.750062`). Коррекция — слайдеры `bmp_t_offset` (±5 °C) и
+`bmp_p_offset` (±20 мм рт. ст.), отключение — switch `bmp_enabled` (выкл → `NA`); всё в группе «Настройки».
+Ловушка: `name` из одних кириллических символов одной длины → одинаковый object_id → «Duplicate entity» (ASCII-приставка).
+Ловушка Windows: сборка падает `PermissionError` на `managed_components` → `attrib -R ... /S /D` и повтор.
+Для более точных T/RH/P (ориентир, цифры типичные, сверять по даташитам): SHT45 (`0x44`, `sht4x`) + BMP390 (`bmp3xx_i2c`).
+
 ## Парсинг 13-байт payload
 
 ```

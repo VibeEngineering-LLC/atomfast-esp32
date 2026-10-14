@@ -16,6 +16,9 @@ NimBLE, отдельный YAML `atomfast_gateway_c3.yaml`).
 
 ## [unreleased]
 
+### Added
+- S3 baseline (`atomfast_gateway_s3.yaml`): датчик GY-BMP280 по I2C — `i2c` (SDA GPIO8, SCL GPIO9, `scan: true`) + `bmp280_i2c` (адрес `0x76`, опрос 30 с): температура и давление (влажности у BMP280 нет). Сенсоры «Температура воздуха» и «Атмосферное давление» (в **мм рт. ст.**, гПа × 0.750062) в группе «AtomFast — показания». Настройки: слайдеры «BMP коррекция температуры» (±5 °C) и «BMP коррекция давления» (±20 мм рт. ст.), шаг 0.1, сохраняются в NVS; переключатель «Датчик давления/температуры включён» (выкл → `NA`). Питание модуля — 3V3. Проверено на плате: 26.5 °C, 751.6 мм рт. ст. Имена из одних кириллических символов одной длины дают одинаковый object_id и валят конфигурацию — слайдерам добавлена ASCII-приставка «BMP». Для BME280 (ID чипа `0x60`) нужна платформа `bme280_i2c`; на BMP280 (ID `0x58`) она даёт `NA`. `fw_version` не менялась (v0.9.0-s3).
+
 ### Changed
 - Removed `bluetooth_proxy` from classic YAML (WiFi 2.4 GHz interference with nearby devices).
 - Reduced WiFi TX power from 20 dBm to 8.5 dBm (`output_power: 8.5dB`) across all YAMLs.
