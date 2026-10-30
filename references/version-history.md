@@ -4,7 +4,18 @@
 Канонический changelog — [`firmware/CHANGELOG.md`](../firmware/CHANGELOG.md); здесь снимок
 описания текущей версии из SKILL.md на момент рефактора.
 
-## Текущая версия прошивки
+## ESP-IDF линия 0.1.0-e16* (новая основа, с 2026-10-29)
+
+Отдельная линия на ESP-IDF 5.4 для ESP32-S3 N16R8, не обновление ESPHome-версий ниже. Шьётся прошивальщиком [0.7.3+](https://github.com/VibeEngineering-LLC/atomspectra-waterfall-esp32-flasher/releases/tag/v0.7.3). Описание: [`esp-idf-gateway-0.1.0.md`](esp-idf-gateway-0.1.0.md). Образы `.bin` лежат в релизах, не в репозитории.
+
+| Версия | Дата | Релиз | sha256 app (`atomfast_gw.bin`, адрес 0x20000) | sha256 factory (`atomfast_gw.factory.bin`, адрес 0x0) | Что нового |
+|---|---|---|---|---|---|
+| `0.1.0-e16h` | 2026-10-30 | [v0.1.0-e16h](https://github.com/VibeEngineering-LLC/atomfast-esp32/releases/tag/v0.1.0-e16h) | `40cb9fdf2ad1178b2e89cc6ce17b3d106f1bb2165460d3d771cbe9e77bd5bbb9` | `2b2c732f8d5ba29996f40ef384e35694737c8d06f1f4ef59338766fb782d2767` | раздел «База данных» на `/system` (отправка на приёмник по HTTP, проверка, статус по трём буферам, сброс позиции); «Проверить» не зависает; несохранённые поля формы не затираются |
+| `0.1.0-e16g` | 2026-10-29 | [v0.1.0-e16g](https://github.com/VibeEngineering-LLC/atomfast-esp32/releases/tag/v0.1.0-e16g) | `c1cde38f2860e9cbf51bd6149cec66756bcee1912090e7395ad831cabe90615c` | `bd9af76e3b5c5aa0ee27d159006f648c144edc5c2d461ab0171cf144c651bebe` | первая ESP-IDF прошивка: три кольца с зеркалом на флеш, новый Web UI, вкладка «Измерения» с погрешностью, экспорт CSV, очистка только по слову «стереть», OTA |
+
+Плата с e16g обновляется до e16h файлом `atomfast_gw.bin` с сохранением настроек и данных. Известные ограничения обеих версий: Web UI без пароля, p95 главной страницы 0,32–0,43 с (цель 0,35 с при слабом сигнале не достигнута), задержки отклика из-за совместной работы Wi-Fi и BLE.
+
+## Текущая версия ESPHome-прошивки (линия v0.x)
 
 **v0.8.0-step4** (2026-06-14) — **major-минор bump**: `atomfast_gateway.yaml`
 пересобран с нуля от официального ESPHome `bluetooth-proxies/esp32-generic`

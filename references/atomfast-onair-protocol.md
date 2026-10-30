@@ -18,6 +18,7 @@
 | `ATOMTAG_SERVICE` | `63462a4a-c28c-4ffd-87a4-2d23a1c72581` | **Primary service** |
 | `ATOMTAG_MEASUREMENT` | `70BC767E-7A1A-4304-81ED-14B9AF54F7BD` | основной notify (CPS / dose-rate / накопленная доза / батарея) |
 | `ATOMTAG_MEASUREMENT2` | `8E26EDC8-A1E9-4C06-9BD0-97B97E7B3FB9` | вторичный measurement (назначение TBD — вероятно CPM stream) |
+|  |  | ⚠ По официальной документации: счётчики импульсов u64/u32/u32/u32, см. [`atomservice-ble-official-doc.md`](atomservice-ble-official-doc.md). |
 | `ATOMTAG_THRESHOLD1` | `3F71E820-1D98-46D4-8ED6-324C8428868C` | порог тревоги 1 |
 | `ATOMTAG_THRESHOLD2` | `2E95D467-4DB7-4D7F-9D82-4CD5C102FA05` | порог тревоги 2 |
 | `ATOMTAG_THRESHOLD3` | `F8DE242F-8D84-4C12-9A2F-9C64A31CA7CA` | порог тревоги 3 |
@@ -51,6 +52,7 @@ hardware revision, software revision, имя изготовителя.
 | Offset | Размер | Тип | Поле (Java) | Описание |
 |---|---|---|---|---|
 | 0 | 1 | `uint8` | `valFlags` | флаги; bit 3 = re-read config request |
+|  |  |  |  | ⚠ Официальная документация называет бит 3 зарезервированным; по 156 784 записям флаги всегда 0 — значение «re-read config» не подтверждено (см. [`atomservice-ble-official-doc.md`](atomservice-ble-official-doc.md)). |
 | 1..4 | 4 | float32 LE | `val_dose` | накопленная доза, **mSv** |
 | 5..8 | 4 | float32 LE | `val_intensity` | мгновенная мощность дозы, **µSv/h**. `>1000` — битый пакет, игнор |
 | 9..10 | 2 | uint16 LE | `pulses_last_2sec` | импульсы за последние 2 с |

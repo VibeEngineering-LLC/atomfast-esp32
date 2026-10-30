@@ -52,6 +52,17 @@ firmware/
 
 **Рекомендация: `esp32-s3-devkitc/atomfast_gateway_s3.yaml` на ESP32-S3-DevKitC-1 N16R8.** Стабильная, актуальная, с запасом по памяти и внешней антенной.
 
+## ESP-IDF линия 0.1.0-e16*
+
+С 2026-10-29 есть вторая линия прошивки, написанная заново на ESP-IDF 5.4 для **ESP32-S3 N16R8** (не обновление ESPHome-линии выше, та остаётся как есть).
+
+- Три кольцевых буфера (сырые отсчёты, агрегаты, датчики среды) с зеркалом на флеш, график с двумя осями, вкладка «Измерения» с погрешностью, экспорт CSV, OTA.
+- `0.1.0-e16h` добавляет раздел «База данных»: плата сама отправляет историю на приёмник в домашней сети, приёмник пишет в PostgreSQL (сам приёмник в репозиторий не входит).
+- Готовые образы: [v0.1.0-e16g](https://github.com/VibeEngineering-LLC/atomfast-esp32/releases/tag/v0.1.0-e16g), [v0.1.0-e16h](https://github.com/VibeEngineering-LLC/atomfast-esp32/releases/tag/v0.1.0-e16h) (в релизах есть `SHA256SUMS.txt`).
+- Шьётся прошивальщиком версии **0.7.3 и новее**: [v0.7.3](https://github.com/VibeEngineering-LLC/atomspectra-waterfall-esp32-flasher/releases/tag/v0.7.3).
+- **Web UI открывается без пароля** и данные идут без шифрования: держите плату только в доверенной домашней сети.
+- Описание, ограничения и методика проверки: [`references/esp-idf-gateway-0.1.0.md`](references/esp-idf-gateway-0.1.0.md); версии и контрольные суммы: [`references/version-history.md`](references/version-history.md); официальный протокол изготовителя (конспект): [`references/atomservice-ble-official-doc.md`](references/atomservice-ble-official-doc.md).
+
 ## Что это решает
 
 Приложение AtomFast красивое, но:

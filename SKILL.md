@@ -1,8 +1,8 @@
 ---
 name: atomfast-esp32
 description: >-
-  ESPHome BLE-шлюз ESP32 → дозиметр AtomFast Plus2: парсер 13-байт on-air payload,
-  Web UI живые графики, вывод в HA/CSV/narodmon без приложения изготовителя. НЕ для Radex/RadonEye.
+  BLE-шлюз ESP32 → дозиметр AtomFast Plus2: ESPHome (v0.x) и ESP-IDF 0.1.0-e16* (кольца, CSV, отправка в PostgreSQL),
+  парсер 13-байт payload, Web UI, HA/CSV/narodmon без приложения изготовителя. НЕ для Radex/RadonEye.
 ---
 
 # atomfast-esp32 — BLE-шлюз AtomFast на ESP32
@@ -12,6 +12,14 @@ description: >-
 - «Выводить данные AtomFast в браузер / HA / на ESP», график CPS/dose-rate без приложения.
 - Дозиметр AtomFast Plus2 + ESP32-DevKitC под рукой.
 - Развёртывание копии прошивки на чужом железе — копировать через скилл, не воспроизводить с нуля.
+
+## Какую линию брать
+
+- **ESP-IDF 0.1.0-e16g / e16h** (новая основа, ESP32-S3 N16R8): три кольца с зеркалом на флеш, новый Web UI,
+  «Измерения» с погрешностью, CSV, отправка истории на приёмник (PostgreSQL). Готовые образы — в релизах репозитория,
+  шьёт прошивальщик **0.7.3+** ([v0.7.3](https://github.com/VibeEngineering-LLC/atomspectra-waterfall-esp32-flasher/releases/tag/v0.7.3)).
+  Web UI без пароля, только домашняя сеть. Описание — [`references/esp-idf-gateway-0.1.0.md`](references/esp-idf-gateway-0.1.0.md).
+- **ESPHome v0.x** (YAML ниже в этом файле) — прежняя линия, остаётся отдельно.
 
 ## ⚠️ SAFETY-CORE (HARD)
 
@@ -140,3 +148,5 @@ Hard rules PR — см. SAFETY-CORE (никаких реальных секре�
 | [`references/test-plans.md`](references/test-plans.md) | Тест-планы А/B/C (полные шаги) |
 | [`references/version-history.md`](references/version-history.md) | История версий + Народмон-выгрузка |
 | [`references/alt-firmware-webv2.md`](references/alt-firmware-webv2.md) | Альтернативный Web UI v2 (webv2-alt) |
+| [`references/esp-idf-gateway-0.1.0.md`](references/esp-idf-gateway-0.1.0.md) | ESP-IDF линия 0.1.0-e16*: архитектура, push-канал, находка Wi-Fi/BLE, методика, схема приёмника |
+| [`references/atomservice-ble-official-doc.md`](references/atomservice-ble-official-doc.md) | Официальная документация AtomService BLE (конспект): флаги, доп. характеристика, формулы |
