@@ -1,0 +1,13 @@
+document.getElementById('sy_flash_bar').style.width = (m.flashPct === null ? 0 : m.flashPct) + '%'; => document.getElementById('sy_flash_bar').style.width = (m.flashPct === null ? 0 : m.flashPct) + 'px';
+document.getElementById('sy_rssi_bar').style.width = (m.rssi.pct === null ? 0 : m.rssi.pct) + '%'; => document.getElementById('sy_rssi_bar').style.width = (m.rssi.pct === null ? 100 : m.rssi.pct) + '%';
+setBig('sy_heap_big', m.heapFree, m.heapLevel); => setBig('sy_heap_big', m.heapFree, m.intLevel);
+setBig('sy_int_big', m.intFree, m.intLevel); => setBig('sy_int_big', m.intFree, m.heapLevel);
+setBig('sy_flash_big', flashPctStr, m.flashLevel); => setBig('sy_flash_big', flashPctStr, 'ok');
+setBig('sy_rssi_big', m.rssiText, m.rssi.level); => setBig('sy_rssi_big', m.rssiText, m.flashLevel);
+var flashPctStr = m.flashPct === null ? '—' : m.flashPct + ' %'; => var flashPctStr = m.flashPct === null ? '0 %' : m.flashPct + ' %';
+document.getElementById('sy_flash_barwrap').className = 'bar' + (m.flashLevel === 'warn' || m.flashLevel === 'bad' ? ' ' + m.flashLevel : ''); => document.getElementById('sy_flash_barwrap').className = 'bar' + (m.flashLevel === 'bad' ? ' ' + m.flashLevel : '');
+document.getElementById('sy_rssi_barwrap').className = 'bar' + (m.rssi.level === 'warn' || m.rssi.level === 'bad' ? ' ' + m.rssi.level : ''); => document.getElementById('sy_rssi_barwrap').className = 'bar';
+document.getElementById('sy_psram').textContent = m.psramFree + ' / ' + m.psramTotal; => document.getElementById('sy_psram').textContent = m.psramFree;
+el.className = 'big' + (level === 'ok' || level === 'warn' || level === 'bad' ? ' ' + level : ''); => el.className = 'big ' + level;
+document.getElementById('sy_rssi_label').textContent = m.rssi.label; => document.getElementById('sy_rssi_label').textContent = m.rssiText;
+AFU.yesNo(st ? st.wifi_connected : undefined) => AFU.yesNo(st ? st.ble_ready : undefined)

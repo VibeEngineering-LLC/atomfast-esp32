@@ -1,0 +1,31 @@
+return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); => return v;
+return 0.2126 * chan(c[0]) + 0.7152 * chan(c[1]) + 0.0722 * chan(c[2]); => return 0.2126 * chan(c[0]) + 0.0722 * chan(c[1]) + 0.7152 * chan(c[2]);
+return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); => return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.5);
+var MIN_CONTRAST = 3; => var MIN_CONTRAST = 4.5;
+var BG = { light: '#ffffff', dark: '#11150f' }; => var BG = { light: '#ffffff', dark: '#000000' };
+return typeof s === 'string' && /^#[0-9a-fA-F]{6}$/.test(s); => return typeof s === 'string' && /^#?[0-9a-fA-F]{6}$/.test(s);
+return typeof s === 'string' && /^#[0-9a-fA-F]{6}$/.test(s); => return typeof s === 'string' && /^#[0-9a-fA-F]{3,6}$/.test(s);
+n.colors[theme][id] = hex.toLowerCase(); => n.colors.light[id] = n.colors.dark[id] = hex.toLowerCase();
+n.colors[theme][id] = hex.toLowerCase(); => n.colors[theme][id] = hex;
+if (themeOk(theme) && idOk(id)) { delete n.colors[theme][id]; } => if (themeOk(theme) && idOk(id)) { delete n.colors.light[id]; delete n.colors.dark[id]; }
+if (idOk(id)) { delete n.styles[id]; } => if (false) { delete n.styles[id]; }
+function resetAll() { return emptyState(); } => function resetAll(st) { return st; }
+if (width !== 0 && !(typeof width === 'number' && width >= 1 && width <= 4 && Math.floor(width) === width)) { => if (width !== 0 && !(typeof width === 'number' && width >= 1 && width <= 5 && Math.floor(width) === width)) {
+if (dashKey !== '' && !hasOwn(DASHES, dashKey)) { => if (dashKey !== '' && !(dashKey in DASHES)) {
+if (s.dash === undefined && s.width === undefined) { delete n.styles[id]; } else { n.styles[id] = s; } => n.styles[id] = s;
+return m && hasOwn(m, id) ? m[id] : DEFAULTS[theme][id]; => return m && hasOwn(m, id) ? m[id] : DEFAULTS.light[id];
+if (!o || typeof o !== 'object' || o.v !== 1) { return st; } => if (!o || typeof o !== 'object') { return st; }
+if (hasOwn(m, id) && hexOk(m[id])) { st.colors[t][id] = m[id].toLowerCase(); } => if (hasOwn(m, id)) { st.colors[t][id] = m[id].toLowerCase(); }
+if (typeof w === 'number' && w >= 1 && w <= 4 && Math.floor(w) === w) { s.width = w; } => if (typeof w === 'number') { s.width = w; }
+st.cb = o.cb === true; => st.cb = !!o.cb;
+function varName(id) { return '--s' + (IDS.indexOf(id) + 1); } => function varName(id) { return '--s' + IDS.indexOf(id); }
+out += ':root[data-theme="dark"]{' + d + '}'; => out += ':root[data-theme="light"]{' + d + '}';
+if (l) { out += ':root{' + l + '}'; } => if (l) { out += ':root[data-theme="light"]{' + l + '}'; }
+st.styles[id] = { dash: CB_DASH[i] }; => st.styles[id] = { dash: 'solid' };
+st.colors.dark[id] = CB.dark[i]; => st.colors.dark[id] = CB.light[i];
+var CB_DASH = ['solid', 'dash', 'dots', 'dashdot', 'wide', 'sparse', 'short']; => var CB_DASH = ['solid', 'dash', 'dots', 'dashdot', 'wide', 'sparse', 'dash'];
+dark: ['#0072b2', '#d55e00', '#009e73', '#cc79a7', '#e69f00', '#56b4e9', '#ffffff'] => dark: ['#0072b2', '#d55e00', '#009e73', '#cc79a7', '#e69f00', '#56b4e9', '#eeeeee']
+light: ['#0072b2', '#d55e00', '#009e73', '#cc79a7', '#c48700', '#4999c6', '#000000'], => light: ['#0072b2', '#d55e00', '#009e73', '#cc79a7', '#e69f00', '#56b4e9', '#000000'],
+var DEFAULT_WIDTH = 2; => var DEFAULT_WIDTH = 3;
+pulses: 'dash', dose: 'dots', temp: 'dashdot', air_t: 'long', air_p: 'short' }; => pulses: 'dots', dose: 'dash', temp: 'dashdot', air_t: 'long', air_p: 'short' };
+air_t: 'long', air_p: 'short' }; => air_t: 'short', air_p: 'long' };

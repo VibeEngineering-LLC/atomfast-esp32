@@ -1,0 +1,44 @@
+var STALE_MIN_S = 30; => var STALE_MIN_S = 10;
+h: typeof o.hum === 'boolean' ? o.hum : info.caps.h => h: info.caps.h
+t: typeof o.temp === 'boolean' ? o.temp : info.caps.t, => t: info.caps.t,
+!isInt(o.sensor, 1, MAX_SENSORS)) { return null; } => !isInt(o.sensor, 0, MAX_SENSORS)) { return null; }
+o.status === 'err' ? o.status : 'err'; => o.status === 'err' ? o.status : o.status;
+'0x' + o.addr.slice(2).toLowerCase() : ''; => '0x' + o.addr.slice(2) : '';
+enabled: o.enabled === true, => enabled: !!o.enabled,
+if (st === 'no_sensor' || st === 'unsupported' && !s.model) { return null; } => if (false) { return null; }
+(st === 'disabled' ? 'off' : 'err') => 'err'
+return i === -1 ? ORDER.length : i; => return i;
+if (n && !hasOwn(seen, n.sensor)) { => if (n) {
+if (s.status === 'off' || !s.enabled) { => if (s.status === 'off') {
+s.last_ok_s_ago > Math.max(STALE_MIN_S, 3 * s.period_s); => s.last_ok_s_ago >= Math.max(STALE_MIN_S, 3 * s.period_s);
+if (s.n_ok === 0) { return { key: 'silent', => if (s.n_ok === 1) { return { key: 'silent',
+(s.err && s.err !== 'error' ? ': ' + s.err : '') => (s.err ? ': ' + s.err : '')
+if (n < 60) { return n + ' с назад'; } => if (n <= 60) { return n + ' с назад'; }
+return Math.floor(n / 60) + ' мин назад'; => return Math.round(n / 60) + ' мин назад';
+return /^-0(\.0+)?$/.test(t) ? t.slice(1) : t; => return t;
+if (s.caps.h) { parts.push({ key: 'h', => if (true) { parts.push({ key: 'h',
+function shortLabel(s) { return '№' + s.sensor + ' ' + s.name; } => function shortLabel(s) { return '№' + s.name + ' ' + s.sensor; }
+(hasOwn(KIND_NAMES, kind) ? KIND_NAMES[kind] : kind) + ' · ' => kind + ' · '
+if (!g || g.model !== s.model) { => if (!g) {
+} else { g.allEnabled = false; } => } else { g.allEnabled = true; }
+if (s.caps.p) { f.push('p_off'); } => if (true) { f.push('p_off'); }
+if (s.caps.h) { f.push('h_off'); } => if (true) { f.push('h_off'); }
+if (n < lim.min || n > lim.max => if (n <= lim.min || n > lim.max
+value: lim.int ? n : Math.round(n * 10) / 10 => value: n
+enabled: input.enabled === true }; => enabled: !!input.enabled };
+if (f === 'enabled') { continue; } => if (false) { continue; }
+function toggleBody(n, enabled) { return isInt(n, 1, MAX_SENSORS) => function toggleBody(n, enabled) { return isInt(n, 0, MAX_SENSORS)
+function modelBody(model, enabled) { return typeof model === 'string' && hasOwn(MODELS, model) ? => function modelBody(model, enabled) { return typeof model === 'string' ?
+function removable(s) { return s.n_ok === 0; } => function removable(s) { return s.n_ok <= 1; }
+return { action: 'add', model: model, addr: addr, enabled: false }; => return { action: 'add', model: model, addr: addr, enabled: true };
+return list.length < (max || MAX_SENSORS); => return list.length <= (max || MAX_SENSORS);
+!isInt(r.found, 0, 99)) { return 'Скан выполнен'; } => !isInt(r.found, 1, 99)) { return 'Скан выполнен'; }
+var changed = isInt(r.changed, 0, 99) ? r.changed : 0; => var changed = isInt(r.changed, 0, 99) ? r.changed : r.found;
+var multi = act.length > 1; => var multi = act.length >= 1;
+return defs.sort(function (a, b) { return a.order - b.order || a.sensor - b.sensor; }); => return defs;
+tint: multi ? i : 0, => tint: 0,
+return s.enabled && s.status === 'ok'; => return s.enabled;
+if (isInt(j.max_sensors, 1, 64)) { => if (true) {
+out.aggS = agg !== null ? agg : (j.cfg => out.aggS = agg !== null ? agg : (j.cfg0
+(caps.p ? (caps.t ? '+P' : 'P') : '') => (caps.p ? 'P' : '')
+j.sensors.reduce(function (acc, x) { return acc.concat(x); }, []).forEach(function (o) { => j.sensors.forEach(function (o) {

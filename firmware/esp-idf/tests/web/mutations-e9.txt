@@ -1,0 +1,28 @@
+range-ui.js | const r = AFRG.lastN(n, unit, rgNow()); => const r = AFRG.lastN(n, 'min', rgNow());
+range-ui.js | a.disabled = s.disabled; => a.disabled = false;
+range-ui.js | a.checked = s.checked; => a.checked = true;
+history.src.html | if (state.range) { loadRange(); return; } => if (false) { loadRange(); return; }
+range-ui.js | AFRG.query(state.kind, r.from, r.to, maxRows) => AFRG.query(state.kind, r.to, r.from, maxRows)
+range-ui.js | state.rangeRestored = !fromUrl; => state.rangeRestored = false;
+range-ui.js | if (state.rangeRestored && !parsed.rows.length) { => if (false) {
+range-ui.js | const restored = fromUrl || AFRG.restoreRange(rgStore, { now: rgNow() }); => const restored = AFRG.restoreRange(rgStore, { now: rgNow() });
+range-ui.js | rgStore.active = !!active && !!rgStore.last; => rgStore.active = !!rgStore.last;
+range-ui.js | rgEl('btnFull').hidden = !r; => rgEl('btnFull').hidden = false;
+range-ui.js | setSeg(rgEl('segWin'), r ? 'range' : state.windowSec, 'data-win'); => setSeg(rgEl('segWin'), state.windowSec, 'data-win');
+range-ui.js | rgEl('rangeLab').textContent = r ? AFRG.label(r.from, r.to) : ''; => rgEl('rangeLab').textContent = '';
+range-ui.js | apply.disabled = !v.ok; => apply.disabled = false;
+range-ui.js | w.warn ? 'warn' : 'ok' => 'ok'
+range-ui.js | AFRG.rowWarning(state.kind, r.from, r.to, { rate: state.rateRaw || 0.5 }); => AFRG.rowWarning('agg', r.from, r.to, { rate: state.rateRaw || 0.5 });
+range-ui.js | AFRG.linkFor(location.pathname, r) => AFRG.linkFor('/x', r)
+range-ui.js | if (full && full.t0 <= r.from && full.t1 >= r.to) { => if (false) {
+range-ui.js | const r = AFRG.selectionToRange(t0, t1, 10); => const r = AFRG.selectionToRange(t0, t1, 1);
+range-ui.js | if (state.pick) rgPickMode(false); => if (false) rgPickMode(false);
+range-ui.js | canvas.classList.toggle('picking', on); => canvas.classList.toggle('picking', false);
+range-ui.js | box.hidden = false; => box.hidden = true;
+range-ui.js | rgEl('btnRange').setAttribute('aria-expanded', 'true'); => rgEl('btnRange').setAttribute('aria-expanded', 'false');
+range-ui.js | rgEl('rangePanel').hidden = true; => rgEl('rangePanel').hidden = false;
+history.src.html | data-win="range" => data-win="rng"
+ui-theme.css | flex-wrap:wrap;gap:1px;background:var(--btn-bd)} => flex-wrap:wrap}
+chart-input.js |   rgClear(false); =>   void 0;
+history.src.html | if (!initRangeUi()) fullLoad(); => initRangeUi(); fullLoad();
+history.src.html | (state.range ? 'Интервал: ' + AFRG.label(state.range.from, state.range.to) + ' · ' : '') => ''

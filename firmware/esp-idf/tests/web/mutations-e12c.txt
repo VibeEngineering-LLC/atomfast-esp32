@@ -1,0 +1,3 @@
+ble-ui.js | host.textContent = ''; => void 0;
+ble-ui.js | blRingRssi = AFBL.pushSample(blRingRssi, b.params && b.params.rssi_dbm); => blRingRssi = AFBL.pushSample(blRingRssi, 0);
+system-nav.js | if (typeof blPush === 'function') blPush(v); => if (false) blPush(v);

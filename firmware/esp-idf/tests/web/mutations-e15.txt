@@ -1,0 +1,18 @@
+meas-ui.js | if (!tok) { return => if (false) { return
+meas-ui.js | msEl('msDel').addEventListener('click', msDelOpen); => msEl('msDel').addEventListener('click', function () { msDelOpen(); msDelDo(); });
+meas-ui.js | if (msF.mode !== 'single') { msF.stopMode = 'time'; } => if (msF.mode !== 'single') { }
+meas-ui.js | var r = await msPost('/api/meas/' + act, { id: a.run.id }); => var r = await msPost('/api/meas/' + act, {});
+meas-ui.js | body: JSON.stringify(body || {}), => body: '{}',
+meas-ui.js | var shown = rows.slice(-200); => var shown = rows.slice(-400);
+meas-ui.js | del.disabled = msBusy || !(r.state === 'done' || r.state === 'aborted' || r.state === 'error'); => del.disabled = msBusy;
+meas-ui.js | msEl('msGo').disabled = msBusy || !!act; => msEl('msGo').disabled = msBusy;
+meas-ui.js | b.hidden = !bd.active; => b.hidden = false;
+meas-ui.js | msEl('msDlg').hidden = false; => msEl('msDlg').hidden = true;
+meas-ui.js | for (var i = 0; i < opt.length; i++) { if (opt[i].value !== 'now') { opt[i].disabled = msTimeOk === false; } } => for (var i = 0; i < opt.length; i++) { }
+meas-ui.js | msEl('msTimeHint').hidden = msTimeOk !== false; => msEl('msTimeHint').hidden = true;
+meas-ui.js | msEl('msStopBtn').disabled = msBusy || !a; => msEl('msStopBtn').disabled = msBusy;
+meas-ui.js | msEl('msPause').disabled = msBusy || !(st === 'running' || st === 'wait'); => msEl('msPause').disabled = msBusy;
+meas-ui.js | csv.setAttribute('href', '/api/meas/results.csv?id=' + r.id); => csv.setAttribute('href', '/api/meas/results.csv');
+history.src.html | if (mv) mv.remove(); => if (false) mv.remove();
+ui-chrome.html | data-nav="measure">Измерения => data-nav="measure">Измерения2
+ui-common.js | if (p === '/measure' || p === '/series') return 'measure'; => if (p === '/series') return 'measure';

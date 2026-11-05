@@ -1,0 +1,24 @@
+out.cps = part(countStat(live.cps * 2, 2), sysPct, k); => out.cps = part(countStat(live.cps, 2), sysPct, k);
+out.pulses = part(pulsesStat(n2), sysPct, k); => out.pulses = part(pulsesStat(n2 * 2), sysPct, k);
+out.rate = part(rateStat(live.rate_usvh, n2), sysPct, k); => out.rate = part(rateStat(live.rate_usvh, live.cps), sysPct, k);
+out.avg_rate = part(rateStat(live.avg_rate_usvh, a.n), sysPct, k); => out.avg_rate = part(rateStat(live.avg_rate_usvh, n2), sysPct, k);
+out.dose = part(doseStat(live.dose_usv, undefined), sysPct, k); => out.dose = part(doseStat(live.dose_usv, 100), sysPct, k);
+if (live.has_rec === true && isNum(live.cps)) => if (isNum(live.cps))
+if (live.has_rec === true && isNum(n2)) => if (isNum(n2))
+if (live.has_rec === true && isNum(live.rate_usvh)) => if (isNum(live.rate_usvh))
+var a = avgCpsStat(live.avg_cps, aggS); => var a = avgCpsStat(live.avg_cps, 60);
+text: format(stat.value, t.sigma).text, zero: !!stat.zero }; => text: format(stat.value, stat.sigma).text, zero: !!stat.zero };
+if (id !== 'cps' && id !== 'pulses' && id !== 'rate') { return null; } => if (id !== 'cps' && id !== 'pulses') { return null; }
+var w = isNum(r.n) && r.n > 0 ? r.n : 1; => var w = 1;
+N += r.pulses_2s * w; S += w; => N += r.pulses_2s; S += w;
+if (isNum(r.doserate_usvh)) { R += r.doserate_usvh * w; } => if (isNum(r.doserate_usvh)) { R += r.doserate_usvh; }
+last = { n: r.pulses_2s * w, w: w, rate: r.doserate_usvh }; => last = { n: r.pulses_2s, w: w, rate: r.doserate_usvh };
+var sigN = N > 0 ? Math.sqrt(N) : 1; => var sigN = Math.sqrt(N);
+if (id === 'cps') { m = { value: N / (2 * S), sigma: sigN / (2 * S) }; => if (id === 'cps') { m = { value: N / (2 * S), sigma: sigN / S };
+else if (id === 'pulses') { m = { value: N / S, sigma: sigN / S }; => else if (id === 'pulses') { m = { value: N / S, sigma: sigN / (2 * S) };
+else { m = rateStat(R / S, N); l = rateStat(last.rate, last.n); } => else { m = rateStat(R / S, S); l = rateStat(last.rate, last.n); }
+else { m = rateStat(R / S, N); l = rateStat(last.rate, last.n); } => else { m = rateStat(R / S, N); l = rateStat(last.rate, N); }
+sigma: (last.n > 0 ? Math.sqrt(last.n) : 1) / (2 * last.w) }; => sigma: (last.n > 0 ? Math.sqrt(last.n) : 1) / 2 };
+sigma: (last.n > 0 ? Math.sqrt(last.n) : 1) / last.w }; } => sigma: (last.n > 0 ? Math.sqrt(last.n) : 1) }; }
+var mt = total(m.value, m.sigma, sysPct, k); => var mt = total(m.value, m.sigma, null, k);
+var lt = total(l.value, l.sigma, sysPct, k); => var lt = total(l.value, l.sigma, null, k);

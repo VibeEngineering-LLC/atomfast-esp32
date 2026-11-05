@@ -1,0 +1,4 @@
+if (j.enabled === true && anyStopped(j)) return => if (false) return
+if (r.stopped === true) { => if (false) {
+j.auth_stop === true || anyStopped(j)) { => j.auth_stop === true) {
+j.timeout_s > 0) ? j.timeout_s : 30; => j.timeout_s > 0) ? j.timeout_s : 8;

@@ -1,0 +1,10 @@
+var out = ['паспортная погрешность: ' + ND]; => var out = [];
+if (isNum(off) && off !== 0) { out.push( => if (isNum(off)) { out.push(
+(off > 0 ? '+' : '−') => (off > 0 ? '−' : '+')
++ Math.abs(off) + ' ' + unit); => + off + ' ' + unit);
+out.push(q === null ? 'дискретизация АЦП: ' + ND : => out.push(q === null ? '' :
+(q / 2).toPrecision(2) => (q).toPrecision(2)
+'дискретизация АЦП (нижняя граница): ±' => 'дискретизация АЦП: ±'
+return out.join('; '); => return out.join(', ');
+var unit = UNITS[kind] || ''; => var unit = '';
+var UNITS = { t: '°C', p: 'мм рт. ст.', h: '%' }; => var UNITS = { t: '°C', p: 'мм', h: '%' };

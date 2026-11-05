@@ -1,0 +1,18 @@
+else if (cols[i] === 'sensor') iS = i; => else if (cols[i] === 'sensor') iS = -1;
+else if (cols[i] === 'model') iM = i; => else if (cols[i] === 'model') iM = -1;
+else if (cols[i] === 'hum_pct') iH = i; => else if (cols[i] === 'hum_pct') iH = -1;
+sv >= 1 && sv <= 8 && => sv >= 0 && sv <= 8 &&
+sv >= 1 && sv <= 8 && => sv >= 1 && sv <= 9 &&
+Math.floor(sv) === sv) sn = sv; => true) sn = sv;
+&& !isFiniteNum(air_h)) { => ) {
+model: (iM !== -1 ? parts[iM] : ''), => model: '',
+var multi = ids.length > 1; => var multi = ids.length > 0;
+var multi = ids.length > 1; => var multi = ids.length > 2;
+ids.sort(function (x, y) { return x - y; }); => ids.sort(function (x, y) { return y - x; });
+var ok = !!b && (r.ts - b.ts) <= gap; => var ok = !!b;
+var ok = !!b && (r.ts - b.ts) <= gap; => var ok = !!b && (r.ts - b.ts) < gap;
+while (ptr[n] < a.length && a[ptr[n]].ts <= r.ts) { => while (ptr[n] < a.length && a[ptr[n]].ts < r.ts) {
+if (first === null) first = { t: t, p: p, h: h }; => first = { t: t, p: p, h: h };
+|| isFiniteNum(r.air_h)) count++; => ) count++;
+if (multi) { r['air_t_' + n] = t; r['air_p_' + n] = p; r['air_h_' + n] = h; } => if (multi) { r['air_t_' + n] = t; r['air_p_' + n] = p; r['air_h_' + n] = t; }
+var n = isFiniteNum(e.sensor) ? e.sensor : 1; => var n = 1;

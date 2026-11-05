@@ -1,0 +1,12 @@
+if (dec2 !== null) dec = dec2; => if (dec2 !== null) dec = dec;
+var eps = epsPct.toFixed(1); => var eps = epsPct.toFixed(2);
+var eps = epsPct.toFixed(1); => var eps = epsPct.toFixed(0);
+var rounded = roundTo(abs, dec); => var rounded = abs;
+if (Math.abs(value) >= 1000) { => if (Math.abs(value) > 1000) {
+} else if (value !== 0 && Math.abs(value) < 0.001) { => } else if (value !== 0 && Math.abs(value) <= 0.001) {
+if (Math.abs(value) < 1e-4 || Math.abs(value) >= 1e9) { => if (Math.abs(value) < 1e-5 || Math.abs(value) >= 1e9) {
+if (!isNum(epsPct) || epsPct < 0) { => if (!isNum(epsPct) || epsPct <= 0) {
+if (epsPct === 0) { => if (false) {
+var abs = Math.abs(value) * epsPct / 100; => var abs = value * epsPct / 100;
+var sig = (firstDigit === 1 || firstDigit === 2) ? 2 : 1; => var sig = 1;
+valueStr = value.toExponential(md).replace('e+', 'e'); => valueStr = value.toExponential(md);

@@ -1,0 +1,7 @@
+Math.round(st.ble_last_rec.battery) => st.ble_last_rec.battery
+isFinite(st.ble_last_rec.battery)) { => true) {
+typeof st.ble_last_rec.battery === 'number' && =>
+label: 'Заряд аккумулятора прибора', value: batt, unit: '%' => label: 'Заряд аккумулятора прибора', value: batt, unit: 'В'
+var batt = '—'; => var batt = '0';
+isObj(st) && isObj(st.ble_last_rec) && => isObj(st) &&
+function readings(j, st) { => function readings(j, st2) {

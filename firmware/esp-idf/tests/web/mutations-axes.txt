@@ -1,0 +1,41 @@
+        return 'count'; => return 'dose';
+            if (p < 4) { => if (p < 5) {
+                axisIdx = 3; => axisIdx = 2;
+            if (groupDef && !groupDef.zeroBase) { => if (groupDef && groupDef.zeroBase) {
+        var first = Math.ceil(min / step - 1e-9) * step; => var first = Math.floor(min / step - 1e-9) * step;
+        } else if (norm <= 5) { => } else if (norm <= 4) {
+            var s = val.trim().replace(',', '.'); => var s = val.trim();
+            return { ok: false, min: null, max: null, error: 'введите числа' }; => return { ok: false, min: null, max: null, error: 'ошибка' };
+        if (min >= max) { => if (min > max) {
+        var newMin = anchor - newSpan * anchorFrac; => var newMin = anchor - newSpan * 0.5;
+        if (anchorFrac < 0) anchorFrac = 0; => if (anchorFrac < 0) anchorFrac = -1;
+        var shift = (max - min) * fracDelta; => var shift = fracDelta;
+        if (isGroup(gid) && isFin(min) && isFin(max) && min < max) { => if (isGroup(gid) && isFin(min) && isFin(max)) {
+        if (!data || typeof data !== 'object' || data.v !== 1) { => if (!data || typeof data !== 'object') {
+            return { windowSec: 86400, viewSec: 21600 }; => return { windowSec: 21600, viewSec: 21600 };
+            return axis.units.join(', '); => return axis.units.join(' ');
+        if (entry && typeof entry === 'object' && entry.mode === 'manual' && isFin(entry.min) && isFin(entry.max) && entry.min < entry.max) { => if (entry && typeof entry === 'object' && entry.mode === 'manual' && isFin(entry.min) && isFin(entry.max)) {
+        return { cfg: cfg }; => return { cfg: cfg, override: data.override };
+    function groupOf(def) { => function groupOf(def, o) { if (o && o[def.id]) return o[def.id];
+            min = lo - span * 0.1; => min = lo - span * 0.2;
+        if (span <= scale * 1e-4) { => if (span <= scale * 1e-1) {
+            if (axes[j] && axes[j].id === sel) return [sel]; => if (axes[j] && axes[j].id === sel) return axes.map(function (a) { return a.id; });
+        if (all === true) { => if (all !== true) {
+                    var r = zoomRange(axes[j].min, axes[j].max, factor, 0.5); => var r = zoomRange(axes[j].min, axes[j].max, factor, 0.1);
+                if (axes[j] && axes[j].id === ids[i]) { => if (axes[j]) {
+        for (var i = 0; i < ids.length; i++) out = setAuto(out, ids[i]); => for (var i = 0; i < ids.length; i++) out = setManual(out, ids[i], 0, 1);
+                if (Object.prototype.hasOwnProperty.call(cfg, k) && ids.indexOf(k) === -1) out[k] = cfg[k]; => if (Object.prototype.hasOwnProperty.call(cfg, k) && ids.indexOf(k) !== -1) out[k] = cfg[k];
+        if (!v.ok) return { ok: false, cfg: cfg, error: v.error }; => if (!v.ok) return { ok: false, cfg: {}, error: v.error };
+            return { min: entry.min, max: entry.max, mode: 'manual' }; => return { min: auto.min, max: auto.max, mode: 'manual' };
+        if (includeZero) { => if (includeZero || true) {
+            if (min > 0) min = 0; => if (min > 0) min = 1;
+            var half = scale > 0 ? scale * 0.02 : 1; => var half = scale > 0 ? scale * 0.02 : 2;
+            var keepZ = copy[gid] && copy[gid].zero === true; => var keepZ = false;
+            var keepM = copy[gid] && copy[gid].zero === true; => var keepM = false;
+                    var zk = val && val.zero === true; => var zk = false;
+        if (on) e.zero = true; else delete e.zero; => e.zero = true;
+        return !!(cfg && typeof cfg === 'object' && cfg[gid] && cfg[gid].zero === true); => return false;
+out.push({ id: a.id, x: x, y0: top, y1: top + plotH }); => if (a.slot >= 1) out.push({ id: a.id, x: x, y0: top, y1: top + plotH });
+var x = a.side === 'L' ? left - a.slot * slotW : left + plotW + a.slot * slotW; => var x = a.side === 'L' ? left - a.slot * slotW : left + plotW;
+var x = a.side === 'L' ? left - a.slot * slotW : left + plotW + a.slot * slotW; => var x = a.side === 'L' ? left : left + plotW + a.slot * slotW;
+out.push({ id: a.id, x: x, y0: top, y1: top + plotH }); => out.push({ id: a.id, x: x, y0: top, y1: top });

@@ -333,10 +333,10 @@ openssl rand -base64 32
 Вывод будет вида (значения рандомные, у тебя будут другие):
 
 ```
-api_encryption_key:     zsa4j3xzDzlRDpjBFMta/iifKvoYI2UDum88BGzQnoA=
-ota_password:           xK7m_pq9a3-FBd_LRzNvW0eC
-web_password:           fH2g8s7TpMxqW3kL5jR9yNvB
-ap_password:            pE4mW2-Z9aLk
+api_encryption_key:     <base64-ключ-32-байта>
+ota_password:           <случайный-пароль>
+web_password:           <случайный-пароль>
+ap_password:           <случайный-пароль>
 ...
 ```
 

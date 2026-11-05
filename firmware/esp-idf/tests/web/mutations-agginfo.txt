@@ -1,0 +1,27 @@
+var RAW_TEXT = 'Сырые — каждое измерение (шаг ≈2 с)'; => var RAW_TEXT = 'Сырые';
+return typeof v === 'number' && isFinite(v) && v > 0 && Math.floor(v) === v ? v : null; => return typeof v === 'number' ? v : null;
+return typeof v === 'number' && isFinite(v) && v > 0 && Math.floor(v) === v ? v : null; => return typeof v === 'number' && isFinite(v) && v >= 0 && Math.floor(v) === v ? v : null;
+return typeof v === 'number' && isFinite(v) && v > 0 && Math.floor(v) === v ? v : null; => return typeof v === 'number' && isFinite(v) && v > 0 ? v : null;
+return typeof v === 'number' && isFinite(v) && v > 0 && Math.floor(v) === v ? v : null; => return 60;
+var v = status && typeof status === 'object' ? status.window_s : undefined; => var v = 60;
+function sec(n) { return n === null ? ND : n + ' с'; } => function sec(n) { return n + ' с'; }
+function sec(n) { return n === null ? ND : n + ' с'; } => function sec(n) { return n === null ? '0 с' : n + ' с'; }
+return 'Агрегаты — усреднённые за ' + sec(n) + ' точки, удобны для длинных окон; хранятся дольше'; => return 'Агрегаты — усреднённые за 60 с точки, удобны для длинных окон; хранятся дольше';
+, удобны для длинных окон; хранятся дольше'; => , удобны для длинных окон';
+if (kind === 'raw') { return RAW_TEXT; } => if (kind === 'raw') { return ''; }
+if (kind === 'raw' || kind === 'agg') { => if (kind === 'raw') {
+function storageLabel(n) { return 'усреднённые точки за ' + sec(n); } => function storageLabel(n) { return 'усреднённые точки за 60 с'; }
+function storageLabel(n) { return 'усреднённые точки за ' + sec(n); } => function storageLabel(n) { return 'усреднённые за ' + sec(n); }
+win <= rawCover => win < rawCover
+expected > 2 * target => expected >= 2 * target
+target = Math.round(widthPx); => target = widthPx;
+if (target < 200) target = 200; => if (target < 100) target = 100;
+if (target > 2000) target = 2000; => if (target > 2001) target = 2001;
+expected = Math.ceil(win * rate); => expected = Math.floor(win * rate);
+expected = Math.ceil(win / aggStep); => expected = Math.floor(win / aggStep);
+if (expected < 1) expected = 1; => if (expected < 0) expected = 1;
+var calculatedFrom = Math.floor(status.now_ts - win); => var calculatedFrom = Math.floor(status.now_ts);
+var rate = 0.5; => var rate = 1;
+var aggStep = 60; => var aggStep = 30;
+target = 800; => target = 900;
+return 'Масштаб подбирается автоматически по ширине графика.'; } => return 'Агрегаты — усреднённые за 60 с точки.'; }

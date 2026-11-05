@@ -1,0 +1,21 @@
+fmtNum(s.t_c, 1) => fmtNum(s.t_c, 2)
+fmtNum(s.p_mmhg, 1) => fmtNum(s.p_mmhg, 0)
+fmtNum(s.h_pct, 1) => fmtNum(s.h_pct, 2)
+s.last_ok_s_ago >= 0) { => s.last_ok_s_ago > 0) {
+' с назад' => ' сек назад'
+Math.round(s.last_ok_s_ago) => Math.floor(s.last_ok_s_ago)
+(typeof s.index === 'number' && isFinite(s.index)) ? s.index : idx + 1 => (typeof s.index === 'number') ? s.index : idx
+result.push(sensorCard(sensorObj, result.length)); => result.push(sensorCard(sensorObj, i));
+chips.ble = { level: 'warn', text: 'Дозиметр: ищет прибор' }; => chips.ble = { level: 'bad', text: 'Дозиметр: ищет прибор' };
+chips.ble = { level: 'bad', text: 'Дозиметр: нет связи' }; => chips.ble = { level: 'warn', text: 'Дозиметр: нет связи' };
+chips.wifi = { level: 'bad', text: 'Wi-Fi: нет' }; => chips.wifi = { level: 'warn', text: 'Wi-Fi: нет' };
+chips.mqtt = { level: 'mut', text: 'MQTT: выключен' }; => chips.mqtt = { level: 'bad', text: 'MQTT: выключен' };
+chips.mqtt = { level: 'warn', text: 'MQTT: не подключён' }; => chips.mqtt = { level: 'bad', text: 'MQTT: не подключён' };
+} else if (m.connected) { => } else if (m.connected === true) {
+chips.time = { level: 'warn', text: 'Время: ' + st.time_source }; => chips.time = { level: 'ok', text: 'Время: ' + st.time_source };
+st.time_source !== 'none' && => st.time_source !== 'nonex' &&
+st.sntp_synced === true) { => st.sntp_synced) {
+fmtNum(live.rate_usvh, 3) => fmtNum(live.rate_usvh, 2)
+fmtNum(live.avg_cps, 2) => fmtNum(live.avg_cps, 1)
+fmtNum(live.dose_usv, 3) => fmtNum(live.dose_usv, 2)
+Math.round(st.ble_last_rec.battery) => Math.floor(st.ble_last_rec.battery)

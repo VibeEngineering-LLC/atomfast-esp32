@@ -1,0 +1,34 @@
+var sigma = single && f.stopMode === 'sigma'; => var sigma = f.stopMode === 'sigma';
+if (endless) { b.endless = true; } else if (single) { b.n = 1; } => if (endless) { b.endless = true; } else if (single) { b.n = 2; }
+if (endless) { b.endless = true; } else if (single) { b.n = 1; } => if (endless) { b.endless = false; } else if (single) { b.n = 1; }
+if (n === null) { err.push({ field: 'n' => if (n === 1) { err.push({ field: 'n'
+t < 10 || t > 3600000 => t < 9 || t > 3600000
+b.retry_invalid = !!f.retry; => b.retry_invalid = true;
+var lm = intIn(f.lostMax, 0, 60); => var lm = intIn(f.lostMax, 0, 61);
+b.delay_s = d * 60; => b.delay_s = d * 30;
+if (o.timeOk === false) => if (o.timeOk === true)
+if (f.fileStore) { => if (true) {
+return isNum(p) ? n * (t + p) : null; => return isNum(p) ? n * t + p : null;
+Math.ceil(1e4 / (epsPct * epsPct) - 1e-9) => Math.ceil(1e3 / (epsPct * epsPct) - 1e-9)
+return Math.max(0, Math.min(1, (done + cur) / run.n)); => return Math.max(0, Math.min(1, cur / run.n));
+? (isNum(r.done) ? r.done : 0) + '/' + r.n : '●'; => ? (isNum(r.done) ? r.done : 0) + '/' + r.n : '*';
+/ (n - 1)) : null; => / n) : null;
+var v = pts.filter(function (p) { return p.valid; }); => var v = pts.slice();
+isNum(f.y(r)) && isNum(r.i) => isNum(r.i)
+if (!isObj(r) || r.valid !== true || !isNum(r.usv_h) => if (!isObj(r) || !isNum(r.usv_h)
+acc += r.usv_h * r.t_ms / 3600000; => acc += r.usv_h * r.t_ms / 60000;
+Math.min(k - 1, Math.floor((x - lo) / (hi - lo) * k)) => Math.floor((x - lo) / (hi - lo) * k)
+isObj(x.run) && isNum(x.run.id) => isObj(x)
+'конфликт состояния' => 'x'
+cps: fv(r.cps, r.cps_sigma), => cps: String(r.cps),
+'недействительно (потеряно пакетов ' => 'действительно (потеряно пакетов '
+return h > 0 ? h + ' ч ' => return h > 0 ? h + ' x '
+if (c <= 1.5) => if (c <= 0.5)
+y0 = Math.min(y0, p.y - (op.noErr ? 0 : p.s)); => y0 = Math.min(y0, p.y);
+return isNum(r.t0_utc) && r.t0_utc > 0; => return isNum(r.t0_utc);
+utf8Len(s) <= 32 => s.length <= 32
+if (a !== null && z !== null && a > z) => if (a !== null && z !== null && a > z + 1000000)
+if (!isNum(e) || e < 0.1 || e > 50) { err.push({ field: 'eps' => if (!isNum(e) || e < 0.01 || e > 50) { err.push({ field: 'eps'
+if (r.partial === true) { s += ', неполное'; } => if (r.partial === false) { s += ', неполное'; }
+if (isNum(r.attempt) && r.attempt > 1) => if (isNum(r.attempt) && r.attempt > 2)
+return { n: n, mean: mean, sd: sd, poisson: poisson }; => return { n: n, mean: 0, sd: sd, poisson: poisson };

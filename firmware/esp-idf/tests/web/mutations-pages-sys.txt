@@ -1,0 +1,6 @@
+id="mqHost" => id="mqHostX"
+href="/readings" => href="/settings"
+<h2>Время платы</h2> => <h2>Время</h2>
+id="sec-maint" => id="sec-maintx"
+id="btnCfgSave" => id="btnCfgSaveX"
+<span class="k">Публикация включена</span><span class="v" id="m_en">—</span> => <span class="k">Публикация включена</span><span class="v" id="m_enx">—</span>

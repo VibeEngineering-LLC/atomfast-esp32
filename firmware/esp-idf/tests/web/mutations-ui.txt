@@ -1,0 +1,42 @@
+if (pct >= 90) return 'bad'; => if (pct > 90) return 'bad';
+if (pct >= 75) return 'warn'; => if (pct > 75) return 'warn';
+if (freeBytes < badBelow) return 'bad'; => if (freeBytes <= badBelow) return 'bad';
+if (freeBytes < warnBelow) return 'warn'; => if (freeBytes <= warnBelow) return 'warn';
+var pct = Math.round(2 * (dbm + 100)); => var pct = Math.round(2 * (dbm + 90));
+if (pct > 100) pct = 100; => if (pct > 100) pct = 99;
+if (pct < 0) pct = 0; => if (pct < 0) pct = 1;
+if (dbm >= -55) { => if (dbm > -55) {
+} else if (dbm >= -67) { => } else if (dbm > -67) {
+} else if (dbm >= -75) { => } else if (dbm > -75) {
+if (n < 1024) return Math.round(n) + ' Б'; => if (n <= 1024) return Math.round(n) + ' Б';
+if (n < 1048576) return => if (n <= 1048576) return
+(n / 1024).toFixed(1) => (n / 1024).toFixed(2)
+var d = Math.floor(n / 86400); => var d = Math.floor(n / 86000);
+if (d === 0) return timeStr; => if (d === 1) return timeStr;
+return Math.min(100, Math.round(used / total * 100)); => return Math.min(99, Math.round(used / total * 100));
+total <= 0 || used < 0) return null; => total < 0 || used < 0) return null;
+if (p === '/history') return 'history'; => if (p === '/history') return 'settings';
+if (p === '/settings' || p === '/readings') return 'settings'; => if (p === '/settings' || p === '/readings') return 'system';
+if (p === '' || p === '/' || p === '/index.html') return 'history'; => if (p === '/' || p === '/index.html') return 'history';
+else bleText = 'нет'; => else bleText = 'нет связи';
+fmtNum(live.rate_usvh, 3) => fmtNum(live.rate_usvh, 2)
+var cps = (live && live.has_rec === true) ? => var cps = (live) ?
+if (sensor.temp === true) airT => if (true) airT
+var wifi = (st && st.wifi_connected === true) ? 'ok' : 'bad'; => var wifi = (st && st.wifi_connected) ? 'ok' : 'bad';
+bleText = 'ищет прибор'; => bleText = 'ищет';
+freeLevel(sy ? sy.free_heap : NaN, 80000, 40000) => freeLevel(sy ? sy.free_heap : NaN, 80000, 20000)
+freeLevel(sy ? sy.int_free : NaN, 60000, 30000) => freeLevel(sy ? sy.int_free : NaN, 50000, 30000)
++ ' из ' + => + ' / ' +
+sy.rssi + ' дБм' => sy.rssi + ' dBm'
+if (v === undefined || v === null) return DASH; => if (v === undefined) return DASH;
+/^-0(\.0+)?$/.test(s) => /^-0$/.test(s)
+(st && typeof st.boot_count === 'number' && isFinite(st.boot_count)) => (st && st.boot_count != null)
+airNote = 'датчик не найден'; => airNote = 'датчик отсутствует';
+if (!isNum(sec) || sec < 0) return DASH; => if (!isNum(sec) || sec < -1) return DASH;
+if (!isNum(n) || n < 0) return DASH; => if (!isNum(n) || n < -1) return DASH;
+return fontPct(v) / 100; => return fontPct(v);
+if (FONT_SCALES[i].pct === n) return n; => if (FONT_SCALES[i].pct >= n) return FONT_SCALES[i].pct;
+{ pct: 130, label: 'Очень крупный' } => { pct: 135, label: 'Очень крупный' }
+
+var n = (typeof v === 'string' && /^\d{2,3}$/.test(v.trim())) ? parseInt(v, 10) : v; => var n = (typeof v === 'string') ? parseInt(v, 10) : v;
+if (p === '/settings' || p === '/readings') return 'settings'; => if (p === '/settings') return 'settings';

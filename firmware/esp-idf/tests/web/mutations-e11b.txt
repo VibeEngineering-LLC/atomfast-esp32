@@ -1,0 +1,5 @@
+history.src.html | v.title = AFUN.envNote(one.model, EK[r.id], one[EK[r.id] + '_off']); => v.title = AFUN.envNote(one.model, EK[r.id], 0);
+history.src.html | if (key === 'dose') s = 'полное число => if (key === 'dosex') s = 'полное число
+history.src.html | if (e.sys > 0) s += => if (e.sys >= 0) s +=
+history.src.html | if (key === 'rate' || key === 'rate_ur' || key === 'avg_rate') => if (key === 'rate')
+history.src.html | const ust = AFUN.seriesStats(def.id, viewRows, sysPct); => const ust = AFUN.seriesStats(def.id, viewRows, null);

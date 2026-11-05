@@ -1,0 +1,10 @@
+var kind = st < STEP_RAW_MAX ? 'raw' : 'agg'; => var kind = st <= STEP_RAW_MAX ? 'raw' : 'agg';
+var STEP_RAW_MAX = 60; => var STEP_RAW_MAX = 61;
+var STEP_RAW_MAX = 60; => var STEP_RAW_MAX = 59;
+var pts = (expected > widthNorm) ? widthNorm : 0; => var pts = 0;
+var pts = (expected > widthNorm) ? widthNorm : 0; => var pts = widthNorm;
+expected = Math.ceil(span / windowS); => expected = Math.ceil(span * rawRate);
+if (w > 2000) w = 2000; => if (w > 4000) w = 4000;
+if (w < 200) w = 200; => if (w < 100) w = 100;
+if (typeof w !== 'number' || !isFinite(w) || w <= 0) return 800; => if (typeof w !== 'number' || !isFinite(w) || w <= 0) return 1000;
+var kind = st < STEP_RAW_MAX ? 'raw' : 'agg'; => var kind = st < STEP_RAW_MAX || (o.status && o.status.agg && o.status.agg.count < 1000) ? 'raw' : 'agg';

@@ -1,0 +1,21 @@
+if (parts.length !== cols.length) { => if (parts.length < cols.length) {
+if (!isFiniteNum(ts)) { => if (false) {
+air_t = (parts[iT] === '' ? NaN : Number(parts[iT])); => air_t = Number(parts[iT]);
+air_p = (parts[iP] === '' ? NaN : Number(parts[iP])); => air_p = (parts[iP] === '' ? 0 : Number(parts[iP]));
+if (!isFiniteNum(air_t) && !isFiniteNum(air_p)) { => if (!isFiniteNum(air_t) || !isFiniteNum(air_p)) {
+badCount++; => badCount += 0;
+headerIdx = i; => headerIdx = i + 1;
+if (isFiniteNum(fVal)) flags = fVal; => flags = 0;
+else if (cols[i] === 'press_mmhg') iP = i; => else if (cols[i] === 'press_pa') iP = i;
+while (j < m && env[j].ts <= r.ts) { => while (j < m && env[j].ts < r.ts) {
+if (best && (r.ts - best.ts) <= gap) { => if (best && (r.ts - best.ts) < gap) {
+gap = maxGap; => gap = maxGap + 1;
+if (isFiniteNum(maxGap) && maxGap >= 0) { => if (isFiniteNum(maxGap)) {
+var gap = 120; => var gap = 60;
+if (!Array.isArray(rows)) return 0; => var noCheck = 1;
+r.air_t = best.air_t; => r.air_t = best.air_p;
+if (isFiniteNum(r.air_t) || isFiniteNum(r.air_p)) { => if (isFiniteNum(r.air_t) && isFiniteNum(r.air_p)) {
+var validEnv = Array.isArray(env) && env.length > 0; => var validEnv = env.length > 0;
+if (iK !== -1 && parts[iK] !== 'env') { => if (false) {
+if (iK !== -1 && parts[iK] !== 'env') { => if (iK !== -1 && parts[iK] === '') {
+else if (cols[i] === 'kind') iK = i; => else if (cols[i] === 'kindx') iK = i;

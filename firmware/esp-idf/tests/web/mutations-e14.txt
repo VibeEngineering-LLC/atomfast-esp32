@@ -1,0 +1,9 @@
+history.src.html | b.title = AFAG.title(b.dataset.kind, aggWindow); => b.title = '';
+history.src.html | b.title = AFAG.title(b.dataset.kind, aggWindow); => b.title = AFAG.title(b.dataset.kind, 60);
+history.src.html | note.textContent = AFAG.note(state.kind, aggWindow); => note.textContent = '';
+history.src.html | note.textContent = AFAG.note(state.kind, aggWindow); => note.textContent = AFAG.note('agg', aggWindow);
+history.src.html | esc(AFAG.storageLabel(AFAG.windowOf(status))) => esc(AFAG.storageLabel(60))
+history.src.html | 'Агрегаты' + '<small class="khint"> => 'Агрегаты' + '<small class="x">
+history.src.html | aria-describedby="kindNote" title="Сырые — => aria-describedby="kindNot" title="Сырые —
+history.src.html | aria-describedby="kindNote" title="Агрегаты — => aria-describedby="kindNot" title="Агрегаты —
+history.src.html | id="kindNote" aria-live="polite" => id="kindNote"

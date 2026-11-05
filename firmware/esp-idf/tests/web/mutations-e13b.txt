@@ -1,0 +1,1 @@
+store-clear-ui.js | b.disabled = !ok || scBusy; => b.disabled = !ok;

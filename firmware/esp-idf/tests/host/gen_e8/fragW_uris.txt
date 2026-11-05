@@ -1,0 +1,4 @@
+        {"/api/push",                    HTTP_GET,  handle_push_get,          NULL},  // Э8: отправка истории на приёмник
+        {"/api/push",                    HTTP_POST, handle_push_post,         NULL},
+        {"/api/push/test",               HTTP_POST, handle_push_test,         NULL},
+        {"/api/push/reset",              HTTP_POST, handle_push_reset,        NULL},

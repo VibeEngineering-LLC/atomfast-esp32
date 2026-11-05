@@ -1,0 +1,15 @@
+var BASE = { t: '--s6', p: '--s7', h: '--s8' }; => var BASE = { t: '--s6', p: '--s7', h: '--s7' };
+var DASH = { t: [8, 3], p: [3, 2], h: [16, 5] }; => var DASH = { t: [8, 3], p: [3, 2], h: [8, 3] };
+name: multi ? d.name : NAME[d.kind], => name: NAME[d.kind],
+name: multi ? d.name : NAME[d.kind], => name: d.name,
+cid: 'air_' + d.kind, => cid: d.id,
+baseName: NAME[d.kind], => baseName: d.name,
+color: d.tint > 0 ? BASE[d.kind] + '|' + d.tint : BASE[d.kind], => color: BASE[d.kind],
+dash: DASH[d.kind].slice(), => dash: DASH[d.kind],
+if (!defs.length) { => if (false) {
+sensor: 1, model: 'bmp280' => sensor: 1, model: 'sht3x'
+d.sensor !== defs[0].sensor => d.sensor === defs[0].sensor
+return d.id + ':' + d.name; => return d.id;
+envKind: d.kind, => envKind: 't',
+group: d.group, => group: 'temp',
+unit: d.unit, => unit: '',

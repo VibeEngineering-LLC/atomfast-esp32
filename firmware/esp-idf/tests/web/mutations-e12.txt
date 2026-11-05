@@ -1,0 +1,20 @@
+ble-ui.js | var v = blNode('span', 'v num' + (r.v === AFBL.ND ? ' nd' : ''), r.v); => var v = blNode('span', 'v num', r.v);
+ble-ui.js | if (r.hint) { => if (false) {
+ble-ui.js | path.setAttribute('d', p.d); => path.setAttribute('d', '');
+ble-ui.js | fill.style.width = Math.round(b.frac * 100) + '%'; => fill.style.width = '100%';
+ble-ui.js | legacy.hidden = st === 'ok' || st === 'notready'; => legacy.hidden = st === 'ok';
+ble-ui.js | full.hidden = st !== 'ok' && st !== 'notready'; => full.hidden = st !== 'ok';
+ble-ui.js | el.appendChild(blSpark('bleSparkPps', => el.appendChild(blSpark('bleSparkPpsX',
+ble-ui.js | a.setAttribute('download', 'ble_sessions.csv'); => a.setAttribute('xdownload', 'ble_sessions.csv');
+ble-ui.js | a.href = '/api/ble/sessions.csv'; => a.href = '/api/ble/sessions';
+ble-ui.js | blRingPps = AFBL.pushSample(blRingPps, b.rate && b.rate.pps_inst); => blRingPps = AFBL.pushSample(blRingPps, 0);
+ble-ui.js | var list = sysData.bs || []; => var list = [];
+system-nav.js | if (e && e.status === 404) { sysData.bl = null; return; } throw e; => throw e;
+system-nav.js | if (e && e.status === 404) { sysData.bs = []; return; } throw e; => throw e;
+system-nav.js | var bb = AFBL.badge(sysData.bl, sysData.bs, Math.floor(Date.now() / 1000)); => var bb = AFBL.badge(sysData.bl, sysData.bs, 0);
+system-nav.js | if (typeof blRender === 'function') blRender(); => if (false) blRender();
+system-nav.js | b[id] = { text: bb.text !== '' ? bb.text : b[id].text, level: bb.level !== '' ? bb.level : b[id].level }; => b[id] = { text: b[id].text, level: b[id].level };
+sections.js | case 'ble': return ['status', 'ble', 'sessions']; => case 'ble': return ['status'];
+ble-ui.js | host.textContent = ''; => void 0;
+ble-ui.js | blRingRssi = AFBL.pushSample(blRingRssi, b.params && b.params.rssi_dbm); => blRingRssi = AFBL.pushSample(blRingRssi, 0);
+system-nav.js | if (typeof blPush === 'function') blPush(v); => if (false) blPush(v);

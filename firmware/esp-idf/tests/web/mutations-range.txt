@@ -1,0 +1,31 @@
+var dt = new Date(y, mo - 1, d, h, mi, s, 0); => var dt = new Date(Date.UTC(y, mo - 1, d, h, mi, s, 0));
+if (r.to - r.from < MIN_SPAN) { => if (r.to - r.from <= MIN_SPAN) {
+r.to > ctx.now + FUTURE_SLACK => r.to >= ctx.now + FUTURE_SLACK
+r.from < ctx.first => r.from <= ctx.first
+{ id: 'yesterday', label: 'Вчера', from: midnight(now, -1), to: midnight(now, 0) } => { id: 'yesterday', label: 'Вчера', from: midnight(now, 0), to: midnight(now, -1) }
+var back = (d.getDay() + 6) % 7; => var back = d.getDay();
+from: midnight(monday, -7), to: monday => from: monday - 7 * 86400, to: monday
+from: now - 3 * 86400, to: now } => from: now - 2 * 86400, to: now }
+n < 1 || n > 99999 => n > 99999
+var UNITS = { min: 60, h: 3600, d: 86400 }; => var UNITS = { min: 1, h: 3600, d: 86400 };
+if (rows <= limit) { => if (rows < limit) {
+function periodOf(kind, o) { return kind === 'raw' ? 1 / o.rate : o.windowS; } => function periodOf(kind, o) { return kind === 'raw' ? o.rate : o.windowS; }
+var DEFAULT_LIMITS = { raw: 4000, => var DEFAULT_LIMITS = { raw: 40000,
+return Math.ceil((to - from) / periodSec); => return Math.floor((to - from) / periodSec);
+return 'kind=' + kind + '&from=' + from + '&to=' + to + '&limit=' => return 'kind=' + kind + '&from=' + to + '&to=' + from + '&limit='
+|| from >= to) { return ''; } => || from > to) { return ''; }
+if (/^\d{1,10}$/.test(v)) { return isTs(+v) ? +v : null; } => if (/^\d{1,10}$/.test(v)) { return +v; }
+if (f === null || t === null || f >= t) { return null; } => if (f === null || t === null || f > t) { return null; }
+var to = Math.ceil(Math.max(t0, t1)); => var to = Math.floor(Math.max(t0, t1));
+if (to - from < (minSpan || 10)) { return null; } => if (to - from <= (minSpan || 10)) { return null; }
+st.active = o.active === true && st.last !== null; => st.active = o.active === true;
+if (isTs(first) && r.to <= first) { return false; } => if (isTs(first) && r.to < first) { return false; }
+if (isTs(last) && r.from > last) { return false; } => if (isTs(last) && r.from >= last) { return false; }
+var v = validate(st.last, { now: ctx.now }); => var v = { ok: true };
+return { checked: false, disabled: true, => return { checked: true, disabled: true,
+isCurrent: function (t) { return !!t && t.id === id; }, => isCurrent: function (t) { return t.id === id; },
+return { id: id, signal: ctrl.signal }; => return { id: 0, signal: ctrl.signal };
+return (Math.round(sec / 8640) / 10) + ' сут'; => return (Math.round(sec / 86400) / 10) + ' сут';
+function p2(n) { return n < 10 ? '0' + n : '' + n; } => function p2(n) { return n < 9 ? '0' + n : '' + n; }
+'-' + p2(d.getMonth() + 1) + '-' => '-' + p2(d.getMonth()) + '-'
+if (typeof n !== 'number' || Math.floor(n) !== n || => if (typeof n !== 'number' ||

@@ -1,0 +1,11 @@
+chart-input.js | axCfg = {}; => axCfg = axCfg;
+chart-input.js | panel.removeAttribute('hidden'); => panel.setAttribute('hidden', '');
+chart-input.js | btnAxes.setAttribute('aria-expanded', 'true'); => btnAxes.setAttribute('aria-expanded', 'false');
+chart-legend.js | cb.checked = !!state.vis[def.id]; => cb.checked = false;
+chart-legend.js | cb.setAttribute('aria-label', def.name); => cb.setAttribute('data-n', def.name);
+chart-legend.js | err.textContent = v.error; => err.textContent = '';
+chart-legend.js | minI.setAttribute('aria-label', 'Минимум оси ' + title); => minI.setAttribute('data-n', 'Минимум оси ' + title);
+chart-legend.js | axCfg = AFAX.setAuto(axCfg, ax.id); => axCfg = axCfg;
+chart-legend.js | if (!defs.length) continue; => if (false) continue;
+chart-legend.js | axPanelSig = axModel.axes.map(a => a.id).join('|'); => axPanelSig = '';
+chart-legend.js | label.appendChild(nm); => label.appendChild(nm); label.appendChild(document.createElement('button'));

@@ -1,0 +1,34 @@
+if (installable) { return 'Можно установить'; } => if (false) { return 'Можно установить'; }
+var installable = o.installable === true && latest !== ''; => var installable = o.installable === true;
+typeof o.current === 'string' && o.current !== '?' ? o.current : '' => typeof o.current === 'string' ? o.current : ''
+newer: o.newer === true, => newer: !!o.newer,
+if (o.state !== 'done') { return bad; } => if (false) { return bad; }
+return /^https:\/\/github\.com\/[^\s"'<>]*$/.test(u) ? u : ''; => return /^https?:\/\/[^\s"'<>]*$/.test(u) ? u : '';
+percent: total > 0 ? Math.min(100, Math.round(bytes * 100 / total)) : 0, => percent: total > 0 ? Math.round(bytes * 100 / total) : 0,
+isFinite(v) && v >= 0 ? v : 0; => isFinite(v) ? v : 0;
+terminal: o.state === 'done' || o.state === 'error', => terminal: o.state === 'done',
+if (seenActive || polls >= STALE_POLLS) { return false; } => if (seenActive) { return false; }
+if (cur.state === 'idle') { return true; } => if (false) { return true; }
+return baseline.state === cur.state && baseline.error === cur.error && baseline.bytes === cur.bytes; => return baseline.state === cur.state;
+if (free < MEM_WARN) { level = 'warn'; } => if (free <= MEM_WARN) { level = 'warn'; }
+if (free < MEM_BAD || (largest !== null && largest < BLOCK_MIN)) { level = 'bad'; } => if (free < MEM_BAD) { level = 'bad'; }
+largest < BLOCK_MIN => largest <= BLOCK_MIN
+free < MEM_BAD || => free <= MEM_BAD ||
+if (status === 409) => if (status === 410)
+|| !hasOwn(STATES, o.state)) { => || !(o.state in STATES)) {
+var base = hasOwn(ERRORS, code) ? ERRORS[code] : => var base = ERRORS[code] ? ERRORS[code] :
+if (hasOwn(REASONS, reason)) { return REASONS[reason]; } => if (REASONS[reason]) { return REASONS[reason]; }
+errorText: o.state === 'error' ? errorText(err) : '', => errorText: errorText(err),
+ || o.state === 'verifying' || o.state === 'installing' => || o.state === 'installing'
+var MEM_NEED_MAX = 30720; => var MEM_NEED_MAX = 50000;
+sha256_mismatch: 'SHA-256 образа не совпала с SHA256SUMS.txt', => sha256_mismatch: 'ошибка образа',
+var CHECK_MAX_MS = 60000; => var CHECK_MAX_MS = 6000;
+return 'Установка не удалась: ' + base + '. Прежняя прошивка осталась.'; => return 'Установка не удалась: ' + base + '.';
+if (largest !== null) { text += => if (true) { text +=
+function kb(v) { return Math.round(v / 1024) + ' КБ'; } => function kb(v) { return Math.floor(v / 1024) + ' КБ'; }
+isFinite(sy.int_free) && sy.int_free >= 0 ? sy.int_free : null; => isFinite(sy.int_free) ? sy.int_free : null;
+return reason ? 'Причина: ' + reason : 'Установка недоступна'; => return 'Причина: ' + reason;
+var ASSET_NAME = 'atomfast_gw.bin'; => var ASSET_NAME = 'atomfast.bin';
+if (o.state === 'checking') { return { state: 'checking' }; } => if (false) { return { state: 'checking' }; }
+var STALE_POLLS = 4; => var STALE_POLLS = 3;
+if (level === 'bad') { text += => if (false) { text +=

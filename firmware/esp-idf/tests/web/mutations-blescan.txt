@@ -1,0 +1,24 @@
+var SCAN_NONE = 'не выполнялось: плата подключена к сохранённому адресу'; => var SCAN_NONE = 'не выполнялось';
+var SCAN_IDLE = ND + ' (скан не шёл)'; => var SCAN_IDLE = ND;
+var idle = b.connected === true && s.scans === 0; => var idle = s.scans === 0;
+var idle = b.connected === true && s.scans === 0; => var idle = b.connected === true && !s.scans;
+var idle = b.connected === true && s.scans === 0; => var idle = b.connected === true;
+var idle = b.connected === true && s.scans === 0; => var idle = b.connected === true && s.scans <= 1;
+var nm = typeof d.name === 'string' ? d.name : ND; => var nm = typeof d.name === 'string' ? d.name : '';
+nm === ND ? 'имя не принимается в рекламе' : 'из рекламы прибора' => nm === ND ? 'имя не принимается в рекламе' : 'имя не принимается в рекламе'
+nm === ND ? 'имя не принимается в рекламе' : 'из рекламы прибора' => nm !== ND ? 'имя не принимается в рекламе' : 'из рекламы прибора'
+rows.unshift(row('Сканирование', SCAN_NONE, => rows.push(row('Сканирование', SCAN_NONE,
+rows.push(row('Реклам в последнем скане', SCAN_IDLE, => rows.push(row('Реклам в последнем скане', num(s.adv_last),
+rows.push(row('Найдено приборов в последнем скане', SCAN_IDLE, => rows.push(row('Найдено приборов в последнем скане', num(s.found_last),
+rows.push(row('От начала скана до обнаружения прибора, мс', SCAN_IDLE, => rows.push(row('От начала скана до обнаружения прибора, мс', num(s.detect_ms),
+rows.push(row('Сканирований с загрузки', num(s.scans), => rows.push(row('Сканирований с загрузки', num(s.adv_last),
+rows.push(row('Реклам в последнем скане', num(s.adv_last), => rows.push(row('Реклам в последнем скане', num(s.found_last),
+rows.push(row('Найдено приборов в последнем скане', num(s.found_last), => rows.push(row('Найдено приборов в последнем скане', num(s.adv_last),
+rows.push(row('Адрес прибора (маска)', typeof d.addr === 'string' ? d.addr : ND, => rows.push(row('Адрес прибора (маска)', ND,
+row('Интервал сканирования, мс', num(s.interval_ms, 1), => row('Интервал сканирования, мс', num(s.window_ms, 1),
+, 'сколько раз плата запускала поиск прибора')); => , ''));
+, 'часть адреса скрыта звёздочками')); => , ''));
+, 'public: постоянный, random: меняющийся')); => , ''));
+, 'после подключения плата не ищет прибор заново, пока соединение живо')); => , ''));
+, 'как часто плата начинает цикл приёма реклам'), => , ''),
+, 'сколько из каждого интервала плата слушает эфир') => , '')

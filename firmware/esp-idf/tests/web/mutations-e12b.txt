@@ -1,0 +1,8 @@
+ble-ui.js | path.setAttribute('d', p.d); => path.setAttribute('d', '');
+ble-ui.js | blTimer = setInterval(blPoll, 5000); => blTimer = setInterval(blPoll, 600000);
+ble-ui.js | blRingPps = AFBL.pushSample(blRingPps, b.rate && b.rate.pps_inst); => blRingPps = AFBL.pushSample(blRingPps, 0);
+ble-ui.js | if (e && e.status === 404) { sysData.bl = null; blRender(); } => if (false) { sysData.bl = null; blRender(); }
+ble-ui.js | host.textContent = ''; => host.textContent = host.textContent;
+system-nav.js | if (e && e.status === 404) { sysData.bl = null; return; } throw e; => throw e;
+system-nav.js | if (e && e.status === 404) { sysData.bs = []; return; } throw e; => throw e;
+history.src.html | initBleUi(); => if (false) initBleUi();

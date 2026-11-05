@@ -1,0 +1,9 @@
+model = MODEL_NAMES[model]; => model = model;
+sht3x: 'SHT3x', aht2x: 'AHT2x' => sht3x: 'SHT3y', aht2x: 'AHT2x'
+number = s.sensor; => number = idx + 1;
+s.sensor <= 8 && => s.sensor <= 80 &&
+var enabled = !(s.enabled === false || s.status === 'off'); => var enabled = !(s.enabled === false);
+} else if (status === 'off') { => } else if (status === 'offx') {
+statusText = 'ошибка'; => statusText = 'ошибка!';
+number: number, => number: 0,
+enabled: enabled, => enabled: true,

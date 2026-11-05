@@ -1,0 +1,130 @@
+<div data-view="measure" id="measureView">
+  <section class="card mbboard" id="mbBoard" aria-label="Идущий замер" hidden>
+    <div class="mbhead"><div class="mbtitle" id="mbTitle"></div><div class="mbsub" id="mbSub"></div></div>
+    <div class="mbrate"><span class="mbval" id="mbRate">—</span><span class="mbunit">мкЗв/ч</span><span class="mbeps" id="mbEps"></span></div>
+    <div class="bar" id="msBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="msBarFill"></i></div>
+    <div class="mbtime"><span id="mbElapsed">00:00</span> / <span id="mbTotal">--:--</span><span class="mbleft" id="mbLeft"></span></div>
+    <div class="mbtiles">
+      <div class="mbtile"><span class="mbk">Импульсов</span><span class="mbv" id="mbCounts">—</span></div>
+      <div class="mbtile"><span class="mbk">Ср. имп/с</span><span class="mbv" id="mbCps">—</span></div>
+      <div class="mbtile"><span class="mbk">Потери пакетов (n / допуск)</span><span class="mbv" id="mbLost">—</span></div>
+    </div>
+    <div class="mbspark"><svg id="mbSpark" viewBox="0 0 300 48" preserveAspectRatio="none" role="img" aria-label="Мощность дозы за текущее окно"><path id="mbSparkPath" d="" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></div>
+    <div class="mbprev" id="mbPrev" hidden></div>
+    <div class="row" id="msLiveBtns">
+      <button type="button" class="btn" id="msPause">Пауза</button>
+      <button type="button" class="btn" id="msResume">Продолжить</button>
+      <button type="button" class="btn warn" id="msStopBtn">Стоп</button>
+    </div>
+    <div class="result" id="msLiveResult" role="status"></div>
+  </section>
+
+  <section class="card" id="msNewCard" aria-label="Новое измерение">
+  <div class="mstitle">
+    <h2>Новый замер</h2>
+    <div class="msmode">
+      <span class="sr" id="msModeLbl">Режим</span>
+      <div class="seg" role="group" aria-labelledby="msModeLbl" id="msMode"><button type="button" data-mode="single" aria-pressed="true">Разовое</button><button type="button" data-mode="series" aria-pressed="false">Серия</button><button type="button" data-mode="journal" aria-pressed="false">Из журнала</button></div>
+    </div>
+  </div>
+  <div class="hint" id="msModeNote"></div>
+  <div class="form msform" id="msForm">
+    <fieldset class="msgroup">
+      <legend class="sr">Что измеряем</legend>
+      <label class="fld msname">
+        <span class="msnamelbl"><span>Название</span><span id="msNameCnt">0/32</span></span>
+        <input id="msName" type="text" autocomplete="off" spellcheck="false" maxlength="32" oninput="document.getElementById('msNameCnt').textContent=this.value.length+'/32'">
+      </label>
+    </fieldset>
+    <div id="msNormal">
+      <fieldset class="msgroup">
+        <legend>Когда остановить</legend>
+        <div data-ms="single">
+          <span class="sr" id="msStopLbl">Остановка</span>
+          <div class="seg" role="group" aria-labelledby="msStopLbl" id="msStop"><button type="button" data-stop="time" aria-pressed="true">По времени</button><button type="button" data-stop="sigma" aria-pressed="false">По погрешности</button></div>
+        </div>
+        <div class="msgrp" data-ms="time">
+          <div class="msrow">
+            <label class="fld msfld"><input id="msH" type="text" inputmode="numeric" autocomplete="off"><span>ч</span></label>
+            <span class="msc">:</span>
+            <label class="fld msfld"><input id="msM" type="text" inputmode="numeric" autocomplete="off"><span>мин</span></label>
+            <span class="msc">:</span>
+            <label class="fld msfld"><input id="msS" type="text" inputmode="numeric" autocomplete="off"><span>с</span></label>
+          </div>
+        </div>
+        <div class="msgrp" data-ms="sigma">
+          <div class="msrow">
+            <label class="fld msfld"><input id="msEps" type="text" inputmode="decimal" autocomplete="off"><span>Погрешность, %</span></label>
+            <label class="fld msfld"><input id="msTmin" type="text" inputmode="numeric" autocomplete="off"><span>Не менее, с</span></label>
+            <label class="fld msfld"><input id="msTmax" type="text" inputmode="numeric" autocomplete="off"><span>Предел, с</span></label>
+          </div>
+        </div>
+        <div class="hint" data-ms="sigma" id="msSigmaHint"></div>
+        <div class="msgrp" data-ms="series">
+          <label class="fld msfld"><input id="msN" type="text" inputmode="numeric" autocomplete="off"><span>Число измерений (2–1000)</span></label>
+        </div>
+      </fieldset>
+      <details class="mbadv more" id="msAdv"><summary>Дополнительно</summary>
+        <div class="mbadv-body">
+          <div class="msgrp">
+            <label class="fld">Старт<select id="msStart"><option value="now">Сразу</option><option value="at">В указанное время</option><option value="delay">Через заданное время</option></select></label>
+            <label class="fld" data-ms="at">Дата и время старта<input id="msAt" type="datetime-local"></label>
+            <label class="fld" data-ms="delay">Через, минут (1-10080)<input id="msDelay" type="text" inputmode="numeric" autocomplete="off"></label>
+          </div>
+          <div class="hint" id="msTimeHint" hidden>Время на плате не синхронизировано: старт «в указанное время» и «через заданное время» недоступен.</div>
+          <div class="msgrp" data-ms="gap">
+            <label class="fld">Пауза между окнами: часы<input id="msPh" type="text" inputmode="numeric" autocomplete="off"></label>
+            <label class="fld">минуты<input id="msPm" type="text" inputmode="numeric" autocomplete="off"></label>
+            <label class="fld">секунды<input id="msPs" type="text" inputmode="numeric" autocomplete="off"></label>
+          </div>
+          <div class="msgrp">
+            <label class="fld">Допустимо потерянных пакетов (0-60)<input id="msLost" type="text" inputmode="numeric" autocomplete="off"></label>
+            <label class="check"><input type="checkbox" id="msRetry"> Повторять недействительное измерение</label>
+          </div>
+          <div class="msgrp"><label class="check"><input type="checkbox" id="msFile"> Сохранять в файл на плате</label></div>
+          <div class="msgrp" data-ms="file">
+            <label class="fld">Префикс<input id="msPrefix" type="text" autocomplete="off" spellcheck="false"></label>
+            <label class="fld">Шаблон имени<input id="msTpl" type="text" autocomplete="off" spellcheck="false"></label>
+            <label class="check"><input type="checkbox" id="msNoOver"> Не перезаписывать существующие</label>
+          </div>
+        </div>
+      </details>
+    </div>
+    <div id="mbJrn" hidden>
+      <div class="msgrp msjrnrow">
+        <label class="fld">с<input id="mbFrom" type="datetime-local" step="1"></label>
+        <label class="fld">по<input id="mbTo" type="datetime-local" step="1"></label>
+      </div>
+      <div class="row"><button type="button" class="btn" id="mbTake">Взять с графика</button><button type="button" class="btn primary" id="mbCalc">Посчитать</button></div>
+      <div id="mbJrnRes"></div>
+      <div class="row"><button type="button" class="btn" id="mbSave" disabled>Сохранить в результаты</button></div>
+      <div class="hint" id="mbJrnNote">Расчёт идёт на плате по сохранённым сырым данным. Интервал не больше 36 часов.</div>
+      <div class="result" id="mbJrnMsg" role="status"></div>
+    </div>
+  </div>
+  <ul class="msErrs" id="msErrs" role="alert"></ul>
+  <div class="msfoot">
+    <div class="mstotal" id="msTotal" hidden></div>
+    <button type="button" class="btn primary msgo" id="msGo" hidden>Запустить</button>
+  </div>
+  <div class="result" id="msResult" role="status"></div>
+</section>
+  <details class="card mbres" id="msResCard">
+    <summary><span class="mbrestitle">Результаты (<span id="mbResN">0</span>)</span> <span class="mbreslast" id="mbResLast"></span></summary>
+    <div class="mbempty" id="mbResEmpty">Замеров пока нет. Запустите первый</div>
+    <label class="fld">Запуск<select id="msRun"></select></label>
+    <div id="msRunInfo" class="hint"></div>
+    <div id="msSum"></div>
+    <div class="row"><a class="btn" id="msCsv" href="/api/meas/results.csv" download>Скачать CSV</a><button type="button" class="btn danger" id="msDel">Удалить запуск</button></div>
+    <div class="scdlg" id="msDlg" role="alertdialog" aria-labelledby="msDlgTitle" hidden><strong id="msDlgTitle">Удалить запуск?</strong><div id="msDlgText"></div><div class="row"><button type="button" class="btn danger" id="msDlgOk">Удалить</button><button type="button" class="btn" id="msDlgCancel">Отмена</button></div></div>
+    <div class="result" id="msDelResult" role="status"></div>
+    <div class="tblwrap"><table class="mstbl" id="msTbl"><caption class="sr">Результаты измерений</caption></table></div>
+    <div class="hint" id="msTblNote"></div>
+    <div id="msPlotCard"><h3 class="sub">График серии</h3>
+      <div class="row"><span class="tpre" id="msFldLbl">Величина</span><div class="seg" role="group" aria-labelledby="msFldLbl" id="msFld"><button type="button" data-fld="cps" aria-pressed="true">CPS</button><button type="button" data-fld="usv_h" aria-pressed="false">мкЗв/ч</button><button type="button" data-fld="counts" aria-pressed="false">Импульсы</button></div><span class="tpre" id="msViewLbl">Вид</span><div class="seg" role="group" aria-labelledby="msViewLbl" id="msView"><button type="button" data-vw="line" aria-pressed="true">По номеру</button><button type="button" data-vw="time" aria-pressed="false">По времени</button><button type="button" data-vw="hist" aria-pressed="false">Гистограмма</button><button type="button" data-vw="dose" aria-pressed="false">Накопленная доза</button></div></div>
+      <div class="hint" id="msPlotNote"></div>
+      <div class="msplot" id="msPlot"></div>
+      <div class="hint" id="msStat"></div>
+    </div>
+  </details>
+</div>

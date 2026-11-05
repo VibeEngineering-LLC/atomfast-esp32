@@ -1,0 +1,12 @@
+chart-input.js | selectAxis(down.ax.id); => redraw();
+chart-input.js | return AFAX.scaleTargets(axModel.axes, selAxis, allAxes); => return AFAX.scaleTargets(axModel.axes, selAxis, true);
+chart-input.js | axCfg = AFAX.zoomAxes(axCfg, axModel.axes, ids, factor); => axCfg = AFAX.zoomAxes(axCfg, axModel.axes, axModel.axes.map(a => a.id), factor);
+chart-input.js | axCfg = AFAX.fitAxes(axCfg, [ax.id]); => axCfg = AFAX.fitAxes(axCfg, []);
+chart-input.js | if (p.y < layout().top) { => if (p.y < 0) {
+chart-input.js | axCfg = AFAX.resetAxes(axCfg, ids); => axCfg = {};
+chart-input.js | allAxes = e.target.checked; => allAxes = false;
+chart-input.js | if (axisZoom(0.8)) return; => if (false) return;
+chart-legend.js | name.addEventListener('click', () => { selectAxis(ax.id); }); => name.addEventListener('click', () => {});
+chart-legend.js | if (zc2) zc2.checked = AFAX.zeroOf(axCfg, ax.id); => if (zc2) zc2.checked = false;
+chart-legend.js | axCfg = AFAX.setZero(axCfg, ax.id, zc.checked); => axCfg = AFAX.setZero(axCfg, ax.id, false);
+chart-draw.js | var auto = AFAX.autoRange(viewRows, axisFields(ax), AFAX.zeroOf(axCfg, ax.id)); => var auto = AFAX.autoRange(viewRows, axisFields(ax), false);

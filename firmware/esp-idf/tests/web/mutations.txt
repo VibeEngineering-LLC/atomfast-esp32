@@ -1,0 +1,28 @@
+ts >= 1700000000 => ts > 1700000000
+raw === '' ? NaN : Number(raw) => raw === '' ? 0 : Number(raw)
+parts.length !== cols.length => parts.length < cols.length
+rows[i].ts >= cut => rows[i].ts > cut
+var B = Math.floor(maxPoints / 2); => var B = maxPoints;
+if (rows[k][field] > rows[ma][field]) ma = k; => ;
+step = 5 * mag; => step = 10 * mag;
+Math.ceil(l0 / step) => Math.floor(l0 / step)
+var off = offMin * 60; => var off = -offMin * 60;
+new Date((ts - offMin * 60) * 1000) => new Date((ts + offMin * 60) * 1000)
+spanSec < 600 => spanSec <= 600
+if (sec < 3600) => if (sec <= 3600)
+if (n < 1048576) => if (n <= 1048576)
+if (limit <= count) return 0; => if (limit < count) return 0;
+return (n - 1) / (last - first); => return n / (last - first);
+a.length - maxRows) => a.length - maxRows + 1)
+* 1.2) + 5 => * 1.2) + 4
+if (want > maxRows) want = maxRows; => if (want < maxRows) want = maxRows;
+var m = sinceUsed > oldest ? sinceUsed : oldest; => var m = sinceUsed < oldest ? sinceUsed : oldest;
+mean: sum / cnt => mean: sum / (cnt + 1)
+else unknown++; => else unknown += 2;
+if (v >= max - step * 1e-9) break; => if (v > max + step * 1e-9) break;
+if (parts.length !== cols.length) { bad++; continue; } => if (parts.length !== cols.length) { continue; }
+if (mi === ma) out.push => if (false) out.push
+if (typeof v !== 'number' || !isFinite(v)) continue; => if (typeof v !== 'number') continue;
+if (cnt === 0) return { n: 0, min: null, max: null, mean: null, last: null }; => if (cnt === 0) return { n: 0, min: 0, max: 0, mean: 0, last: 0 };
+last = v; => last = min;
+return { n: cnt, min: min, max: max, mean: sum / cnt, last: last }; => return { n: cnt, min: min, max: max, mean: sum / n, last: last };

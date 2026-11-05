@@ -1,0 +1,14 @@
+        var dt = new Date(y, m, day + i, 0, 0, 0); => var dt = new Date(Date.UTC(y, m, day + i, 0, 0, 0));
+                if (first || dateKey !== prevDateKey) { => if (!first && dateKey !== prevDateKey) {
+                if (first || dateKey !== prevDateKey) { => if (first) {
+    } else if (span <= 172800) { => } else if (span <= 86400000) {
+    if (span < 600) { => if (span < 300) {
+    var withYear = d0.getFullYear() !== d1.getFullYear(); => var withYear = d0.getFullYear() === d1.getFullYear();
+    var sameYear = d0.getFullYear() === d1.getFullYear(); => var sameYear = true;
+    return W + off(t0) * 60; => return W + off(W) * 60;
+    var names = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб']; => var names = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+        if (ts >= t0) { => if (ts > t0) {
+        for (i = 0; i < mm.length; i += k) { => for (i = 0; i < mm.length; i += 1) {
+        return pad(d.getDate()) + '.' + pad(d.getMonth() + 1); => return pad(d.getMonth() + 1) + '.' + pad(d.getDate());
+        !isFinite(t0) || !isFinite(t1) || t1 <= t0) { => !isFinite(t0) || !isFinite(t1) || t1 < t0) {
+        wd: weekdayShort(mm[i]) => wd: ''

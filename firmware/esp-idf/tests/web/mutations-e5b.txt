@@ -1,0 +1,2 @@
+history.src.html | AFSN.readings(j, st) : [] => AFSN.readings(j) : []
+history.src.html | try { st = await fetchJSON('/api/status'); } => try { st = null; }

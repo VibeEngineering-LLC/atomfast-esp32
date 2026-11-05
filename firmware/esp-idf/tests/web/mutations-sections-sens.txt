@@ -1,0 +1,3 @@
+if (cards[i].enabled === false) continue; => if (false) continue;
+out.sensors.text = String(nEn); => out.sensors.text = String(cards.length);
+nEn++; => nEn += 2;

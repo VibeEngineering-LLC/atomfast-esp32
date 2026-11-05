@@ -1,0 +1,423 @@
+  <div class="sysgrid" data-view="system">
+    <nav class="sidelist" id="sidelist" aria-label="Разделы системы">
+      <a href="#status" data-sec="status"><span class="nt">Состояние</span><span class="nb" id="nb_status"></span></a>
+      <a href="#system" data-sec="system"><span class="nt">Система</span><span class="nb" id="nb_system"></span></a>
+      <a href="#wifi" data-sec="wifi"><span class="nt">Wi-Fi и сеть</span><span class="nb" id="nb_wifi"></span></a>
+      <a href="#ble" data-sec="ble"><span class="nt">BLE</span><span class="nb" id="nb_ble"></span></a>
+      <a href="#sensors" data-sec="sensors"><span class="nt">Датчики среды</span><span class="nb" id="nb_sensors"></span></a>
+      <a href="#mqtt" data-sec="mqtt"><span class="nt">MQTT / Home Assistant</span><span class="nb" id="nb_mqtt"></span></a>
+      <a href="#db" data-sec="db"><span class="nt">База данных</span><span class="nb" id="nb_db"></span></a>
+      <a href="#storage" data-sec="storage"><span class="nt">Хранилище</span><span class="nb" id="nb_storage"></span></a>
+      <a href="#firmware" data-sec="firmware"><span class="nt">Прошивки</span><span class="nb" id="nb_firmware"></span></a>
+      <a href="#maint" data-sec="maint"><span class="nt">Обслуживание</span><span class="nb" id="nb_maint"></span></a>
+    </nav>
+
+    <div class="secpane">
+
+      <section class="sec" id="sec-status" data-sec="status" aria-label="Состояние" hidden>
+        <div class="hint">Значения датчиков — на странице <a href="/readings">Показания</a>, график и история — на <a href="/">Главной</a>.</div>
+        <div class="card">
+          <h2>Состояние</h2>
+          <div class="kv"><span class="k">Wi-Fi подключён</span><span class="v" id="sy_wifi">—</span></div>
+          <div class="kv"><span class="k">BLE готов</span><span class="v" id="sy_ble">—</span></div>
+          <div class="kv"><span class="k">Версия прошивки</span><span class="v" id="sy_fw">—</span></div>
+          <div class="kv"><span class="k">Раздел OTA</span><span class="v" id="sy_part">—</span></div>
+          <div class="kv"><span class="k">Аптайм</span><span class="v" id="sy_up">—</span></div>
+          <div class="kv"><span class="k">Перезагрузок (boot_count)</span><span class="v" id="sy_boot">—</span></div>
+          <div class="kv"><span class="k">Причина последнего сброса</span><span class="v" id="sy_reset">—</span></div>
+          <div class="kv"><span class="k">Источник времени</span><span class="v" id="sy_time">—</span></div>
+          <div class="kv"><span class="k">SNTP синхронизирован</span><span class="v" id="sy_sntp">—</span></div>
+        </div>
+      </section>
+
+      <section class="sec" id="sec-system" data-sec="system" aria-label="Система" hidden>
+        <div class="tiles">
+          <div class="tile">
+            <span class="lbl">Свободная память (heap)</span>
+            <span class="big num" id="sy_heap_big">—</span>
+            <span class="sub">минимум с запуска <span id="sy_heap_min" class="num">—</span></span>
+          </div>
+          <div class="tile">
+            <span class="lbl">Внутренняя RAM</span>
+            <span class="big num" id="sy_int_big">—</span>
+            <span class="sub">минимум с запуска <span id="sy_int_min" class="num">—</span></span>
+          </div>
+          <div class="tile">
+            <span class="lbl">Flash (LittleFS)</span>
+            <span class="big num" id="sy_flash_big">—</span>
+            <div class="bar" id="sy_flash_barwrap"><i id="sy_flash_bar" style="width:0%"></i></div>
+            <span class="sub" id="sy_flash_txt">—</span>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Память и flash</h2>
+          <div class="kv"><span class="k">Свободно, heap</span><span class="v" id="sy_heap">—</span></div>
+          <div class="kv"><span class="k">Свободно, внутренняя RAM</span><span class="v" id="sy_int">—</span></div>
+          <div class="kv"><span class="k">PSRAM: свободно / всего</span><span class="v" id="sy_psram">—</span></div>
+          <div class="kv"><span class="k">Flash занято</span><span class="v" id="sy_flash_pct">—</span></div>
+        </div>
+      </section>
+
+      <section class="sec" id="sec-wifi" data-sec="wifi" aria-label="Wi-Fi и сеть" hidden>
+        <div class="tiles">
+          <div class="tile">
+            <span class="lbl">Wi-Fi</span>
+            <span class="big num" id="sy_rssi_big">—</span>
+            <div class="bar" id="sy_rssi_barwrap"><i id="sy_rssi_bar" style="width:0%"></i></div>
+            <span class="sub">уровень сигнала: <span id="sy_rssi_label">—</span></span>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Сеть</h2>
+          <div class="kv"><span class="k">Сеть (SSID)</span><span class="v" id="sy_ssid">—</span></div>
+          <div class="kv"><span class="k">Режим сети</span><span class="v" id="sy_net">—</span></div>
+          <div class="kv"><span class="k">Уровень сигнала</span><span class="v" id="sy_rssi">—</span></div>
+          <div class="kv" id="sy_ap_warn" role="alert" hidden><span class="k">Пароль точки доступа</span><span class="v" style="color:var(--warn)">стандартный (не менялся): смените, иначе любой, знающий прошивку, подключится к полевой точке</span></div>
+        </div>
+      </section>
+
+      <section class="sec" id="sec-ble" data-sec="ble" aria-label="BLE" hidden>
+        <div class="card">
+          <label class="chk"><input type="checkbox" id="set_ble_ext"> Расширенная статистика</label>
+          <div class="hint">Выключено: ведутся только основные счётчики; окна, RSSI-гистограмма и сессии не копятся.</div>
+        </div>
+        <div class="card" id="bleSel">
+          <h2>Выбор прибора</h2>
+          <div class="hint" id="sel_head" aria-live="polite">—</div>
+          <table class="fw-table" id="sel_table">
+            <thead><tr><th>#</th><th>Прибор</th><th>Тип</th><th>Сигнал</th><th>Адрес</th><th>Видели</th><th></th></tr></thead>
+            <tbody id="sel_rows"></tbody>
+          </table>
+          <div class="btnrow">
+            <button type="button" class="btn" id="sel_rescan">Пересканировать эфир</button>
+            <button type="button" class="btn danger" id="sel_forget">Забыть прибор</button>
+            <button type="button" class="btn" id="sel_cancel">Отмена</button>
+          </div>
+          <div class="btnrow">
+            <input type="text" id="sel_manual_addr" placeholder="AA:BB:CC:DD:EE:FF" maxlength="17" autocomplete="off" spellcheck="false">
+            <button type="button" class="btn" id="sel_manual_btn">Подключить по адресу</button>
+          </div>
+          <div class="hint">Сильнее сигнал — ближе прибор. Адреса показаны не полностью.</div>
+          <div class="hint" id="sel_msg" aria-live="polite"></div>
+        </div>
+        <div id="bleFull" hidden>
+          <div id="bleCards" class="blecards"></div>
+        </div>
+        <div id="bleLegacy">
+          <div class="card">
+            <h2>Дозиметр AtomFast (BLE)</h2>
+            <div class="kv"><span class="k">Подключён</span><span class="v" id="b_conn">—</span></div>
+            <div class="kv"><span class="k">Стек готов</span><span class="v" id="b_ready">—</span></div>
+            <div class="kv"><span class="k">Переподключений</span><span class="v" id="b_reconn">—</span></div>
+            <div class="kv"><span class="k">Принято пакетов</span><span class="v" id="b_rx">—</span></div>
+            <div class="kv"><span class="k">Битых пакетов</span><span class="v" id="b_bad">—</span></div>
+            <div class="kv"><span class="k">Ошибок</span><span class="v" id="b_err">—</span></div>
+            <div class="kv"><span class="k">Возраст последней записи</span><span class="v" id="b_age">—</span></div>
+          </div>
+          <div class="hint">Подробная статистика недоступна: прошивка платы не отдаёт /api/ble (обновите прошивку).</div>
+        </div>
+      </section>
+
+      <section class="sec" id="sec-sensors" data-sec="sensors" aria-label="Датчики среды" hidden>
+        <div class="card" id="sensCard">
+          <h2>Датчики среды</h2>
+          <div class="sens-sum" id="sensSummary" role="status">Датчиков: —</div>
+          <div class="hint" id="sensEmpty" hidden>Датчики не найдены. Нажмите «Сканировать шину I2C».</div>
+          <div class="fw-wrap">
+            <table class="fw-table sens-table" id="sensTable" hidden>
+              <thead><tr><th>№</th><th>Модель</th><th>Адрес</th><th>Состояние</th><th>Значения</th><th>Возраст</th><th>Ошибок</th><th>Вкл.</th><th>Действия</th></tr></thead>
+              <tbody id="sensRows"></tbody>
+            </table>
+          </div>
+          <div class="row">
+            <button type="button" id="btnScan" class="btn">Сканировать шину I2C</button>
+          </div>
+          <div class="hint">Сканирование разово расходует около 4 КБ памяти, не нажимайте его часто.</div>
+          <div class="result" id="sensScanMsg" role="status"></div>
+          <div class="form sens-add">
+            <label class="fld">Добавить вручную: модель<select id="addModel"></select></label>
+            <label class="fld">Адрес<select id="addAddr"></select></label>
+            <button type="button" id="btnAdd" class="btn">Добавить</button>
+          </div>
+          <div class="result" id="sensAddMsg" role="status"></div>
+          <div class="hint">Показания датчиков, в том числе влажность, находятся на странице <a href="/readings">Показания</a>.</div>
+        </div>
+        <section class="card" id="sensCfgCard" aria-label="Настройки датчика">
+          <h2 id="sensCfgTitle">Настройки датчика</h2>
+          <div class="hint" id="sensCfgPick">Выберите датчик кнопкой «Настроить» в таблице.</div>
+          <div class="form" id="sensCfgForm" hidden>
+            <label class="check"><input type="checkbox" id="cfgEnabled"> Датчик включён</label>
+            <label class="fld" data-cap="t">Поправка температуры, °C (от -5 до 5)<input id="cfgTOff" type="text" inputmode="decimal" autocomplete="off"></label>
+            <label class="fld" data-cap="p">Поправка давления, мм рт. ст. (от -20 до 20)<input id="cfgPOff" type="text" inputmode="decimal" autocomplete="off"></label>
+            <label class="fld" data-cap="h">Поправка влажности, % (от -10 до 10)<input id="cfgHOff" type="text" inputmode="decimal" autocomplete="off"></label>
+            <label class="fld">Интервал агрегации (среднее за окно), с (1-60)<input id="cfgAgg" type="text" inputmode="numeric" autocomplete="off"></label>
+            <label class="fld">Период измерения датчика, с (5-600)<input id="cfgPeriod" type="text" inputmode="numeric" autocomplete="off"></label>
+          </div>
+          <div class="row">
+            <button type="button" id="btnCfgSave" class="btn primary" hidden>Сохранить</button>
+          </div>
+          <div class="result" id="cfgResult" role="status"></div>
+        </section>
+      </section>
+
+      <section class="sec" id="sec-mqtt" data-sec="mqtt" aria-label="MQTT / Home Assistant" hidden>
+        <div class="card">
+          <h2>MQTT / Home Assistant</h2>
+          <div class="kv"><span class="k">Публикация включена</span><span class="v" id="m_en">—</span></div>
+          <div class="kv"><span class="k">Соединение с брокером</span><span class="v" id="m_conn">—</span></div>
+          <div class="kv"><span class="k">Отправлено сообщений</span><span class="v" id="m_pub">—</span></div>
+          <div class="kv"><span class="k">Ошибок отправки</span><span class="v" id="m_fail">—</span></div>
+          <div class="kv"><span class="k">Последняя ошибка</span><span class="v" id="m_err">—</span></div>
+        </div>
+        <section class="card" aria-label="MQTT и Home Assistant">
+          <h2>MQTT и Home Assistant</h2>
+          <div class="hint" id="mqState"></div>
+          <div class="form">
+            <label class="check"><input type="checkbox" id="mqEnabled"> Публиковать в MQTT (автообнаружение Home Assistant)</label>
+            <label class="fld">Адрес брокера<input id="mqHost" type="text" autocomplete="off" spellcheck="false"></label>
+            <label class="fld">Порт (1-65535)<input id="mqPort" type="text" inputmode="numeric" autocomplete="off"></label>
+            <label class="fld">Пользователь<input id="mqUser" type="text" autocomplete="off" spellcheck="false"></label>
+            <label class="fld">Пароль <span class="hint" id="mqPassHint"></span><input id="mqPass" type="password" autocomplete="new-password"></label>
+            <label class="check"><input type="checkbox" id="mqPassClear"> Очистить сохранённый пароль</label>
+            <label class="fld">Период публикации состояния, с (10-3600)<input id="mqPeriod" type="text" inputmode="numeric" autocomplete="off"></label>
+            <label class="fld">Префикс discovery Home Assistant<input id="mqPrefix" type="text" autocomplete="off" spellcheck="false"></label>
+          </div>
+          <div class="row">
+            <button type="button" id="btnMqSave" class="btn primary">Сохранить MQTT</button>
+          </div>
+          <div class="result" id="mqResult" role="status"></div>
+        </section>
+      </section>
+
+      <section class="sec" id="sec-db" data-sec="db" aria-label="База данных" hidden>
+        <div class="card">
+          <h2>База данных</h2>
+          <div class="kv"><span class="k">Отправка включена</span><span class="v" id="p_en">—</span></div>
+          <div class="kv"><span class="k">Состояние</span><span class="v" id="p_state">—</span></div>
+          <div class="kv"><span class="k">Соединение с приёмником</span><span class="v" id="p_conn">—</span></div>
+          <div class="kv"><span class="k">Отправлено записей</span><span class="v" id="p_sent">—</span></div>
+          <div class="kv"><span class="k">Ошибок отправки</span><span class="v" id="p_fail">—</span></div>
+          <div class="kv"><span class="k">Последняя ошибка</span><span class="v" id="p_err">—</span></div>
+          <div class="kv"><span class="k">Сырые</span><span class="v" id="p_ring_raw">—</span></div>
+          <div class="kv"><span class="k">Агрегаты</span><span class="v" id="p_ring_agg">—</span></div>
+          <div class="kv"><span class="k">Датчики среды</span><span class="v" id="p_ring_env">—</span></div>
+        </div>
+        <section class="card" aria-label="Отправка истории в базу">
+          <h2>Отправка истории в базу</h2>
+          <div class="hint" id="pushNote">Данные идут по HTTP без шифрования: используйте только внутри доверенной домашней сети.</div>
+          <div class="hint" id="pushWarn" hidden>Адрес приёмника не похож на адрес домашней сети: токен и данные уйдут без шифрования.</div>
+          <div class="form">
+            <label class="check"><input type="checkbox" id="pushEnabled"> Отправлять историю в базу</label>
+            <label class="fld">Адрес приёмника<input id="pushHost" type="text" autocomplete="off" spellcheck="false"></label>
+            <label class="fld">Порт (1-65535)<input id="pushPort" type="text" inputmode="numeric" autocomplete="off"></label>
+            <label class="fld">Токен <span class="hint" id="pushTokenHint"></span><input id="pushToken" type="password" autocomplete="new-password"></label>
+            <label class="check"><input type="checkbox" id="pushTokenClear"> Очистить сохранённый токен</label>
+          </div>
+          <div class="row">
+            <button type="button" id="btnPushSave" class="btn primary">Сохранить</button>
+            <button type="button" id="btnPushTest" class="btn">Проверить</button>
+            <button type="button" id="btnPushReset" class="btn">Сбросить позицию отправки</button>
+          </div>
+          <div class="scback" id="pushBackdrop" hidden></div>
+          <div class="scdlg" id="pushDlg" role="alertdialog" aria-modal="true" aria-labelledby="pushDlgTitle" hidden>
+            <strong id="pushDlgTitle">Сбросить позицию отправки</strong>
+            <div id="pushDlgText"></div>
+            <div class="row">
+              <button type="button" class="btn" id="pushDlgCancel">Отмена</button>
+              <button type="button" class="btn danger" id="pushDlgOk">Сбросить</button>
+            </div>
+          </div>
+          <div class="result" id="pushResult" role="status"></div>
+          <div class="result" id="pushTestResult" role="status"></div>
+        </section>
+      </section>
+
+      <section class="sec" id="sec-storage" data-sec="storage" aria-label="Хранилище" hidden>
+        <div class="card">
+          <h2>Хранилище</h2>
+          <div class="setbox" id="setBox">
+            <h3 class="sub">Что записывать</h3>
+            <label class="chk"><input type="checkbox" id="set_st_raw"> Сырые</label>
+            <label class="chk"><input type="checkbox" id="set_st_agg"> Агрегаты</label>
+            <label class="chk"><input type="checkbox" id="set_st_env"> Датчики среды</label>
+            <div class="hint">Выключено: новые записи не сохраняются, накопленное остаётся.</div>
+            <label class="row">Окно усреднения агрегатов <select id="set_win"></select></label>
+            <label class="row">Погрешность <select id="set_sigma"></select></label>
+            <div class="hint" id="set_msg" aria-live="polite"></div>
+          </div>
+          <div id="store"></div>
+          <div class="storeact" id="storeAct">
+            <h3 class="sub">Очистка и выгрузка</h3>
+            <div class="row" id="storeBtns"></div>
+            <div class="hint" id="storeAvail">Кнопки очистки станут доступны после ответа платы.</div>
+            <div class="row">
+              <a class="btn" id="storeCsvRaw" href="/api/history.csv?kind=raw" download>Скачать CSV (сырые)</a>
+              <a class="btn" id="storeCsvAgg" href="/api/history.csv?kind=agg" download>Скачать CSV (агрегаты)</a>
+              <a class="btn" id="storeCsvEnv" href="/api/history.csv?kind=env" download>Скачать CSV (датчики среды)</a>
+            </div>
+            <div class="scback" id="scBackdrop" hidden></div>
+            <div class="scdlg" id="scDlg" role="alertdialog" aria-modal="true" aria-labelledby="scDlgTitle" hidden>
+              <strong id="scDlgTitle">Подтверждение</strong>
+              <div id="scDlgText"></div>
+              <div id="scWordBox" hidden><label class="fld">Введите слово «стереть»<input id="scWord" type="text" autocomplete="off" spellcheck="false"></label></div>
+              <div class="row">
+                <button type="button" class="btn" id="scDlgCancel">Отмена</button>
+                <button type="button" class="btn danger" id="scDlgOk">Очистить</button>
+              </div>
+            </div>
+            <div class="result" id="storeResult" role="status"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec" id="sec-firmware" data-sec="firmware" aria-label="Прошивки" hidden>
+        <div class="card" id="fbCard">
+          <h2>Обновление через плату</h2>
+          <div class="hint">Плата сама обращается к GitHub, скачивает образ, сверяет SHA-256 по файлу SHA256SUMS.txt и записывает его в запасной раздел. Браузер с GitHub не общается. Автоматической проверки нет: запрос только по кнопке.</div>
+          <div class="form">
+            <label class="fld">Репозиторий (задан в прошивке, не меняется)<input id="fbRepo" type="text" readonly aria-readonly="true"></label>
+          </div>
+          <label class="check"><input type="checkbox" id="fbPre"> Включать пред-релизы (rc)</label>
+          <div class="row">
+            <button type="button" id="fbCheck" class="btn primary">Проверить обновления</button>
+            <span class="muted">Установлено: <span id="fbCurrent" class="num">—</span></span>
+          </div>
+          <div class="result" id="fbStatus" role="status"></div>
+          <div class="fw-wrap"><table class="fw-table" id="fbTable" hidden>
+            <thead><tr><th>Релиз</th><th>Состояние</th><th>Заметки</th><th></th></tr></thead>
+            <tbody id="fbRows"></tbody>
+          </table></div>
+          <div class="fw-msg" id="fbMem" role="status"></div>
+        </div>
+        <div class="card" id="fbConfirm" role="group" aria-label="Установка прошивки через плату" hidden>
+          <h2>Установка</h2>
+          <div id="fbConfirmText" class="fw-msg"></div>
+          <div id="fbWarn" class="fw-msg warn"></div>
+          <label class="check"><input type="checkbox" id="fbUnderstand"> Понимаю: плата перезагрузится, связь пропадёт</label>
+          <label class="check" id="fbDowngradeRow" hidden><input type="checkbox" id="fbDowngradeOk"> Понимаю: это понижение версии</label>
+          <div class="row">
+            <button type="button" id="fbGo" class="btn danger" disabled>Установить</button>
+            <button type="button" id="fbCancel" class="btn">Отмена</button>
+          </div>
+          <progress id="fbProg" max="100" value="0" hidden aria-label="Ход установки на плате"></progress>
+          <div class="result" id="fbProgText" role="status"></div>
+        </div>
+        <div class="card" id="fbBrowserCard">
+          <h2>Запасной путь: через браузер</h2>
+          <div class="hint">Если плата сама не доходит до GitHub: страница получает список релизов, скачивает образ, проверяет его и заливает на плату. По умолчанию выключено.</div>
+          <label class="check"><input type="checkbox" id="fbBrowserOn"> Скачать в браузере и залить</label>
+        </div>
+        <div id="fwBrowserBox" hidden>
+<div class="card" id="fwOldCard">
+          <h2>Список релизов GitHub в браузере</h2>
+          <div class="hint">Запросы к GitHub идут из этого браузера, плата в них не участвует. Автоматической проверки нет: список запрашивается только по кнопке «Проверить».</div>
+          <div class="form">
+            <label class="fld">Репозиторий (владелец/имя)<input id="fwRepo" type="text" autocomplete="off" spellcheck="false" placeholder="владелец/репозиторий"></label>
+          </div>
+          <div class="row">
+            <button type="button" id="fwCheck" class="btn primary">Проверить</button>
+            <span class="muted">Установлено: <span id="fwCurrent" class="num">—</span></span>
+          </div>
+          <div class="result" id="fwStatus" role="status"></div>
+          <div class="fw-wrap"><table class="fw-table" id="fwTable" hidden>
+            <thead><tr><th>Релиз</th><th>Дата</th><th>Файл</th><th>Заметки</th><th></th></tr></thead>
+            <tbody id="fwRows"></tbody>
+          </table></div>
+        </div>
+        <div class="card" id="fwConfirm" role="group" aria-label="Установка прошивки" hidden>
+          <h2>Установка</h2>
+          <div id="fwConfirmText" class="fw-msg"></div>
+          <label class="check"><input type="checkbox" id="fwUnderstand"> Понимаю: плата перезагрузится, связь пропадёт</label>
+          <label class="check" id="fwDowngradeRow" hidden><input type="checkbox" id="fwDowngradeOk"> Понимаю: это понижение версии</label>
+          <div class="row">
+            <button type="button" id="fwGo" class="btn primary" disabled>Скачать и проверить</button>
+            <button type="button" id="fwCancel" class="btn">Отмена</button>
+          </div>
+          <progress id="fwProg" max="100" value="0" hidden aria-label="Ход скачивания и заливки"></progress>
+          <div class="result" id="fwProgText" role="status"></div>
+          <div id="fwVerify" class="fw-msg" hidden></div>
+          <label class="check" id="fwSumRow" hidden><input type="checkbox" id="fwSumOk"> Контрольная сумма не подтверждена: установить всё равно</label>
+          <div class="row"><button type="button" id="fwUpload" class="btn danger" disabled hidden>Залить на плату</button></div>
+        </div>
+        </div>
+        <div class="card" id="fwManualCard">
+          <h2>Ручная заливка файла .bin</h2>
+          <div class="hint">Файл проверяется до отправки: размер и первый байт образа (0xE9). Плата сама сверяет сегменты и откатывается на прежнюю прошивку при ошибке.</div>
+          <label class="fld">Файл прошивки<input id="fwFile" type="file" accept=".bin" aria-label="Файл прошивки .bin"></label>
+          <div class="result" id="fwFileInfo" role="status"></div>
+          <label class="check"><input type="checkbox" id="fwFileOk"> Понимаю: плата перезагрузится, связь пропадёт</label>
+          <div class="row"><button type="button" id="fwFileGo" class="btn danger" disabled>Залить файл</button></div>
+          <progress id="fwFileProg" max="100" value="0" hidden aria-label="Ход заливки файла"></progress>
+          <div class="result" id="fwFileText" role="status"></div>
+        </div>
+      </section>
+      <section class="sec" id="sec-maint" data-sec="maint" aria-label="Обслуживание" hidden>
+        <div class="card">
+          <h2>Обслуживание</h2>
+          <div class="row">
+            <button type="button" id="btnReconnect" class="btn">Переподключиться к AtomFast</button>
+            <button type="button" id="btnReboot" class="btn danger">Перезагрузить</button>
+          </div>
+          <div class="result" id="sysResult" role="status"></div>
+          <div class="hint">Переподключение заново запускает связь с дозиметром по BLE. Перезагрузка прерывает связь с платой примерно на 10 секунд.</div>
+          <div class="hint" id="sysNote"></div>
+        </div>
+        <div class="card" id="sysPctCard">
+          <h2>Погрешность измерений</h2>
+          <div class="form">
+            <label class="fld">Систематическая погрешность прибора, % (от 0 до 50)<input id="sysPct" type="text" inputmode="decimal" autocomplete="off" placeholder="не задана"></label>
+          </div>
+          <div class="result" id="sysPctMsg" role="status"></div>
+          <div class="hint">Складывается со статистической (Пуассон, по выбранному k·σ) квадратично и влияет на значения в «Показаниях» и в сводке под графиком. Пустое поле: систематическая часть не учитывается.</div>
+        </div>
+        <div class="card">
+          <h2>Интерфейс</h2>
+          <div class="fsrow">
+            <span class="tpre" id="lblFont">Размер шрифта</span>
+            <div class="seg" role="group" aria-labelledby="lblFont" id="segFont">
+              <button type="button" data-fs="90" aria-pressed="false">Мелкий 90%</button>
+              <button type="button" data-fs="100" aria-pressed="true">Обычный 100%</button>
+              <button type="button" data-fs="115" aria-pressed="false">Крупный 115%</button>
+              <button type="button" data-fs="130" aria-pressed="false">Очень крупный 130%</button>
+            </div>
+            <button type="button" id="btnFontReset" class="btn">Сбросить</button>
+          </div>
+          <div class="hint">Применяется ко всем страницам сразу, хранится в этом браузере.</div>
+        </div>
+                <div class="card" id="clrCard">
+          <h2>Цвета графиков</h2>
+          <div class="hint">Цвет ряда общий для линии на графике, легенды, подписи оси и статистики под графиком; сглаженная линия берёт цвет ряда. Цвета хранятся в этом браузере отдельно для светлой и тёмной темы. Недоступны цвета, у которых контраст к фону графика ниже 3:1.</div>
+          <div class="fsrow">
+            <span class="tpre" id="lblScheme">Схема</span>
+            <div class="seg" role="group" aria-labelledby="lblScheme" id="segScheme">
+              <button type="button" data-scheme="light" aria-pressed="true">Светлая</button>
+              <button type="button" data-scheme="dark" aria-pressed="false">Тёмная</button>
+            </div>
+          </div>
+          <div class="clr-series" id="clrSeries" role="group" aria-label="Ряд"></div>
+          <div class="clr-pal" id="clrPal" role="group" aria-label="Палитра"></div>
+          <div class="form">
+            <label class="fld">Свой цвет HEX<input id="clrHex" type="text" maxlength="7" autocomplete="off" spellcheck="false" placeholder="#RRGGBB"></label>
+            <label class="fld">Линия<select id="clrDash"></select></label>
+            <label class="fld">Толщина<select id="clrWidth"><option value="">По умолчанию (2 px)</option><option value="1">1 px</option><option value="2">2 px</option><option value="3">3 px</option><option value="4">4 px</option></select></label>
+          </div>
+          <div class="result" id="clrMsg" role="status"></div>
+          <div class="row">
+            <button type="button" id="clrReset" class="btn">Сбросить цвет</button>
+            <button type="button" id="clrResetAll" class="btn">Сбросить все</button>
+            <button type="button" id="clrCb" class="btn" aria-pressed="false">Режим для дальтоников</button>
+          </div>
+          <canvas id="clrPrev" class="clr-prev" width="640" height="180" role="img" aria-label="Предпросмотр графика с выбранными цветами"></canvas>
+        </div>
+<section class="card" aria-label="Время платы">
+          <h2>Время платы</h2>
+          <div class="time-ind" id="timeInd"><span class="dot mut"></span><span>…</span></div>
+          <div class="row">
+            <button type="button" id="btnTime" class="btn">Задать время из браузера</button>
+            <span class="muted" id="timeHint" style="font-size:calc(13px*var(--fs))"></span>
+          </div>
+          <div class="result" id="timeResult"></div>
+        </section>
+      </section>
+    </div>
+  </div>

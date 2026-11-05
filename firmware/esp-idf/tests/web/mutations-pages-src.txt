@@ -1,0 +1,8 @@
+<div data-view="settings"> => <div data-view="settings2">
+<div id="readings"></div> => <div id="readingsx"></div>
+postJSON('/api/sensors', v.body) => postJSON('/api/sensor', v.body)
+postJSON('/api/mqtt', v.body) => postJSON('/api/mqt', v.body)
+fetchJSON('/api/time', { => fetchJSON('/api/times', {
+postJSON('/api/reboot-esp', {}) => postJSON('/api/reboot', {})
+<div class="hint" id="sensorLine"></div> => <div class="hint" id="sensorLine"></div><input id="cfgEnabled">
+<h2>Показания</h2> => <h2>Показания</h2><button type="button">x</button>

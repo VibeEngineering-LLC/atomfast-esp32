@@ -1,0 +1,17 @@
+var t = 1 - Math.pow(0.78, Math.min(7, Math.floor(k))); => var t = 1 - Math.pow(0.78, Math.min(8, Math.floor(k)));
+var t = 1 - Math.pow(0.78, Math.min(7, Math.floor(k))); => var t = 1 - Math.pow(0.8, Math.min(7, Math.floor(k)));
+var t = 1 - Math.pow(0.78, Math.min(7, Math.floor(k))); => var t = 1 - Math.pow(0.78, Math.floor(k));
+var target = scheme === 'dark' ? 255 : 0; => var target = scheme === 'dark' ? 0 : 255;
+var target = scheme === 'dark' ? 255 : 0; => var target = 0;
+if (!hexOk(hex) || !(k > 0)) { return hex; } => if (!(k > 0)) { return hex; }
+if (!hexOk(hex) || !(k > 0)) { return hex; } => if (!hexOk(hex)) { return hex; }
+return '#' + c.map(function (v) { return (v < 16 ? '0' : '') + v.toString(16); }).join(''); => return '#' + c.map(function (v) { return v.toString(16); }).join('');
+var c = rgb(hex).map(function (v) { return Math.round(v + (target - v) * t); }); => var c = rgb(hex).map(function (v) { return Math.floor(v + (target - v) * t); });
+return TINT_DASH[(Math.floor(k) - 1) % TINT_DASH.length].slice(); => return TINT_DASH[(Math.floor(k) - 1) % TINT_DASH.length];
+if (!(k > 0)) { return dash; } => if (!(k >= 0)) { return dash; }
+var TINT_DASH = [[6, 3], [2, 3], [10, 3, 2, 3], [1, 5], [14, 4], [4, 2, 1, 2], [8, 8]]; => var TINT_DASH = [[6, 3], [2, 3], [10, 3, 2, 3], [1, 5], [14, 4], [4, 2, 1, 2], [6, 3]];
+air_h: '#0e7490' }, => air_h: '#0e7491' },
+air_h: '#5ad1e6' } => air_h: '#5ad1e7' }
+air_h: 'wide' }; => air_h: 'long' };
+'#4999c6', '#000000', '#767676'], => '#4999c6', '#000000', '#777777'],
+'#56b4e9', '#ffffff', '#a0a0a0'] => '#56b4e9', '#ffffff', '#a1a1a1']

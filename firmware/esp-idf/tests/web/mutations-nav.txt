@@ -1,0 +1,32 @@
+secs[i].hidden = secs[i].getAttribute('data-sec') !== id; => secs[i].hidden = secs[i].getAttribute('data-sec') === id;
+links[j].setAttribute('aria-current', 'true'); => links[j].setAttribute('aria-current', 'page');
+localStorage.setItem(SYS_LS_KEY, id); => localStorage.setItem(SYS_LS_KEY, 'summary');
+if (AFSEC.IDS.indexOf(id) === -1) id = 'summary'; => if (false) id = 'summary';
+if (sysBusy) sysDirty = true; => if (false) sysDirty = true;
+if (sysDirty) { sysDirty = false; refresh(); } => if (sysDirty) { sysDirty = false; }
+if (sysBusy) return; => if (false) return;
+activate(AFSEC.pick(location.hash, readStored())); => activate(AFSEC.pick('', readStored()));
+if (AFSEC.fromHash(location.hash) === null) { => if (true) {
+history.replaceState(null, '', AFSEC.toHash(sysCur)); => history.replaceState(null, '', location.hash);
+if (id !== null) activate(id, true); => activate(id || 'summary', true);
+if (document.visibilityState === 'visible') refresh(); => refresh();
+}, 5000); => }, 15000);
+return localStorage.getItem(SYS_LS_KEY); => return null;
+if (e && e.status === 401) { => if (e && e.status === 403) {
+setPill('ok', 'обновлено ' + ts); => setPill('ok', 'обновлено');
+if (note) note.textContent = 'Нет связи с платой'; => if (note) note.textContent = '';
+if (kind === 'status') return fetchJSON('/api/status').then(function (v) { sysData.st = v; }); => if (kind === 'status') return fetchJSON('/api/status').then(function (v) { sysData.st = null; });
+if (kind === 'sensors') return fetchJSON('/api/sensors').then(function (v) { sysData.sn = v; }); => if (kind === 'sensors') return fetchJSON('/api/status').then(function (v) { sysData.sn = v; });
+if (cnt >= 2) { => if (cnt >= 1) {
+fetchText('/api/history.csv?kind=raw&since=' + (cnt - 1) + '&limit=1') => fetchText('/api/history.csv?kind=raw&since=' + cnt + '&limit=1')
+state.rows = [first, last]; => state.rows = [last, first];
+if (note) note.textContent = 'Датчики среды не обнаружены'; => if (note) note.textContent = '';
+age = Math.round(st.ble_last_rec.age_ms / 1000) + ' с'; => age = Math.round(st.ble_last_rec.age_ms) + ' с';
+setTxt('b_bad', numOrDash(st.ble_bad_total)); => setTxt('b_bad', numOrDash(st.ble_rx_total));
+setTxt('m_fail', numOrDash(m.failed)); => setTxt('m_fail', numOrDash(m.published));
+setTxt('m_conn', AFU.yesNo(m.connected)); => setTxt('m_conn', AFU.yesNo(m.enabled));
+el.className = 'nb' + (b[id].level ? ' ' + b[id].level : ''); => el.className = 'nb';
+if (link) link.setAttribute('data-level', b[id].level); => if (link) link.setAttribute('data-level', '');
+setTxt('h_env', parts || '—'); => setTxt('h_env', '—');
+setTxt('h_envnote', m.cards.length + ' датч. · ' + m.cards[0].title); => setTxt('h_envnote', m.cards.length + ' датч.');
+snum.textContent = '#' + card.number; => snum.textContent = card.number;

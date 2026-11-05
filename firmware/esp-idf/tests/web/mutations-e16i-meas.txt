@@ -1,0 +1,1 @@
+var FIELDS = { => var FIELDS = { ur_h: { label: 'Мощность дозы, мкР/ч', y: function (r) { return isNum(r.usv_h) ? r.usv_h * 100 : NaN; }, s: function (r) { return 0; } },

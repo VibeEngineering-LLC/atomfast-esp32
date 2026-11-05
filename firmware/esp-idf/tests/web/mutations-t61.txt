@@ -1,0 +1,3 @@
+id === 'raw' || id === 'agg' => id === 'agg'
+id === 'raw' || id === 'agg' || id === 'env' => id === 'raw' || id === 'env'
+id === 'agg' || id === 'env' || id === 'all' => id === 'agg' || id === 'all'

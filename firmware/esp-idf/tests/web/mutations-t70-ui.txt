@@ -1,0 +1,2 @@
+pEl('btnPushReset').addEventListener('click', pushResetOpen); => pEl('btnPushReset').addEventListener('click', pushResetOk);
+if (el) el.value = ''; => if (el) el.value = (typeof j.token === 'string') ? j.token : '';

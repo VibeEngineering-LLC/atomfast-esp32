@@ -1,0 +1,3 @@
+<a href="/readings" data-nav="settings">Показания</a> => <a href="/readings" data-nav="settings">Настройки</a>
+<a href="/readings" data-nav="settings">Показания</a> => <a href="/settings" data-nav="settings">Показания</a>
+<a href="/system" data-nav="system">Система</a> => <a href="/system" data-nav="systems">Система</a>

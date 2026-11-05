@@ -1,0 +1,42 @@
+    var sizeOk = !isFin(asset.size) || bytes.length === asset.size; => var sizeOk = true;
+    var magicOk = bytes.length > 0 && bytes[0] === 0xE9; => var magicOk = bytes.length > 0;
+        sha = actual === expected ? 'confirmed' : 'mismatch'; => sha = 'confirmed';
+        ok: sizeOk && magicOk && sha !== 'mismatch', => ok: sizeOk && magicOk,
+    if (bytes.length < MIN_IMAGE) { => if (bytes.length <= MIN_IMAGE) {
+    if (bytes.length > MAX_IMAGE) { => if (bytes.length >= MAX_IMAGE) {
+    if (bytes[0] !== 0xE9) { => if (bytes[0] !== 0xE8) {
+    if (!isGithubUrl(url, base)) { => if (false) {
+    return typeof url === 'string' && url.indexOf((base || API_BASE) + '/') === 0; => return typeof url === 'string' && url.indexOf(base || API_BASE) === 0;
+        credentials: 'omit', => credentials: 'include',
+        referrerPolicy: 'no-referrer', => referrerPolicy: 'origin',
+        headers: { Accept: accept }, => headers: { Accept: accept, 'X-Board': 'x' },
+    if (va.pre === '') { return 1; } => if (va.pre === '') { return -1; }
+    if (vb.pre === '') { return -1; } => if (vb.pre === '') { return 1; }
+    var order = { alpha: 0, beta: 1, rc: 2 }; => var order = { alpha: 0, beta: 2, rc: 1 };
+    if (va.preNum !== vb.preNum) { return va.preNum < vb.preNum ? -1 : 1; } => if (va.preNum !== vb.preNum) { return va.preNum < vb.preNum ? 1 : -1; }
+    if (va.minor !== vb.minor) { return va.minor < vb.minor ? -1 : 1; } => if (va.minor !== vb.minor) { return va.minor > vb.minor ? -1 : 1; }
+    if (c === 1) { return 'newer'; } => if (c === 1) { return 'older'; }
+        downgrade: row.relation === 'older', => downgrade: row.relation === 'newer',
+    if (row.relation === 'older') { => if (row.relation === 'same') {
+    if (state.needSumConfirm && !state.sumConfirmed) { => if (state.needSumConfirm) {
+    if (state.downgrade && !state.downgradeConfirmed) { => if (state.downgrade) {
+    } else if (status === 403 && typeof getHeader === 'function' && getHeader('x-ratelimit-remaining') === '0') { => } else if (status === 403) {
+                    var N = Math.max(1, Math.ceil((resetNum - nowSec) / 60)); => var N = Math.max(1, Math.floor((resetNum - nowSec) / 60));
+    if (status >= 500) { => if (status > 500) {
+        if (item.draft === true) { continue; } => void 0;
+        if (typeof item.html_url === 'string' && item.html_url.indexOf('https://github.com/') === 0) { => if (typeof item.html_url === 'string') {
+        var installed = rel === 'same'; => var installed = rel !== 'unknown';
+    if (!Array.isArray(json)) { => if (false) {
+    if (lower.indexOf('bootloader') !== -1 || lower.indexOf('partition') !== -1) { => if (lower.indexOf('bootloader') !== -1) {
+        if (aHas && !bHas) { return -1; } => if (aHas && !bHas) { return 1; }
+    var m = d.match(/^sha256:([0-9a-f]{64})$/i); => var m = d.match(/^sha256:([0-9a-f]{6,64})$/i);
+        if (rest.length > 4 && rest.substring(rest.length - 4) === '.git') { => if (false) {
+    if (name === '.' || name === '..') { => if (name === '.') {
+        var hex = m[1].toLowerCase(); => var hex = m[1];
+    if (bytes < 1048576) { => if (bytes <= 1048576) {
+    return (base || API_BASE) + '/repos/' + repo + '/releases?per_page=20'; => return (base || API_BASE) + '/repos/' + repo + '/releases?per_page=100';
+    if (typeof id !== 'number' || !isFinite(id) || id <= 0 || Math.floor(id) !== id) { => if (typeof id !== 'number' || !isFinite(id) || id <= 0) {
+    if (hostname !== 'localhost' && hostname !== '127.0.0.1') { return undefined; } => if (false) { return undefined; }
+    if (!/^http:\/\/(localhost|127\.0\.0\.1):[0-9]{1,5}(\/[^@]*)?$/.test(v)) { return undefined; } => if (v.indexOf('http://localhost:') !== 0 && v.indexOf('http://127.0.0.1:') !== 0) { return undefined; }
+    v = v.replace(/\/+$/, ''); => void 0;
+    var m = search.match(/[?&]gh=([^&]*)/); => var m = search.match(/gh=([^&]*)/);

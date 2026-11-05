@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>История измерений</title>
+<style>
+/*__UICSS__*/
+</style>
+<script>
+/*__UI__*/
+</script>
+<script>
+(function(){var p=AFU.pageOf(location.pathname);document.documentElement.setAttribute('data-page',p==='settings'||p==='system'||p==='measure'?p:'history');try{document.documentElement.style.setProperty('--fs',String(AFU.fontScale(localStorage.getItem('af.fs'))));}catch(e){}})();
+</script>
+</head>
+<body>
+<!--__CHROME_HTML__-->
+<script>
+/*__CHROME__*/
+</script>
+<main class="wrap">
+
+<section class="card chartcard" data-view="history" aria-label="График">
+    <div class="toolbar" role="toolbar" aria-label="Управление графиком">
+      <div class="tg">
+        <span class="tpre" id="lblWin">Окно</span>
+        <div class="seg" role="group" aria-labelledby="lblWin" id="segWin">
+          <button type="button" data-win="3600" aria-pressed="true" title="Последний час">Час</button>
+          <button type="button" data-win="21600" aria-pressed="false" title="Последние 6 часов">6 ч</button>
+          <button type="button" data-win="86400" aria-pressed="false" title="Последние сутки">Сутки</button>
+          <button type="button" data-win="0" aria-pressed="false" title="Вся история">Вся</button>
+          <button type="button" id="btnRange" data-win="range" aria-pressed="false" aria-expanded="false" aria-controls="rangePanel" title="Произвольный интервал"><svg class="ico" viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M2 6.5h12M5 1.8v2.6M11 1.8v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Интервал</button>
+        </div>
+      </div>
+      <div class="tg">
+        <span class="rangelab" id="rangeLab" hidden></span>
+        <button type="button" id="btnPick" class="btn ib txt" aria-pressed="false" title="Выделить на графике интервал: перетащите мышью по оси времени">Выделить</button>
+        <button type="button" id="btnFull" class="btn ib txt" hidden title="Вернуться к полному окну">К полному окну</button>
+      </div>
+      <div id="segKind" hidden></div>
+      <div class="tg tright">
+        <button type="button" id="btnZoomIn" class="btn ib" aria-label="Приблизить по времени" title="Приблизить по времени"><svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M9 3v12M3 9h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+        <button type="button" id="btnZoomOut" class="btn ib" aria-label="Отдалить по времени" title="Отдалить по времени"><svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M3 9h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+        <button type="button" id="btnFit" class="btn ib" aria-label="По данным: подогнать оси" title="По данным: подогнать оси"><svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M3 6V3h3M12 3h3v3M15 12v3h-3M6 15H3v-3M6 9h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button type="button" id="btnReset" class="btn ib" aria-label="Сбросить масштаб" title="Сбросить масштаб"><svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M3 9a6 6 0 1 0 2-4.5M3 3v3h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <button type="button" id="btnAxes" class="btn ib txt" aria-expanded="false" aria-controls="axpanel" title="Оси: авто/ручной масштаб">Оси</button>
+        <button type="button" id="btnRefresh" class="btn ib primary" aria-label="Обновить" title="Обновить"><svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M15 9a6 6 0 1 1-2-4.5M15 3v3h-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <label class="switch" title="Автообновление"><input type="checkbox" id="auto" checked aria-label="Автообновление"><span class="knob" aria-hidden="true"></span><span class="swl">Авто</span></label>
+      </div>
+    </div>
+    <div class="axpanel" id="axpanel" hidden aria-label="Настройки осей"></div>
+    <div class="axpanel rgpanel" id="rangePanel" hidden role="dialog" aria-label="Выбор интервала">
+      <div class="rgrow">
+        <label class="fld">С<input type="datetime-local" id="rgFrom" step="60"></label>
+        <label class="fld">По<input type="datetime-local" id="rgTo" step="60"></label>
+      </div>
+      <div class="rgrow" id="rgPresets" role="group" aria-label="Быстрые интервалы"></div>
+      <div class="rgrow">
+        <label class="fld">Последние<input type="number" id="rgN" min="1" step="1" value="3" inputmode="numeric"></label>
+        <label class="fld">Единицы<select id="rgUnit"><option value="min">минут</option><option value="h" selected>часов</option><option value="d">суток</option></select></label>
+        <button type="button" id="rgLast" class="btn">Показать</button>
+      </div>
+      <div class="hint" id="rgBounds"></div>
+      <div class="result" id="rgMsg" role="status"></div>
+      <div class="rgrow">
+        <button type="button" id="rgApply" class="btn primary">Применить</button>
+        <button type="button" id="rgCancel" class="btn">Отмена</button>
+        <button type="button" id="rgCopy" class="btn">Копировать ссылку</button>
+      </div>
+    </div>
+    <div class="axbar" id="axbar" role="group" aria-label="Выбранная ось" hidden>
+      <span class="axbn" id="axbName"></span>
+      <span class="axbm" id="axbMode"></span>
+      <button type="button" id="axbPlus" class="btn ib" aria-label="Приблизить выбранную ось" title="Приблизить выбранную ось">+</button>
+      <button type="button" id="axbMinus" class="btn ib" aria-label="Отдалить выбранную ось" title="Отдалить выбранную ось">−</button>
+      <button type="button" id="axbFit" class="btn ib txt" title="Вернуть авто-масштаб оси">Авто</button>
+      <button type="button" id="axbReset" class="btn ib txt" title="Сбросить настройки оси">Сброс</button>
+      <label class="axzl"><input type="checkbox" id="axbAll" aria-label="Масштабировать все оси"> Все оси</label>
+    </div>
+    <form class="axedit" id="axedit" hidden aria-label="Границы оси">
+      <input id="axeMin" type="text" inputmode="decimal" autocomplete="off" aria-label="Минимум оси">
+      <input id="axeMax" type="text" inputmode="decimal" autocomplete="off" aria-label="Максимум оси">
+      <button type="submit" class="btn ib txt">OK</button>
+      <span class="axerr" id="axeErr" role="alert"></span>
+    </form>
+    <div class="hint kindnote" id="kindNote" aria-live="polite"></div>
+    <div class="legend" id="legend"></div>
+    <div class="chart-wrap">
+      <canvas id="chart" role="img" tabindex="0" aria-label="График измерений"></canvas>
+    </div>
+    <div class="summary" id="summary"></div>
+    <div id="diskBar" aria-label="Заполнение диска" style="margin-top:8px"><span id="diskTxt">Диск: н/д</span><div style="height:8px;background:rgba(128,128,128,.25);border-radius:4px;margin-top:4px;overflow:hidden"><i id="diskFill" style="display:block;height:100%;width:0%"></i></div></div>
+    <div class="sr" id="live" aria-live="polite"></div>
+  </section>
+
+  <div data-view="settings">
+  <section class="card" aria-label="Показания">
+    <h2>Показания</h2>
+    <div id="readings"></div>
+    <div class="hint" id="errNote"></div>
+    <div class="hint" id="sensorLine"></div>
+
+  </section>
+  </div>
+
+<!--__MEASVIEW_HTML__-->
+
+  <section class="card" data-view="history" aria-label="Экспорт">
+    <h2>Экспорт</h2>
+    <div class="dl">
+      <a id="dlRaw" download>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0 3-3m-3 3L5 7M3 13h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Скачать CSV (сырые)
+      </a>
+      <a id="dlAgg" download>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0 3-3m-3 3L5 7M3 13h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Скачать CSV (агрегаты)
+      </a>
+      <a id="dlEnv" download>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0 3-3m-3 3L5 7M3 13h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Скачать CSV (датчики среды)
+      </a>
+    </div>
+    <div class="hint">Скачивание сырых данных за всю историю может быть большим по объёму. «Датчики среды»: температура, давление, влажность по подключённым датчикам.</div>
+  </section>
+
+<!--__SYSVIEW_HTML__-->
+
+</main>
+
+<script src="/common-time.js"></script>
+<script>
+'use strict';
+/*__TIMEAXIS__*/
+/*__FWREL__*/
+/*__RANGE__*/
+/*__SENSORS_LIST__*/
+/*__UNCERT__*/
+/*__BLEMODEL__*/
+/*__AGGINFO__*/
+/*__ZOOMPICK__*/
+/*__STORECLEAR__*/
+/*__PUSHMODEL__*/
+/*__ENVSERIES__*/
+/*__COLORS__*/
+/*__FWBOARD__*/
+/*__AXES__*/
+/*__MEASMODEL__*/
+/*__MEASBOARD__*/
+/*__CORE__*/
+/*__UIFONT__*/
+/*__FWUI__*/
+/*__COLORSUI__*/
+/*__FWBOARDUI__*/
+/*__SERIES__*/
+/*__SENSORS__*/
+/*__SYSVIEW__*/
+/*__HOMEMODEL__*/
+/*__SECTIONS__*/
+/*__SYSNAV__*/
+
+const PAGE = document.documentElement.getAttribute('data-page') || 'history';
+
+const SERIES = [
+  {id:'rate',   group:'dose',  name:'Мощность дозы',      unit:'мкЗв/ч',  field:'doserate_usvh', axis:'L', color:'--s1', dash:[],        on:true},
+  {id:'cps',    group:'count', name:'CPS',                unit:'имп/с',   field:'cps',           axis:'R', color:'--s2', dash:[],        on:true},
+  {id:'pulses', group:'count', name:'Импульсы за 2 с',    unit:'имп/2 с', field:'pulses_2s',     axis:'R', color:'--s3', dash:[6,4],     on:false},
+  {id:'temp',   group:'temp',  name:'Температура прибора',      unit:'°C',      field:'temp_c',        axis:'R', color:'--s5', dash:[10,3,2,3],on:false},
+  {id:'air_t',  group:'temp',  name:'Температура среды', unit:'°C',      field:'air_t',         envKind:'t', cid:'air_t', axis:'R', color:'--s6', dash:[8,3],     on:false, dec:1},
+  {id:'air_p',  group:'press', name:'Давление среды',         unit:'мм рт. ст.', field:'air_p',      envKind:'p', cid:'air_p', axis:'R', color:'--s7', dash:[3,2],     on:false, dec:1},
+  {id:'air_h',  group:'hum',   name:'Влажность среды',        unit:'%',          field:'air_h',      envKind:'h', cid:'air_h', axis:'R', color:'--s8', dash:[16,5],    on:false, dec:1}
+  // Воздух (BMP280): ряды air_t/air_p приходят отдельным видом kind=env и привязываются к строкам по времени (AFS.mergeEnv).
+];
+
+initColors();
+const MAX_RAW_ROWS = 4000;
+const MAX_AGG_ROWS = 21000;
+const POLL_MS = 5000;
+const STATUS_MS = 30000;
+const FETCH_TIMEOUT = 15000;
+
+const LS_KEY = 'afh.history.v1';
+
+const state = {
+  kind: 'raw',
+  windowSec: 3600,
+  vis: {},
+  axis: {},
+  rows: [],
+  unknown: 0,
+  lastSeq: 0,
+  epoch: null,
+  view: null,
+  prevFull: null,
+  busy: false,
+  capped: false,
+  rateRaw: 0.5,
+  errors: [],
+  pill: {cls:'', text:'…'}
+};
+
+// ---- helpers ----
+function offMin(){ try { return new Date(Date.now()).getTimezoneOffset(); } catch(e){ return 0; } }
+function cssVar(name){
+  try {
+    const i = String(name).indexOf('|');
+    if (i < 0) return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    const bg = cssVar('--bg');
+    const dark = AFCL.hexOk(bg) && AFCL.luminance(bg) < 0.4;
+    return AFCL.tint(cssVar(name.slice(0, i)), Number(name.slice(i + 1)), dark ? 'dark' : 'light');
+  }
+  catch(e){ return '#888'; }
+}
+function fmtCompact(v, dec){
+  if (v == null || !isFinite(v)) return '—';
+  if (dec != null) return Number(v).toFixed(dec); // e10: для давления и температуры воздуха важен десятый знак
+  let s = Number(v).toPrecision(3);
+  if (s.indexOf('e') >= 0 || s.indexOf('E') >= 0) return s;
+  if (s.indexOf('.') >= 0) s = s.replace(/0+$/,'').replace(/\.$/,'');
+  return s;
+}
+function decOf(id){ const d = SERIES.find(x => x.id === id); return d ? d.dec : null; }
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function loadLS(){
+  try { const raw = localStorage.getItem(LS_KEY); if (raw) return JSON.parse(raw); } catch(e){}
+  return null;
+}
+function saveLS(){
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      kind: state.kind, windowSec: state.windowSec, vis: state.vis, axis: state.axis
+    }));
+  } catch(e){}
+}
+function defaultState(){
+  const vis = {}, axis = {};
+  for (const s of SERIES){ vis[s.id] = s.on; axis[s.id] = s.axis; }
+  return {vis, axis};
+}
+
+// ряды датчиков среды: перестраиваются по списку датчиков из CSV (E7b)
+let envSig = '';
+function syncEnvSeries(envRows) {
+  const next = AFES.build(envRows);
+  const sig = AFES.signature(next);
+  if (sig === envSig) return false;
+  const kindOn = {t: false, p: false, h: false};
+  for (const d of SERIES) if (d.envKind && state.vis[d.id]) kindOn[d.envKind] = true;
+  const kept = SERIES.filter(d => !d.envKind);
+  for (const d of SERIES) if (d.envKind) { delete state.vis[d.id]; delete state.axis[d.id]; }
+  SERIES.splice(0, SERIES.length, ...kept, ...next);
+  for (const d of next) { if (state.vis[d.id] === undefined) state.vis[d.id] = kindOn[d.envKind]; if (state.axis[d.id] === undefined) state.axis[d.id] = d.axis; }
+  envSig = sig;
+  if (typeof clApply === 'function') clApply();
+  if (PAGE === 'history' && document.getElementById('legend')) buildLegend();
+  return true;
+}
+function applyEnv(rows) { syncEnvSeries(state.env); return AFS.mergeEnv(rows, state.env, 120); }
+
+// ---- fetch with timeout ----
+async function fetchRead(url, opts, readResponse){
+  const ctrl = new AbortController();
+  const signal = opts && opts.signal;
+  const abort = () => ctrl.abort();
+  if (signal) {
+    if (signal.aborted) ctrl.abort();
+    else signal.addEventListener('abort', abort, {once:true});
+  }
+  const t = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT);
+  try {
+    const o = Object.assign({credentials:'same-origin', cache:'no-store'}, opts||{});
+    o.signal = ctrl.signal;
+    const r = await fetch(url, o);
+    if (r.status === 401) { const e = new Error('401'); e.status = 401; throw e; }
+    if (!r.ok) { const e = new Error('HTTP '+r.status); e.status = r.status; throw e; }
+    return await readResponse(r);
+  } finally {
+    clearTimeout(t);
+    if (signal) signal.removeEventListener('abort', abort);
+  }
+}
+async function fetchJSON(url, opts){
+  return fetchRead(url, opts, r => r.json());
+}
+async function fetchText(url, opts){
+  return fetchRead(url, opts, async r => {
+    const dsh = r.headers.get('X-AF-Ds');   // "next=<seq>;bucket=<n>" - только у прореженного ответа (pts)
+    const nm = dsh ? /next=(\d+)/.exec(dsh) : null;
+    return {text: await r.text(), seq: r.headers.get('X-AF-Seq'), next: nm ? nm[1] : null, ds: !!dsh};
+  });
+}
+
+// ---- pill ----
+function setPill(cls, text){
+  state.pill = {cls, text};
+  const p = document.getElementById('pill');
+  p.className = 'pill ' + cls;
+  document.getElementById('pillText').textContent = text;
+}
+function pillOk(){
+  const d = new Date();
+  const p = n => String(n).padStart(2,'0');
+  setPill('ok', 'обновлено ' + p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds()));
+}
+function pillErr(e){
+  if (e && e.status === 401) setPill('warn', 'нужна авторизация');
+  else setPill('bad', 'нет связи с платой');
+}
+
+// ---- data loading ----
+async function fullLoad(){
+  if (state.range) { loadRange(); return; }
+  if (state.busy) return;
+  state.busy = true;
+  state.ovr = null; state.zl = null;   // e16g: обзорная загрузка отменяет детальную (зум)
+  zlSeq++; if (zlTimer) { clearTimeout(zlTimer); zlTimer = null; }   // T-57 P2-5: устаревший ответ зума отбрасывается по номеру запроса
+  try {
+    const status = await fetchJSON('/api/history/status');
+    aggWindow = AFAG.windowOf(status);
+    lastHistStatus = status;
+    renderDisk(status);
+    renderKindNote();
+    // e16e (T-34): вид (сырые/агрегаты) выбирается автоматически по окну и ширине графика; плата прореживает ряд по числу точек (pts)
+    // e16g (T-46/T-49): шаг = окно / ширина; < 60 с - сырые, иначе агрегаты; не хватает агрегатов - сырые (AFZP.pick)
+    const nowT = status.now_ts || Math.floor(Date.now() / 1000);
+    const rr = state.rateRaw || 0.5;
+    const wsec = state.windowSec > 0 ? state.windowSec : (Math.max(((status.raw || {}).count || 0) / rr, ((status.agg || {}).count || 0) * (status.window_s || 60)) || 3600);
+    const pick = AFZP.pick({ from: nowT - wsec, to: nowT, widthPx: canvas.clientWidth, status: status, rawRate: rr });
+    pick.from = state.windowSec > 0 ? nowT - wsec : null;
+    state.kind = pick.kind;
+    const ring = status[state.kind] || {};
+    const maxRows = state.kind === 'raw' ? MAX_RAW_ROWS : MAX_AGG_ROWS;
+    const rate = state.kind === 'raw' ? (state.rateRaw || 0.5) : (status.window_s ? 1/status.window_s : 0);
+    const since = AFH.sinceFor(ring, state.windowSec, rate, maxRows);
+    const url = pick.pts > 0
+      ? '/api/history.csv?kind=' + state.kind + '&pts=' + pick.pts + (pick.from ? '&from=' + pick.from : '') + '&limit=200000'
+      : '/api/history.csv?kind=' + state.kind + '&since=' + since + '&limit=' + maxRows;
+    const res = await fetchText(url);
+    if (state.range) return;
+    const parsed = AFH.parseCsv(res.text);
+    if (state.kind === 'raw' && parsed.rows.length && !res.ds) state.rateRaw = AFH.ratePerSec(parsed.rows);
+    const split = AFH.splitKnown(parsed.rows);
+    state.unknown = split.unknown;
+    let rows = split.known;
+    if (state.windowSec > 0) rows = AFH.windowRows(rows, state.windowSec);
+    try { await syncEnv(status, true); } catch(e){ state.env = []; state.envSeq = 0; state.envEpoch = null; }
+    if (state.range) return;
+    applyEnv(rows);
+    state.rows = rows;
+    state.lastSeq = (res.ds && res.next !== null && isFinite(Number(res.next))) ? Number(res.next) : AFH.nextSince(since, ring.oldest, parsed.rows.length + parsed.bad);
+    state.epoch = ring.epoch;
+    state.capped = !res.ds && (since > ring.oldest) && state.windowSec === 0;
+    state.errors = [];
+    if (parsed.bad) state.errors.push('Пропущено строк с ошибками: ' + parsed.bad);
+    const full = AFS.fullRange(rows);
+    if (full) {
+      if (!state.view || (state.prevFull && state.view.t0 === state.prevFull.t0 && state.view.t1 === state.prevFull.t1)) {
+        state.view = {t0: full.t0, t1: full.t1};
+      }
+      state.prevFull = {t0: full.t0, t1: full.t1};
+    } else {
+      state.view = null; state.prevFull = null;
+    }
+    pillOk();
+    renderStore(status);
+    redraw();
+  } catch(e){
+    pillErr(e);
+  } finally {
+    state.busy = false;
+  }
+}
+
+async function poll(){
+  if (state.range) return; // poll: в режиме интервала автообновления нет
+  if (state.ovr) return;   // e16g: пока график приближен, обзор не дописываем
+  if (state.busy) return;
+  if (document.visibilityState !== 'visible') return;
+  state.busy = true;
+  try {
+    const status = await fetchJSON('/api/history/status');
+    aggWindow = AFAG.windowOf(status);
+    lastHistStatus = status;
+    renderDisk(status);
+    renderKindNote();
+    const ring = status[state.kind] || {};
+    if (ring.seq < state.lastSeq || ring.epoch !== state.epoch) {
+      await fullLoad();
+      return;
+    }
+    let envChanged = false;
+    try { envChanged = await syncEnv(status, false); } catch(e){ envChanged = false; }
+    if (state.range) return;
+    if (ring.seq > state.lastSeq) {
+      const maxRows = state.kind === 'raw' ? MAX_RAW_ROWS : MAX_AGG_ROWS;
+      const url = '/api/history.csv?kind=' + state.kind + '&since=' + state.lastSeq + '&limit=2000';
+      const res = await fetchText(url);
+      if (state.range) return;
+    if (state.range) return;
+      const parsed = AFH.parseCsv(res.text);
+      if (state.kind === 'raw' && parsed.rows.length) state.rateRaw = AFH.ratePerSec(parsed.rows);
+      const split = AFH.splitKnown(parsed.rows);
+      state.unknown += split.unknown;
+      let rows = AFH.appendRows(state.rows, split.known, maxRows);
+      if (state.windowSec > 0) rows = AFH.windowRows(rows, state.windowSec);
+      applyEnv(rows);
+      state.rows = rows;
+      state.lastSeq = AFH.nextSince(state.lastSeq, ring.oldest, parsed.rows.length + parsed.bad);
+      const full = AFS.fullRange(rows);
+      if (full) {
+        if (state.prevFull && state.view && state.view.t0 === state.prevFull.t0 && state.view.t1 === state.prevFull.t1) {
+          state.view = {t0: full.t0, t1: full.t1};
+        }
+        state.prevFull = {t0: full.t0, t1: full.t1};
+      }
+      pillOk();
+      renderStore(status);
+      redraw();
+    } else {
+      if (envChanged) { applyEnv(state.rows); redraw(); }
+      pillOk();
+      renderStore(status);
+    }
+  } catch(e){
+    pillErr(e);
+  } finally {
+    state.busy = false;
+  }
+}
+
+// ---- time card ----
+async function loadTime(){
+  try {
+    const s = await fetchJSON('/api/status');
+    const ind = document.getElementById('timeInd');
+    const hint = document.getElementById('timeHint');
+    const btn = document.getElementById('btnTime');
+    const src = s.time_source;
+    let dotCls, txt;
+    if (src === 'none') { dotCls = 'bad'; txt = 'время неизвестно (SNTP не синхронизирован)'; }
+    else {
+      dotCls = 'ok';
+      const map = {sntp:'SNTP (сеть)', browser:'от браузера', manual:'задано вручную'};
+      txt = 'время известно — ' + (map[src] || src);
+    }
+    ind.innerHTML = '<span class="dot ' + dotCls + '"></span><span>' + esc(txt) + '</span>';
+    if (s.sntp_synced) {
+      btn.disabled = true;
+      hint.textContent = 'время уже синхронизировано по SNTP';
+    } else {
+      btn.disabled = false;
+      hint.textContent = '';
+    }
+  } catch(e){
+    const ind = document.getElementById('timeInd');
+    ind.innerHTML = '<span class="dot mut"></span><span>нет связи с платой</span>';
+  }
+}
+
+async function setTime(){
+  const btn = document.getElementById('btnTime');
+  const res = document.getElementById('timeResult');
+  btn.disabled = true;
+  res.className = 'result';
+  res.textContent = 'отправляю…';
+  try {
+    const tok = await fetchJSON('/api/csrf-token');
+    const r = await fetchJSON('/api/time', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','X-CSRF-Token': tok.token},
+      body: JSON.stringify({epoch_ms: Date.now(), manual: true})
+    });
+    if (r.accepted) {
+      res.className = 'result ok';
+      res.textContent = 'время задано, источник: ' + (r.source || '—');
+    } else {
+      res.className = 'result bad';
+      res.textContent = 'плата отклонила: ' + (r.source || '—');
+    }
+    loadTime();
+  } catch(e){
+    res.className = 'result bad';
+    res.textContent = 'ошибка: ' + (e && e.status === 401 ? 'нужна авторизация' : 'нет связи с платой');
+  } finally {
+    if (!document.getElementById('btnTime').disabled) {}
+    loadTime();
+  }
+}
+
+// ---- store card ----
+function renderStore(status) {
+  if (PAGE !== 'system') return;
+  const el = document.getElementById('store');
+  const win = status.window_s || 0;
+  let html = '';
+  const kindNames = { raw: 'Сырые', agg: 'Агрегаты', env: 'Датчики среды' };
+  const khint = '<small class="khint">' + esc(AFAG.storageLabel(AFAG.windowOf(status))) + '</small>';
+  for (const kind of ['raw', 'agg', 'env']) {
+    const ring = status[kind] || {};
+    const limit = ring.limit || 0;
+    const count = ring.count || 0;
+    const rate = kind === 'raw' ? (state.rateRaw || 0.5) : (kind === 'env' ? 1 / ((lastSensors && lastSensors.cfg && AFUN.isNum(lastSensors.cfg.period_s) && lastSensors.cfg.period_s > 0) ? lastSensors.cfg.period_s : 300) : (win ? 1 / win : 0));
+    const pct = limit ? Math.min(100, Math.round(count / limit * 100)) : 0;
+    const barCls = pct >= 100 ? 'bad' : (pct >= 80 ? 'warn' : '');
+    const reserve = AFH.fmtDuration(AFH.reserveSec(count, limit, rate));
+    const span = (state.spans && state.spans[kind] != null) ? state.spans[kind] : null;
+    html += '<div style="margin-bottom:14px">';
+    html += '<div class="kv"><span class="k">' + kindNames[kind] + (kind === 'agg' ? khint : '') + '</span><span class="v num">' + count + ' / ' + limit + ' (' + pct + '%)</span></div>';
+    html += '<div class="bar ' + barCls + '" role="progressbar" aria-valuenow="' + count + '" aria-valuemin="0" aria-valuemax="' + limit + '" aria-label="' + kindNames[kind] + '"><i style="width:' + pct + '%"></i></div>';
+    html += '<div class="note">запас по времени: ' + esc(reserve) + '</div>';
+    if (count >= limit && limit > 0) html += '<div class="note bad">кольцо заполнено, старые записи перезаписываются</div>';
+    if (span != null) html += '<div class="note">охват: ' + esc(AFH.fmtDuration(span)) + '</div>';
+    html += '<div class="note">потеряно: ' + (ring.dropped != null ? ring.dropped : '—') + ' · отклонено: ' + (ring.rejected != null ? ring.rejected : '—') + '</div>';
+    html += '</div>';
+  }
+  html += '<h3 class="sub">Состояние буфера</h3>';
+  html += '<div class="kv"><span class="k">готово</span><span class="v">' + (status.ready ? 'да' : 'буфер не готов') + '</span></div>';
+  html += '<div class="kv"><span class="k">отсчётов</span><span class="v num">' + (status.samples != null ? status.samples : '—') + '</span></div>';
+  html += '<div class="kv"><span class="k">без времени</span><span class="v num">' + (status.ts0_samples != null ? status.ts0_samples : '—') + '</span></div>';
+  html += '<div class="kv"><span class="k">потеряно из очереди</span><span class="v num">' + (status.q_dropped != null ? status.q_dropped : '—') + '</span></div>';
+  html += '<div class="kv"><span class="k">объём</span><span class="v num">' + (status.bytes != null ? AFH.fmtBytes(status.bytes) : '—') + '</span></div>';
+  const p = status.persist;
+  if (p == null) {
+    html += '<div class="note" style="margin-top:10px">сохранение на флеш: нет данных</div>';
+  } else {
+    html += '<div style="margin-top:10px">';
+    if (p.since_flush_s != null) html += '<div class="note">с последнего сброса: ' + p.since_flush_s + ' с</div>';
+    if (p.last_flush_ms != null) html += '<div class="note">длительность последнего сброса: ' + p.last_flush_ms + ' мс</div>';
+    if (p.flush_errs != null) {
+      if (p.flush_errs > 0) html += '<div class="note bad">ошибок записи: ' + p.flush_errs + ' (ошибка)</div>';
+      else html += '<div class="note">ошибок записи: 0</div>';
+    }
+    const labels = {
+      mounted: 'смонтировано',
+      formatted: 'отформатировано',
+      flushes: 'сбросов на флеш',
+      flush_errs: 'ошибок записи',
+      bytes_written: 'записано байт',
+      last_flush_ms: 'длительность последнего сброса, мс',
+      max_flush_ms: 'максимальный сброс, мс',
+      since_flush_s: 'с последнего сброса, с',
+      restore_ms: 'восстановление, мс',
+      restore_gap: 'пропусков при восстановлении',
+      restore_tail_bad: 'битых хвостов',
+      restore_fail: 'ошибок восстановления',
+      fs_total: 'файловая система, всего',
+      fs_used: 'файловая система, занято',
+      raw: 'сырые',
+      env: 'датчики среды',
+      agg: 'агрегаты',
+      persisted_seq: 'записано до seq',
+      pending: 'ждёт записи',
+      restored: 'восстановлено',
+      files: 'файлов',
+      cur_valid: 'валидных в текущем файле'
+    };
+    const known = new Set(['since_flush_s', 'last_flush_ms', 'flush_errs']);
+    const extra = [];
+    for (const k of Object.keys(p)) {
+      if (known.has(k)) continue;
+      let v = p[k];
+      if (v && typeof v === 'object') v = JSON.stringify(v);
+      const label = labels[k] || k;
+      extra.push('<div class="note">' + esc(label) + ': ' + esc(v == null ? '—' : v) + '</div>');
+    }
+    if (extra.length) html += '<details class="more"><summary>Подробнее</summary>' + extra.join('') + '</details>';
+    html += '</div>';
+  }
+  el.innerHTML = html;
+}
+function spanOf(rows){
+  if (!rows || rows.length < 2) return null;
+  let t0 = Infinity, t1 = -Infinity;
+  for (const r of rows){ if (r.ts < t0) t0 = r.ts; if (r.ts > t1) t1 = r.ts; }
+  if (!isFinite(t0) || !isFinite(t1)) return null;
+  return Math.max(0, t1 - t0);
+}
+
+// ---- legend ----
+function swatchSVG(color, dash, w){
+  w = w || 28;
+  const da = (dash && dash.length) ? ' stroke-dasharray="' + dash.join(' ') + '"' : '';
+  return '<svg class="sw" width="' + w + '" height="12" viewBox="0 0 ' + w + ' 12" aria-hidden="true"><path d="M0 6 L' + w + ' 6" stroke="' + color + '" stroke-width="3.2" fill="none"' + da + '/></svg>';
+}
+/*__CHARTLEGEND__*/
+
+function renderSummary(){
+  const el = document.getElementById('summary');
+  const defs = AFS.axisDefs(SERIES, state.vis, null);
+  const visDefs = AFS.visibleDefs(SERIES, state.vis);
+  let viewRows = state.rows;
+  if (state.view) viewRows = AFS.sliceRange(state.rows, state.view.t0, state.view.t1);
+  let html = '';
+  let uncNote = false;
+  for (const def of visDefs) {
+    const color = cssVar(def.color);
+    const sum = AFH.summarize(viewRows, def.field);
+    const ust = AFUN.seriesStats(def.id, viewRows, sysPct, sigK());
+    if (ust) uncNote = true;
+    const sw = swatchSVG(color, def.dash, 20);
+    html += '<div class="sum-row">' + sw +
+      '<span class="nm">' + esc(def.name) + '</span>' +
+      '<span class="vals">мин ' + fmtCompact(sum.min, def.dec) + ' · сред ' + (ust ? ust.mean.text : fmtCompact(sum.mean, def.dec)) + ' · макс ' + fmtCompact(sum.max, def.dec) + ' · посл ' + (ust ? ust.last.text : fmtCompact(sum.last, def.dec)) + ' ' + esc(def.unit) + ' · N=' + sum.n + '</span>' + '</div>';
+  }
+  if (uncNote) html += '<div class="notes"><div class="note">Погрешность среднего: статистическая (Пуассон, ' + sigLbl() + ') = σ/√n независимых отсчётов — допущение о независимости отсчётов. Мощность дозы: допущение о пропорциональности счёту. Систематическая часть: ' + (sysPct === null ? 'не учтена' : sysPct + ' %') + '</div></div>';
+  if (state.capped) html += '<div class="notes"><div class="note">Сырые ограничены последними ' + MAX_RAW_ROWS + ' точками</div></div>';
+  if (state.unknown > 0) html += '<div class="notes"><div class="note">' + state.unknown + ' точек без времени не показаны</div></div>';
+  for (const e of state.errors) html += '<div class="notes"><div class="note bad">' + esc(e) + '</div></div>';
+  const winRange = state.view || AFS.fullRange(state.rows);
+  if (winRange) html = '<div class="winlabel">' + (state.range ? 'Интервал: ' + AFRG.label(state.range.from, state.range.to) + ' · ' : '') + 'Окно: ' + AFTX.windowLabel(winRange.t0, winRange.t1) + '</div>' + html;
+  el.innerHTML = html;
+
+}
+
+// ---- chart ----
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+let cursor = null; // {ts, index}
+let drag = null;   // {x0, x1, active}
+
+/*__CHARTDRAW__*/
+function roundRect(x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+
+function updateAria(){
+  const defs = AFS.visibleDefs(SERIES, state.vis);
+  let txt = 'График измерений. ';
+  if (!state.rows.length) txt += 'Нет данных за выбранное окно.';
+  else if (!defs.length) txt += 'Выберите хотя бы один ряд.';
+  else {
+    txt += 'Отображается ' + defs.length + ' ряд(а): ' + defs.map(d => d.name).join(', ') + '.';
+    if (state.view) txt += ' Диапазон времени от ' + AFTX.tooltipTime(state.view.t0) + ' до ' + AFTX.tooltipTime(state.view.t1) + '.';
+  }
+  canvas.setAttribute('aria-label', txt);
+}
+
+function redraw(){
+  draw();
+  renderSummary();
+}
+
+// ---- interaction ----
+function canvasPos(e){
+  const r = canvas.getBoundingClientRect();
+  return {x: e.clientX - r.left, y: e.clientY - r.top, w: r.width, h: r.height};
+}
+function timeAt(px){
+  const L = layout();
+  const plotW = canvas.clientWidth - L.left - L.right;
+  const view = state.view || AFS.fullRange(state.rows);
+  if (!view) return null;
+  return AFS.pxToTime(px, view.t0, view.t1, L.left, plotW);
+}
+function setCursorFromTime(ts, keyboard){
+  if (ts == null) return;
+  const cv = AFS.cursorValues(state.rows, SERIES, state.vis, ts);
+  if (cv) {
+    cursor = {ts: cv.ts, index: cv.index};
+    if (keyboard) {
+      const off = offMin();
+      let msg = AFH.fmtTime(cv.ts, 'full', off) + '. ';
+      for (const it of cv.items) msg += it.name + ' ' + (it.value == null ? '—' : fmtCompact(it.value, decOf(it.id)) + ' ' + it.unit) + '; ';
+      document.getElementById('live').textContent = msg;
+    }
+    draw();
+  }
+}
+
+/*__CHARTINPUT__*/
+/*__ZOOMLOAD__*/
+/*__RANGEUI__*/
+/*__SENSORSUI__*/
+/*__BLEUI__*/
+/*__STORECLEARUI__*/
+/*__SETTINGSUI__*/
+/*__BLESEL__*/
+/*__PUSHUI__*/
+/*__MEASUI__*/
+/*__MEASBOARDUI__*/
+
+canvas.addEventListener('keydown', e => {
+  const off = offMin();
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    e.preventDefault();
+    if (!state.rows.length) return;
+    let idx;
+    if (cursor) idx = cursor.index;
+    else { const full = AFS.fullRange(state.rows); idx = AFS.nearestIndex(state.rows, full ? (full.t0+full.t1)/2 : state.rows[0].ts); }
+    idx += (e.key === 'ArrowRight' ? 1 : -1);
+    idx = Math.max(0, Math.min(state.rows.length - 1, idx));
+    setCursorFromTime(state.rows[idx].ts, true);
+  } else if (e.key === 'Escape') {
+    const full = AFS.fullRange(state.rows);
+    if (full) state.view = {t0: full.t0, t1: full.t1};
+    cursor = null; redraw();
+  } else if (e.key === '+' || e.key === '=' || e.key === '-') {
+    e.preventDefault();
+    const full = AFS.fullRange(state.rows);
+    if (!full) return;
+    const c = (state.view ? (state.view.t0+state.view.t1)/2 : (full.t0+full.t1)/2);
+    const factor = (e.key === '+' || e.key === '=') ? 0.8 : 1.25;
+    let nv = AFS.zoomRange(state.view ? state.view.t0 : full.t0, state.view ? state.view.t1 : full.t1, c, factor, 10);
+    nv.t0 = Math.max(nv.t0, full.t0); nv.t1 = Math.min(nv.t1, full.t1);
+    state.view = nv; redraw();
+  }
+});
+
+// ---- controls ----
+function setSeg(el, val, attr){
+  for (const b of el.querySelectorAll('button')) {
+    b.setAttribute('aria-pressed', String(b.getAttribute(attr) === String(val)));
+  }
+}
+let aggWindow = null;
+function renderDisk(status) {   // e16i П.13: заполнение диска из уже загруженного /api/history/status (persist.fs_used/fs_total)
+  const p = (status && status.persist) || {};
+  const r = AFHM.diskUsage(p.fs_used, p.fs_total);
+  const t = document.getElementById('diskTxt'), f = document.getElementById('diskFill');
+  if (!t || !f) return;
+  const mb = v => (v / 1048576).toFixed(1);
+  const txt = r.pct === null ? 'Диск: н/д' : 'Диск: ' + mb(p.fs_used) + ' из ' + mb(p.fs_total) + ' МБ (' + r.text + ')';
+  if (t.textContent !== txt) t.textContent = txt;
+  const w = (r.pct === null ? 0 : r.pct) + '%';
+  if (f.style.width !== w) f.style.width = w;
+  const c = r.level === 'crit' ? '#c0392b' : (r.level === 'warn' ? '#d68a00' : '#2e8b57');
+  if (f.style.background !== c) f.style.background = c;
+}
+
+function renderKindNote() {
+  const seg = document.getElementById('segKind');
+  const note = document.getElementById('kindNote');
+  if (!seg || !note) return;
+  for (const b of seg.querySelectorAll('button')) b.title = AFAG.title(b.dataset.kind, aggWindow);
+  note.textContent = AFAG.note(state.kind, aggWindow);
+}
+let lastHistStatus = null; // П.5: последний /api/history/status — по нему pickKind выбирает агрегаты или сырые
+function defaultKindForWindow(w){ return AFH.pickKind(lastHistStatus, w); }
+
+document.getElementById('segKind').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  state.kind = b.dataset.kind;
+  setSeg(document.getElementById('segKind'), state.kind, 'data-kind');
+  renderKindNote();
+  saveLS();
+  fullLoad();
+});
+document.getElementById('btnRefresh').addEventListener('click', () => { fullLoad(); loadTime(); });
+document.getElementById('btnTime').addEventListener('click', setTime);
+
+// ---- env (воздух) и показания/настройки датчика ----
+const MAX_ENV_ROWS = 5000;
+state.env = [];
+state.envSeq = 0;
+state.envEpoch = null;
+
+async function syncEnv(status, full) {
+  const ring = status && status.env;
+  if (!ring || typeof ring !== 'object') {
+    state.env = [];
+    state.envSeq = 0;
+    state.envEpoch = null;
+    return false;
+  }
+  if (!full && ring.epoch === state.envEpoch && ring.seq >= state.envSeq) {
+    if (ring.seq === state.envSeq) return false;
+    const res = await fetchText('/api/history.csv?kind=env&since=' + state.envSeq + '&limit=500');
+    const p = AFS.parseEnvCsv(res.text);
+    state.env = AFH.appendRows(state.env, p.rows, MAX_ENV_ROWS);
+    state.envSeq = AFH.nextSince(state.envSeq, ring.oldest, p.rows.length + p.bad);
+    return true;
+  }
+  const since = AFH.sinceFor(ring, state.windowSec, 1/30, MAX_ENV_ROWS);
+  const res = await fetchText('/api/history.csv?kind=env&since=' + since + '&limit=' + MAX_ENV_ROWS);
+  const p = AFS.parseEnvCsv(res.text);
+  state.env = p.rows;
+  state.envSeq = AFH.nextSince(since, ring.oldest, p.rows.length + p.bad);
+  state.envEpoch = ring.epoch;
+  return true;
+}
+
+let sensorsBusy = false;
+let lastSensors = null;
+let sysPct = null;
+const SYS_KEY = 'afh.sys.v1';
+try { const o = JSON.parse(localStorage.getItem(SYS_KEY)); if (o && o.v === 1) sysPct = AFUN.sysPctOf(o.pct); } catch (e) { sysPct = null; }
+const sigK = () => (typeof AFSET !== 'undefined' ? AFSET.k() : 1);
+const sigLbl = () => (sigK() === 1 ? '1σ' : 'k·σ, k = ' + sigK());
+const ERR_NOTE = () => 'Погрешность: статистическая (Пуассон, ' + sigLbl() + ') для счётных величин; для датчиков среды — по паспорту. ';
+function errNoteText() {
+  return ERR_NOTE() + (sysPct === null ? 'Систематическая погрешность прибора (калибровка, энергетическая зависимость, фон) не учтена' : 'Систематическая погрешность прибора задана вручную (' + sysPct + ' %) и складывается со статистической квадратично.');
+}
+function errTip(e, key) {
+  let s = 'статистическая (Пуассон, ' + sigLbl() + '): ' + (AFUN.isNum(e.stat) ? AFUN.format(e.value, e.stat).err : AFUN.ND);
+  if (e.sys > 0) s += '; систематическая (' + sysPct + ' %): ' + AFUN.format(e.value, e.sys).err + '; итого: ' + AFUN.format(e.value, e.sigma).err;
+  if (key === 'rate' || key === 'avg_rate') s += '. Допущение: мощность дозы пропорциональна счёту, сглаживание в приборе не учтено';
+  return s;
+}
+
+function renderSensors(j, st) {
+  lastSensors = j;
+  const container = document.getElementById('readings');
+  const parsed = AFSL.parseList(j);
+  const multi = parsed.list.length !== 1;
+  let readings = container ? AFSN.readings(j, st) : [];
+  if (multi) readings = readings.filter(r => r.id.indexOf('air_') !== 0);
+  if (container) container.textContent = '';
+  const aggS = AFUN.isNum(j && j.agg_s) ? j.agg_s : (j && j.cfg && AFUN.isNum(j.cfg.agg_s) ? j.cfg.agg_s : undefined);
+  const ue = AFUN.liveErrors(j && j.live, aggS, sysPct, sigK());
+  const one = parsed.list.length === 1 ? parsed.list[0] : null;
+  const EK = { air_t: 't', air_p: 'p', air_h: 'h' };
+  for (const r of readings) {
+    const row = document.createElement('div');
+    row.className = 'kv';
+    const k = document.createElement('span');
+    k.className = 'k';
+    k.textContent = r.label + ', ' + r.unit;
+    const v = document.createElement('span');
+    v.className = 'v num';
+    v.textContent = r.value;
+    const e = ue[r.id];
+    if (e && r.value !== '—') {
+      v.textContent = AFUN.isNum(e.sigma) ? e.text : r.value + ' ± —';
+      v.title = errTip(e, r.id);
+    } else if (one && EK[r.id] && r.value !== '—') {
+      v.textContent = r.value + ' ± —';
+      v.title = AFUN.envNote(one.model, EK[r.id], one[EK[r.id] + '_off']);
+    }
+    row.appendChild(k);
+    row.appendChild(v);
+    container.appendChild(row);
+  }
+  if (container && multi) {
+    snRenderEnvTable(container, parsed);
+    for (const tr of container.querySelectorAll('#envTable tbody tr')) {
+      const s = parsed.list.find(x => String(x.sensor) === tr.dataset.sensor);
+      for (const td of tr.querySelectorAll('td[data-kind]')) {
+        if (td.textContent === '—' || !s) continue;
+        td.textContent += ' ± —';
+        td.title = AFUN.envNote(s.model, td.dataset.kind, s[td.dataset.kind + '_off']);
+      }
+    }
+  }
+  if (container && !multi) {
+    const cap = document.createElement('div');
+    cap.className = 'hint';
+    cap.id = 'envCaption';
+    cap.textContent = AFSL.label(parsed.list[0]);
+    container.appendChild(cap);
+  }
+  const en = document.getElementById('errNote');
+  if (en) en.textContent = errNoteText();
+  const sl = document.getElementById('sensorLine');
+  if (sl) sl.textContent = AFSN.sensorLine(j);
+  if (document.getElementById('sensCard')) {
+    snRender(parsed);
+    if (typeof sysData === 'object' && sysData && typeof renderBadges === 'function') { sysData.sn = j; renderBadges(); }
+  }
+}
+
+async function loadSensors() {
+  if (sensorsBusy) return;
+  sensorsBusy = true;
+  try {
+    const j = await fetchJSON('/api/sensors');
+    let st = null;
+    try { st = await fetchJSON('/api/status'); } catch (e) { st = null; }
+    renderSensors(j, st);
+    if (PAGE !== 'history') pillOk();
+  } catch (e) {
+    const sl = document.getElementById('sensorLine');
+    if (sl) sl.textContent = (e && e.status === 401) ? 'Нужна авторизация' : 'Нет связи с платой';
+    if (PAGE !== 'history') pillErr(e);
+  } finally {
+    sensorsBusy = false;
+  }
+}
+
+async function postJSON(url, body) {
+  const tokenRes = await fetchJSON('/api/csrf-token');
+  const token = tokenRes.token;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': token
+      },
+      body: JSON.stringify(body || {}),
+      signal: controller.signal
+    });
+    let data = null;
+    try {
+      data = await r.json();
+    } catch (e) {
+      data = null;
+    }
+    return { ok: r.ok, status: r.status, data };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function doReconnect() {
+  const btn = document.getElementById('btnReconnect');
+  btn.disabled = true;
+  setSysResult('', 'переподключаю…');
+  try {
+    const r = await postJSON('/api/ble-reconnect', {});
+    if (r.ok && r.data && r.data.ok) {
+      setSysResult('ok', 'команда переподключения отправлена');
+    } else {
+      setSysResult('bad', 'не удалось (BLE не готов)');
+    }
+  } catch (e) {
+    setSysResult('bad', 'нет связи с платой');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function doReboot() {
+  if (!confirm('Перезагрузить плату? Связь пропадёт примерно на 10 секунд.')) return;
+  const btn = document.getElementById('btnReboot');
+  btn.disabled = true;
+  setSysResult('', 'перезагружаю…');
+  try {
+    const r = await postJSON('/api/reboot-esp', {});
+    if (r.ok) {
+      setSysResult('ok', 'плата перезагружается, страница обновится сама');
+    } else {
+      setSysResult('bad', 'не удалось отправить команду');
+    }
+  } catch (e) {
+    setSysResult('bad', 'нет связи с платой');
+  } finally {
+    setTimeout(() => {
+      btn.disabled = false;
+    }, 15000);
+  }
+}
+
+function initMaintUi() {
+  document.getElementById('btnReconnect').addEventListener('click', doReconnect);
+  document.getElementById('btnReboot').addEventListener('click', doReboot);
+}
+
+function initSysPct() {
+  const el = document.getElementById('sysPct');
+  if (!el) return;
+  el.value = sysPct === null ? '' : String(sysPct);
+  el.addEventListener('change', () => {
+    const msg = document.getElementById('sysPctMsg');
+    const raw = el.value.trim();
+    const n = raw === '' ? null : AFUN.sysPctOf(raw);
+    if (raw !== '' && n === null) { msg.className = 'result bad'; msg.textContent = 'допустимо число от 0 до 50 (%)'; return; }
+    sysPct = n;
+    try { if (n === null) localStorage.removeItem(SYS_KEY); else localStorage.setItem(SYS_KEY, JSON.stringify({ v: 1, pct: n })); } catch (e) {}
+    msg.className = 'result ok';
+    msg.textContent = n === null ? 'систематическая часть не учитывается' : 'сохранено: ' + n + ' %';
+  });
+}
+
+function initSensorsUi() {
+  initSensorsList();
+  loadSensors();
+  setInterval(() => {
+    if (document.visibilityState === 'visible') loadSensors();
+  }, 5000);
+}
+
+let mqDirty = false;
+let mqFilled = false;
+let mqBusy = false;
+
+function mqSetResult(cls, text) {
+    const el = document.getElementById('mqResult');
+    el.className = 'result ' + cls;
+    el.textContent = text;
+}
+
+async function mqLoad() {
+    if (mqBusy) return;
+    mqBusy = true;
+    try {
+        const j = await fetchJSON('/api/mqtt');
+        const active = document.activeElement;
+        const ids = ['mqEnabled', 'mqHost', 'mqPort', 'mqUser', 'mqPass', 'mqPassClear', 'mqPeriod', 'mqPrefix'];
+        const isFocusInBlock = active && ids.includes(active.id);
+        if ((!mqFilled || !mqDirty) && !isFocusInBlock) {
+            document.getElementById('mqEnabled').checked = !!j.enabled;
+            document.getElementById('mqHost').value = j.host;
+            document.getElementById('mqPort').value = String(j.port);
+            document.getElementById('mqUser').value = j.user;
+            document.getElementById('mqPeriod').value = String(j.period_s);
+            document.getElementById('mqPrefix').value = j.prefix;
+            document.getElementById('mqPass').value = '';
+            document.getElementById('mqPassClear').checked = false;
+            document.getElementById('mqPassHint').textContent = j.pass_set ? 'пароль задан (оставьте поле пустым, чтобы не менять)' : 'пароль не задан';
+            mqFilled = true;
+            mqDirty = false;
+        }
+    } catch (e) {
+        document.getElementById('mqState').textContent = (e && e.status === 401) ? 'Нужна авторизация' : 'Нет связи с платой';
+    } finally {
+        mqBusy = false;
+    }
+}
+
+async function mqLoadState() {
+    try {
+        const j = await fetchJSON('/api/status');
+        const m = j.mqtt;
+        const el = document.getElementById('mqState');
+        if (!m) {
+            el.textContent = 'MQTT: нет данных';
+            return;
+        }
+        if (!m.enabled) {
+            el.textContent = 'MQTT выключен';
+            return;
+        }
+        if (m.connected) {
+            el.textContent = 'MQTT подключён, отправлено ' + m.published + ', ошибок отправки ' + m.failed;
+            return;
+        }
+        const map = {
+            no_host: 'не задан адрес брокера',
+            transport: 'нет соединения с брокером',
+            auth: 'брокер отклонил логин/пароль',
+            publish: 'ошибка отправки',
+            init: 'ошибка запуска клиента'
+        };
+        const reason = m.last_err ? (map[m.last_err] || m.last_err) : '';
+        el.textContent = 'MQTT не подключён' + (reason ? ' (' + reason + ')' : '');
+    } catch (e) {
+        // тихо игнорируем ошибки сети
+    }
+}
+
+function mqBuildBody() {
+    const enabled = document.getElementById('mqEnabled').checked;
+    const host = document.getElementById('mqHost').value.trim();
+    const portStr = document.getElementById('mqPort').value.trim();
+    const user = document.getElementById('mqUser').value;
+    const pass = document.getElementById('mqPass').value;
+    const passClear = document.getElementById('mqPassClear').checked;
+    const periodStr = document.getElementById('mqPeriod').value.trim();
+    const prefix = document.getElementById('mqPrefix').value;
+
+    // Проверка host
+    if (enabled) {
+        if (!host) return { ok: false, error: 'Укажите адрес брокера', field: 'mqHost' };
+        if (host.length > 63) return { ok: false, error: 'Адрес брокера слишком длинный', field: 'mqHost' };
+        if (!/^[A-Za-z0-9._-]+$/.test(host)) return { ok: false, error: 'Недопустимые символы в адресе брокера', field: 'mqHost' };
+    }
+
+    // Проверка port
+    if (!/^\d+$/.test(portStr)) return { ok: false, error: 'Порт должен быть целым числом', field: 'mqPort' };
+    const port = parseInt(portStr, 10);
+    if (port < 1 || port > 65535) return { ok: false, error: 'Порт должен быть от 1 до 65535', field: 'mqPort' };
+
+    // Проверка period_s
+    if (!/^\d+$/.test(periodStr)) return { ok: false, error: 'Период должен быть целым числом', field: 'mqPeriod' };
+    const period = parseInt(periodStr, 10);
+    if (period < 10 || period > 3600) return { ok: false, error: 'Период должен быть от 10 до 3600 секунд', field: 'mqPeriod' };
+
+    // Проверка prefix
+    if (!/^[a-z0-9_\/-]{1,32}$/.test(prefix)) return { ok: false, error: 'Недопустимый префикс', field: 'mqPrefix' };
+    if (prefix.startsWith('/') || prefix.endsWith('/')) return { ok: false, error: 'Префикс не может начинаться или заканчиваться на /', field: 'mqPrefix' };
+
+    // Проверка user
+    if (user.length > 31) return { ok: false, error: 'Имя пользователя слишком длинное', field: 'mqUser' };
+    for (let i = 0; i < user.length; i++) {
+        const c = user.charCodeAt(i);
+        if (c < 0x20 || c > 0x7E) return { ok: false, error: 'Имя пользователя содержит недопустимые символы', field: 'mqUser' };
+    }
+
+    // Проверка pass
+    if (pass.length > 63) return { ok: false, error: 'Пароль слишком длинный', field: 'mqPass' };
+    for (let i = 0; i < pass.length; i++) {
+        const c = pass.charCodeAt(i);
+        if (c < 0x20 || c > 0x7E) return { ok: false, error: 'Пароль содержит недопустимые символы', field: 'mqPass' };
+    }
+
+    const body = {
+        enabled: enabled,
+        host: host,
+        port: port,
+        user: user,
+        period_s: period,
+        prefix: prefix
+    };
+
+    // Добавляем pass только если поле заполнено или стоит флаг очистки
+    if (pass !== '' || passClear) {
+        body.pass = passClear ? '' : pass;
+    }
+
+    return { ok: true, body: body };
+}
+
+async function mqSave() {
+    const v = mqBuildBody();
+    if (!v.ok) {
+        mqSetResult('bad', v.error);
+        const el = document.getElementById(v.field);
+        if (el) el.focus();
+        return;
+    }
+
+    const btn = document.getElementById('btnMqSave');
+    btn.disabled = true;
+    mqSetResult('', 'сохраняю…');
+
+    try {
+        const r = await postJSON('/api/mqtt', v.body);
+        if (r.ok) {
+            const msg = (r.data && r.data.persisted === false) ? 'применено, но не записано в память платы (действует до перезагрузки)' : 'сохранено';
+            mqSetResult('ok', msg);
+            mqDirty = false;
+            mqFilled = false;
+            await mqLoad();
+            await mqLoadState();
+        } else {
+            let errText = 'плата отклонила значения';
+            if (r.status === 401) errText = 'нужна авторизация';
+            else if (r.status === 403) errText = 'отказ: недействительный токен, обновите страницу';
+            mqSetResult('bad', errText);
+        }
+    } catch (e) {
+        mqSetResult('bad', 'нет связи с платой');
+    } finally {
+        btn.disabled = false;
+        // Всегда очищаем поле пароля после попытки сохранения
+        document.getElementById('mqPass').value = '';
+    }
+}
+
+function initMqttUi() {
+    const btn = document.getElementById('btnMqSave');
+    btn.addEventListener('click', mqSave);
+
+    const fieldIds = ['mqEnabled', 'mqHost', 'mqPort', 'mqUser', 'mqPass', 'mqPassClear', 'mqPeriod', 'mqPrefix'];
+    fieldIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', () => { mqDirty = true; });
+            el.addEventListener('change', () => { mqDirty = true; });
+        }
+    });
+
+    mqLoad();
+    mqLoadState();
+
+    setInterval(() => {
+        if (document.visibilityState === 'visible') {
+            mqLoadState();
+        }
+    }, 10000);
+}
+// ---- downloads ----
+document.getElementById('dlRaw').href = '/api/history.csv?kind=raw';
+document.getElementById('dlAgg').href = '/api/history.csv?kind=agg';
+document.getElementById('dlEnv').href = '/api/history.csv?kind=env';
+
+// ---- resize ----
+let ro;
+if (PAGE !== 'history') {
+  // canvas is hidden on the other views
+} else if (typeof ResizeObserver !== 'undefined') {
+  ro = new ResizeObserver(() => draw());
+  ro.observe(canvas);
+} else {
+  window.addEventListener('resize', () => draw());
+}
+
+// e16f (T-38): видимый участок графика сохраняется для кнопки «Взять с графика» на вкладке «Измерения»
+window.addEventListener('pagehide', function () {
+  try { if (PAGE === 'history' && state.view) localStorage.setItem('af.chartView', JSON.stringify({ t0: state.view.t0, t1: state.view.t1 })); } catch (e) {}
+});
+// ---- init ----
+(function init(){
+  const saved = loadLS();
+  const d = defaultState();
+  if (saved) {
+    if (typeof saved.windowSec === 'number') state.windowSec = saved.windowSec;
+    if (saved.kind === 'raw' || saved.kind === 'agg') state.kind = saved.kind;
+    if (saved.vis) for (const k in d.vis) if (k in saved.vis) state.vis[k] = saved.vis[k];
+    if (saved.axis) for (const k in d.axis) if (k in saved.axis) state.axis[k] = saved.axis[k];
+  } else {
+    state.vis = d.vis; state.axis = d.axis;
+  }
+  // e10: ряды, которых нет в сохранённых настройках (новые), берут значения по умолчанию; ось ряда = сохранённая ось
+  for (const s of SERIES) {
+    if (state.vis[s.id] === undefined) state.vis[s.id] = s.on;
+  }
+  if (PAGE !== 'measure') {
+    const mv = document.getElementById('measureView');
+    if (mv) mv.remove();
+  }
+  if (PAGE !== 'system') {
+    // формы и разделы системы живут только на /system: на других страницах их узлов нет вовсе
+    const sv = document.querySelector('[data-view~="system"]');
+    if (sv) sv.remove();
+  }
+  loadAxesLS();
+  initFontUi();
+  try {
+    const vp = new URLSearchParams(location.search).get('vis'); // ?vis=rate,cps,... preselects series (testing, screenshots)
+    if (vp) { const on = vp.split(','); for (const s of SERIES) state.vis[s.id] = on.indexOf(s.id) !== -1; }
+  } catch (e) {}
+  try {
+    const wp = parseInt(new URLSearchParams(location.search).get('win'), 10); // ?win=86400 (testing, screenshots), 0 = вся история
+    if (wp >= 0) { state.windowSec = wp; state.kind = defaultKindForWindow(wp); }
+  } catch (e) {}
+  if (PAGE === 'history') {
+    setSeg(document.getElementById('segWin'), state.windowSec, 'data-win');
+    setSeg(document.getElementById('segKind'), state.kind, 'data-kind');
+    renderKindNote();
+    buildLegend();
+    if (!initRangeUi()) fullLoad();
+    setInterval(() => {
+      if (document.getElementById('auto').checked && document.visibilityState === 'visible') poll();
+    }, POLL_MS);
+  } else if (PAGE === 'settings') {
+    loadSensors();
+    setInterval(() => {
+      if (document.visibilityState === 'visible') loadSensors();
+    }, 5000);
+  } else if (PAGE === 'measure') {
+    initMeasure();
+  } else if (PAGE === 'system') {
+    loadTime();
+    initSensorsUi();
+    initSysPct();
+    initStoreClear();
+    initMqttUi();
+    initPush();
+    setInterval(() => {
+      if (document.visibilityState === 'visible') loadTime();
+    }, STATUS_MS);
+    initMaintUi();
+    initFirmwareUi();
+    initBoardFw();
+    initSystemView();
+  }
+  initMeasBadge();
+})();
+</script>
+</body>
+</html>

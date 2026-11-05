@@ -1,0 +1,10 @@
+const FS_KEY = 'af.fs'; => const FS_KEY = 'af.fz';
+setProperty('--fs', String(AFU.fontScale(pct))) => setProperty('--fs', String(pct))
+b.setAttribute('aria-pressed', String(b.getAttribute('data-fs') === String(pct))); => b.setAttribute('aria-pressed', 'false');
+    if (pct === 100) { => if (pct === 101) {
+  return applyFont(100); => return applyFont(115);
+  applyFont(readFont()); => applyFont(100);
+        applyFont(saveFont(b.getAttribute('data-fs'))); => applyFont(b.getAttribute('data-fs'));
+      resetFont(); => applyFont(100);
+  if (btns) { => if (!btns) {
+    return localStorage.getItem(FS_KEY); => return null;

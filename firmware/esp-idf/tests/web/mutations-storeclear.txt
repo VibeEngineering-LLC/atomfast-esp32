@@ -1,0 +1,36 @@
+var WORD = 'стереть'; => var WORD = 'очистить';
+var CONFIRM = 'CLEAR'; => var CONFIRM = 'clear';
+{ id: 'agg', label: 'Очистить агрегаты', url: '/api/history/clear', ring: 'agg', => { id: 'agg', label: 'Очистить агрегаты', url: '/api/history/clear', ring: 'raw',
+{ id: 'env', label: 'Очистить датчики среды', url: '/api/history/clear', ring: 'env', => { id: 'env', label: 'Очистить датчики среды', url: '/api/history/clear', ring: 'agg',
+{ id: 'all', label: 'Очистить всё', url: '/api/history/clear', ring: 'all', => { id: 'all', label: 'Очистить всё', url: '/api/history/clear', ring: 'raw',
+{ id: 'raw', label: 'Очистить сырые', url: '/api/history/clear', ring: 'raw', => { id: 'raw', label: 'Очистить сырые', url: '/api/history/clear', ring: 'all',
+url: '/api/log/clear', ring: null => url: '/api/history/clear', ring: null
+return a.ring === null ? { confirm: CONFIRM } : { ring: a.ring, confirm: CONFIRM }; => return { ring: a.ring, confirm: CONFIRM };
+return a.ring === null ? { confirm: CONFIRM } : { ring: a.ring, confirm: CONFIRM }; => return { ring: a.ring };
+if (!a) { return null; } => if (!a) { return { confirm: CONFIRM }; }
+return typeof text === 'string' && text.trim().toLowerCase() === WORD; => return typeof text === 'string' && text.trim().toLowerCase().toUpperCase() === WORD;
+return typeof text === 'string' && text.trim().toLowerCase() === WORD; => return typeof text === 'string' && text.indexOf(WORD) >= 0;
+return typeof text === 'string' && text.trim().toLowerCase() === WORD; => return typeof text === 'string' && text === WORD;
+return typeof text === 'string' && text.trim().toLowerCase() === WORD; => return true;
+function available(st) { return st !== null && typeof st === 'object' && !Array.isArray(st); } => function available(st) { return true; }
+function available(st) { return st !== null && typeof st === 'object' && !Array.isArray(st); } => function available(st) { return st !== null; }
+if (a.ring === null) { return base; } => if (false) { return base; }
+' Счётчик seq не сбрасывается, epoch очищенных колец вырастет на 1: => ' Счётчик seq сбрасывается, epoch очищенных колец вырастет на 1:
+var base = 'Будет очищено: ' + a.what + '. Данные вернуть нельзя.'; => var base = 'Будет очищено: ' + a.what + '.';
+if (a.ring === null) { return 'Журнал очищен'; } => if (false) { return 'Журнал очищен'; }
+if (typeof rem[k] === 'number' && isFinite(rem[k])) => if (typeof rem[k] === 'number')
+} else if (typeof rem === 'number' && isFinite(rem)) { => } else if (typeof rem === 'number') {
+parts.push((RING_NAMES[a.ring] || 'записей') + ' ' + rem); => parts.push('записей ' + rem);
+var out = parts.length ? 'Очищено: ' + parts.join(', ') : 'Готово'; => var out = parts.length ? 'Очищено: ' + parts.join(' ') : 'Готово';
+if (d.persisted === false) => if (d.persisted)
+if (status === 403) { return 'отказ: недействительный токен, обновите страницу'; } => if (status === 402) { return 'отказ: недействительный токен, обновите страницу'; }
+if (status === 503) { return => if (status === 504) { return
+if (status === 401) { return 'нужна авторизация'; } => if (status === 402) { return 'нужна авторизация'; }
+return id === 'all' || id === 'log'; => return id === 'all';
+return id === 'all' || id === 'log'; => return id === 'log';
+if (r !== null && g !== null && e !== null) { return r + g + e; } => if (r !== null && g !== null && e !== null) { return r + g; }
+if (m10 === 1 && m100 !== 11) { return 'запись'; } => if (m10 === 1) { return 'запись'; }
+if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) { return 'записи'; } => if (m10 >= 2 && m10 <= 4) { return 'записи'; }
+if (a.ring !== null) { => if (false) {
+if (n !== null) { => if (false) {
+var ring = hs[id]; => var ring = hs.raw;

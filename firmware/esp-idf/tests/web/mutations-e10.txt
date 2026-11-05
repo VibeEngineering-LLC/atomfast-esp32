@@ -1,0 +1,34 @@
+sensors-ui.js | sw.inp.indeterminate = g.anyEnabled && !g.allEnabled; => sw.inp.indeterminate = false;
+sensors-ui.js | snToggle(s.sensor, on)); => snToggle(s.sensor + 1, on));
+sensors-ui.js | if (AFSL.removable(s)) { => if (true) {
+sensors-ui.js | if (!confirm( => if (confirm(
+sensors-ui.js | pick.addEventListener('click', () => { snSel = s.sensor; => pick.addEventListener('click', () => { snSel = 0;
+sensors-ui.js | lab.hidden = !s.caps[lab.dataset.cap]; => lab.hidden = false;
+sensors-ui.js | snEl('btnAdd').disabled = !AFSL.canAdd(list, parsed.maxSensors); => snEl('btnAdd').disabled = false;
+sensors-ui.js | if (AFSL.addrTaken(snParsed ? snParsed.list : [], addr)) { => if (false) {
+sensors-ui.js | { action: 'scan' }, '', 'sensScanMsg'); => { action: 'sc' }, '', 'sensScanMsg');
+sensors-ui.js | snEl('sensEmpty').hidden = list.length > 0; => snEl('sensEmpty').hidden = true;
+sensors-ui.js | snEl('sensTable').hidden = list.length === 0; => snEl('sensTable').hidden = false;
+sensors-ui.js | const act = parsed.list.filter(s => s.enabled); => const act = parsed.list;
+sensors-ui.js | snCell(tr, part ? part.text : '—', 'num').dataset.kind = k; => snCell(tr, part ? part.text : '0', 'num').dataset.kind = k;
+sensors-ui.js | if (r && r.ok) snSay('sensScanMsg', AFSL.scanText(r.data), 'ok'); => if (false) snSay('sensScanMsg', AFSL.scanText(r.data), 'ok');
+sensors-ui.js | snPost('/api/sensors/model', body, => snPost('/api/sensors', body,
+sensors-ui.js | const body = AFSL.addBody(model, addr); => const body = AFSL.addBody(model, '0x00');
+sensors-ui.js | const v = AFSL.sensorPatch(s, { => const v = AFSL.sensorPatch({ sensor: 1, caps: s.caps, enabled: s.enabled }, {
+sensors-ui.js | for (const lab of form.querySelectorAll('[data-cap]')) => for (const lab of form.querySelectorAll('[data-capx]'))
+sensors-ui.js | b.className = 'fw-badge ' + (st.cls === 'ok' ? 'ok' : (st.cls === 'mut' ? '' : 'warn')); => b.className = 'fw-badge';
+history.src.html | const multi = parsed.list.length !== 1; => const multi = false;
+history.src.html | if (container && multi) snRenderEnvTable(container, parsed); => if (false) snRenderEnvTable(container, parsed);
+history.src.html | cap.textContent = AFSL.label(parsed.list[0]); => cap.textContent = '';
+history.src.html | sysData.sn = j; renderBadges(); => renderBadges();
+history.src.html | for (const d of SERIES) if (d.envKind && state.vis[d.id]) kindOn[d.envKind] = true; => kindOn.t = false;
+history.src.html | SERIES.splice(0, SERIES.length, ...kept, ...next); => SERIES.splice(0, SERIES.length, ...kept);
+history.src.html | if (typeof clApply === 'function') clApply(); => if (false) clApply();
+history.src.html | if (PAGE === 'history' && document.getElementById('legend')) buildLegend(); => if (false) buildLegend();
+history.src.html | if (typeof buildSmoothPanel === 'function') buildSmoothPanel(); => if (false) buildSmoothPanel();
+history.src.html | const dark = AFCL.hexOk(bg) && AFCL.luminance(bg) < 0.4; => const dark = false;
+history.src.html | return AFCL.tint(cssVar(name.slice(0, i)), Number(name.slice(i + 1)), dark ? 'dark' : 'light'); => return cssVar(name.slice(0, i));
+history.src.html | for (const d of SERIES) if (d.envKind) { delete state.vis[d.id]; delete state.axis[d.id]; } => for (const d of SERIES) if (d.envKind) { state.axis[d.id] = d.axis; }
+history.src.html | state.axis[d.id] = d.axis; } => state.axis[d.id] = 'L'; }
+colors-ui.js | def.dash = AFCL.tintDash(s.dash, def.tint || 0); => def.dash = s.dash;
+history.src.html | function applyEnv(rows) { syncEnvSeries(state.env); => function applyEnv(rows) {

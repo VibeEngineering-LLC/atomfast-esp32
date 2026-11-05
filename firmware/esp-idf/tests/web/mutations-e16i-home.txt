@@ -1,0 +1,5 @@
+cps: cps, => rateUr: AFU.fmtNum(live.rate_urh, 1), cps: cps,
+var pct = Math.round(Math.max(0, used) / total * 100); => var pct = Math.round(Math.max(0, used) / used * 100);
+var pct = Math.round(Math.max(0, used) / total * 100); => var pct = Math.ceil(Math.max(0, used) / total * 100);
+if (pct > 100) { pct = 100; } => if (pct > 100) { pct = pct; }
+pct >= 95 ? 'crit' : (pct >= 80 ? 'warn' : 'ok') => pct >= 95 ? 'crit' : (pct > 80 ? 'warn' : 'ok')

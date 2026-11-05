@@ -1,0 +1,14 @@
+head = 'Сканирую эфир…'; => head = '';
+var mins = Math.max(1, Math.round((d.lost_s || 0) / 60)); => var mins = Math.round((d.lost_s || 0) / 60);
+var canPick = (st === 'list' || st === 'wait'); => var canPick = (st === 'list');
+var canForget = (st === 'live' || st === 'wait') && !!tgt; => var canForget = (st === 'live') && !!tgt;
+var canCancel = (st === 'list') && !!tgt; => var canCancel = (st === 'list');
+/ 1000).toFixed(1) => / 1000).toFixed(0)
+(?:[0-9A-Fa-f]{2}\1){4} => (?:[0-9A-Fa-f]{2}[:-]){4}
+(body.records != null ? body.records : '?') => '?'
+'Забыть ' + nm + ' (' + ad + ')? => 'Забыть ' + nm + ' (' + ')?
+var hint = d.err ? noteText(d.err) : ''; => var hint = '';
+if (s === 'clear_failed') { return 'Не удалось стереть историю, прибор не сменён'; } => if (s === 'clear_failed') { return 'Ошибка: ' + s; }
+if (hidden) { return 0; } => if (hidden) { return 1000; }
+return FAST[state] ? 1000 : 5000; => return FAST[state] ? 1000 : 1000;
+var FAST = { scan: 1, stopping: 1, opening: 1, confirming: 1, forgetting: 1 }; => var FAST = { scan: 1, stopping: 1, opening: 1, confirming: 1 };

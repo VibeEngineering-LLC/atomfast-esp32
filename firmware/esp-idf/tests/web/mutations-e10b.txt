@@ -1,0 +1,1 @@
+sensors-ui.js | b.className = 'fw-badge ' + (st.cls === 'ok' ? 'ok' : (st.cls === 'mut' ? '' : 'warn')); => b.className = 'fw-badge';

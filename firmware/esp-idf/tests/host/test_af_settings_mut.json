@@ -1,0 +1,17 @@
+[
+ {"name": "M1_clear_before_window", "file": "af_settings_http.c", "subs": [
+   ["esp_err_t we = af_store_set_window(out.window_s);", "esp_err_t we = ESP_OK;"],
+   ["int prc = af_pfs_clear(AF_CLR_MASK_AGG, &pres);", "int prc = af_pfs_clear(AF_CLR_MASK_AGG, &pres); if (prc == 0) we = af_store_set_window(out.window_s);"]]},
+ {"name": "M2_no_rollback_after_nvs_fail", "file": "af_settings_http.c", "subs": [
+   ["(void)af_store_set_window((uint16_t)cur.window_s);\n            st_send_err_step(req, \"500 Internal Server Error\", \"nvs_failed\", \"window\");", "st_send_err_step(req, \"500 Internal Server Error\", \"nvs_failed\", \"window\");"]]},
+ {"name": "M3_no_rollback_after_clear_fail", "file": "af_settings_http.c", "subs": [
+   ["(void)af_store_set_window((uint16_t)cur.window_s);\n            if (prc == -1) {", "if (prc == -1) {"]]},
+ {"name": "M4_ignore_set_enabled_result", "file": "af_settings_http.c", "subs": [
+   ["if (af_store_set_enabled(fr, fa, fe) != ESP_OK) {", "if ((af_store_set_enabled(fr, fa, fe), 0)) {"]]},
+ {"name": "M5_ram_before_nvs", "file": "af_store.c", "subs": [
+   ["    if (err != ESP_OK) {\n        /* RAM", "    if (agg != -1) s_core.en_agg = (agg != 0);\n    if (err != ESP_OK) {\n        /* RAM"]]},
+ {"name": "M6_no_step_field", "file": "af_settings_http.c", "subs": [
+   ["\"{\\\"error\\\":\\\"%s\\\",\\\"step\\\":\\\"%s\\\"}\"", "\"{\\\"error\\\":\\\"%s\\\",\\\"stp\\\":\\\"%s\\\"}\""]]},
+ {"name": "M7_atype_fraction_accepted", "file": "af_ble_sel_http.c", "subs": [
+   ["if (!(da == 0.0 || da == 1.0)) {", "if (0) {"]]}
+]

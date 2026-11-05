@@ -1,0 +1,21 @@
+fw-ui.js | fwEl('fwUpload').hidden = !v.ok; => fwEl('fwUpload').hidden = false;
+fw-ui.js | needSumConfirm: fwVerified.sha === 'unconfirmed', => needSumConfirm: false,
+fw-ui.js | fwEl('fwSumRow').hidden = v.sha !== 'unconfirmed' || !v.ok; => fwEl('fwSumRow').hidden = true;
+fw-ui.js | x.setRequestHeader('X-CSRF-Token', tok.token || ''); => x.setRequestHeader('X-CSRF-Token', '');
+fw-ui.js | x.open('POST', '/api/ota'); => x.open('POST', '/api/ota2');
+fw-ui.js | fwEl('fwGo').disabled = fwBusy || !c.ok; => fwEl('fwGo').disabled = fwBusy;
+fw-ui.js | fwEl('fwDowngradeRow').hidden = !plan.downgrade; => fwEl('fwDowngradeRow').hidden = true;
+fw-ui.js | a.rel = 'noopener noreferrer'; => a.rel = '';
+fw-ui.js | a.target = '_blank'; => a.target = '_self';
+fw-ui.js | if (row.installed) c1.appendChild(fwBadge('установлена', 'ok')); => void 0;
+fw-ui.js | if (row.prerelease) c1.appendChild(fwBadge('пред-релиз', 'warn')); => void 0;
+fw-ui.js | sel.addEventListener('change', () => { row.pick = parseInt(sel.value, 10); }); => void 0;
+fw-ui.js | fwSaveRepo(v.repo); => void 0;
+fw-ui.js | v = localStorage.getItem(FW_REPO_KEY) || v; => v = v;
+fw-ui.js | fwSay('fwStatus', v.error, 'bad'); => fwSay('fwStatus', '', 'bad');
+fw-ui.js | fwSay('fwStatus', AFFW.networkErrorMessage('list'), 'bad'); => fwSay('fwStatus', AFFW.networkErrorMessage('download'), 'bad');
+fw-ui.js | if (wentDown || (ver && ver !== beforeVersion)) return { ok: true, version: ver, wentDown: wentDown }; => if (true) return { ok: true, version: ver, wentDown: wentDown };
+fw-ui.js | const c = AFFW.checkManualFile(buf); => const c = { ok: true, error: '' };
+fw-ui.js | fwEl('fwFileGo').disabled = fwBusy || !fwFileBytes || !fwEl('fwFileOk').checked; => fwEl('fwFileGo').disabled = fwBusy || !fwFileBytes;
+fw-ui.js | fwVerified = await AFFW.verifyImage(bytes, asset, sums, subtle); => fwVerified = { ok: true, sha: 'confirmed', sizeOk: true, magicOk: true, actual: 'x'.repeat(12), errors: [] };
+fw-ui.js | b.textContent = row.installed ? 'Переустановить' : 'Установить'; => b.textContent = 'Установить';

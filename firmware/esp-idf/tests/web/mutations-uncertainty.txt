@@ -1,0 +1,31 @@
+var sig = (first === 1 || first === 2) ? 2 : 1; => var sig = (first === 1) ? 2 : 1;
+var sig = (first === 1 || first === 2) ? 2 : 1; => var sig = (first === 1 || first === 2 || first === 3) ? 2 : 1;
+var sig = (first === 1 || first === 2) ? 2 : 1; => var sig = 1;
+return Math.max(-12, Math.min(12, sig - 1 - exp)); => return Math.max(-12, Math.min(12, sig - exp));
+var exp = Math.floor(Math.log10(err)); => var exp = Math.round(Math.log10(err));
+r = Number(Math.round(Number(str + 'e' + dec)) + 'e' + (-dec)); => r = Number(Math.floor(Number(str + 'e' + dec)) + 'e' + (-dec));
+r = Number(Math.round(Number(str + 'e' + dec)) + 'e' + (-dec)); => r = Number(Math.ceil(Number(str + 'e' + dec)) + 'e' + (-dec));
+decimals: dec, weak: err >= Math.abs(value) }; => decimals: dec, weak: err > Math.abs(value) };
+if (err < 0) { return => if (err < -1) { return
+if (err === 0) { var d0 => if (err === 1) { var d0
+(err !== undefined && err !== null && !isNum(err)) => (false)
+if (!isNum(value) || => if (
+if (Math.abs(value) >= 1e15 || err >= 1e15) => if (Math.abs(value) >= 1e16 || err >= 1e16)
+return { value: n / t, sigma: (n > 0 ? Math.sqrt(n) : 1) / t, zero: n === 0 }; => return { value: n / t, sigma: n / t, zero: n === 0 };
+return { value: n / t, sigma: (n > 0 ? Math.sqrt(n) : 1) / t, zero: n === 0 }; => return { value: n / t, sigma: (n > 0 ? Math.sqrt(n) : 1), zero: n === 0 };
+return { value: n, sigma: n > 0 ? Math.sqrt(n) : 1, zero: n === 0 }; => return { value: n, sigma: n > 0 ? Math.sqrt(n) : 0, zero: n === 0 };
+var n = cpsAvg * windowS; => var n = cpsAvg / windowS;
+return { value: cpsAvg, sigma: (n > 0 ? Math.sqrt(n) : 1) / windowS, zero: n === 0, n: n }; => return { value: cpsAvg, sigma: (n > 0 ? Math.sqrt(n) : 1), zero: n === 0, n: n };
+return { value: rate, sigma: rate / Math.sqrt(n) }; => return { value: rate, sigma: rate / n };
+return { value: dose, sigma: dose / Math.sqrt(nTotal) }; => return { value: dose, sigma: dose / nTotal };
+if (!isNum(dose) || dose < 0 || !isNum(nTotal) || !(nTotal > 0)) => if (!isNum(dose) || dose < 0)
+|| !(n >= 1)) { return NaN; } => || false) { return NaN; }
+if (!isNum(n) || n < 0 || n > MAX_SYS_PCT) { return null; } => if (!isNum(n) || n < 0 || n >= MAX_SYS_PCT) { return null; }
+if (!isNum(n) || n < 0 || n > MAX_SYS_PCT) { return null; } => if (!isNum(n) || n <= 0 || n > MAX_SYS_PCT) { return null; }
+var n = typeof x === 'string' ? Number(x.replace(',', '.')) : x; => var n = typeof x === 'string' ? Number(x) : x;
+if (typeof x === 'string' && x.trim() === '') { return null; } =>
+return { sigma: Math.sqrt(sigmaStat * sigmaStat + sys * sys), stat: sigmaStat, sys: sys }; => return { sigma: sigmaStat + sys, stat: sigmaStat, sys: sys };
+var sys = sp === null || !isNum(value) ? 0 : Math.abs(value) * sp / 100; => var sys = sp === null || !isNum(value) ? 0 : value * sp / 100;
+var sys = sp === null || !isNum(value) ? 0 : Math.abs(value) * sp / 100; => var sys = sp === null || !isNum(value) ? 0 : Math.abs(value) * sp;
+sht3x: { t: 175 / 65535, h: 100 / 65535 }, => sht3x: { t: 175 / 65536, h: 100 / 65535 },
+aht2x: { t: 200 / 1048576, h: 100 / 1048576 } => aht2x: { t: 200 / 1048576, h: 100 / 1048575 }

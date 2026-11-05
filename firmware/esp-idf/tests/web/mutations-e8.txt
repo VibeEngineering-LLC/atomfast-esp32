@@ -1,0 +1,17 @@
+colors-ui.js | clStyleEl.textContent = AFCL.cssText(clState); => clStyleEl.textContent = '';
+colors-ui.js | def.lw = s.width; => def.lw = 2;
+colors-ui.js | def.dash = s.dash; => def.dash = def.dash;
+colors-ui.js | const ok = AFCL.usable(hex, clScheme); => const ok = true;
+colors-ui.js | b.disabled = !ok; => b.disabled = false;
+colors-ui.js | const r = AFCL.setColor(clState, clScheme, clSel, hex); => const r = AFCL.setColor(clState, 'light', clSel, hex);
+colors-ui.js | const c = AFCL.check(v, clScheme); => const c = AFCL.check(v, 'light');
+colors-ui.js | localStorage.setItem(AFCL.KEY, AFCL.serialize(clState)); => localStorage.setItem(AFCL.KEY, '{}');
+colors-ui.js | clState = t ? AFCL.parse(t) : AFCL.emptyState(); => clState = t ? JSON.parse(t) : AFCL.emptyState();
+colors-ui.js | clState = AFCL.resetColor(clState, clScheme, clSel); => clState = AFCL.resetAll();
+colors-ui.js | clState = AFCL.resetAll(); => clState = AFCL.resetColor(clState, clScheme, clSel);
+colors-ui.js | clState = AFCL.colorblind(); => clState = AFCL.emptyState();
+colors-ui.js | ctx.fillStyle = AFCL.BG[clScheme]; => ctx.fillStyle = AFCL.BG.light;
+colors-ui.js | clScheme = b.dataset.scheme; => clScheme = clScheme;
+colors-ui.js | clEl('clrHex').addEventListener('input', clHexInput); => clEl('clrHex').addEventListener('change', clHexInput);
+colors-ui.js | b.innerHTML = swatchSVG(AFCL.effectiveColor(clState, clScheme, def.id), s.dash, 26); => b.innerHTML = swatchSVG('#888888', s.dash, 26);
+history.src.html | initColors(); => void 0;

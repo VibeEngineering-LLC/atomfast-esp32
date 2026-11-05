@@ -1,0 +1,56 @@
+var RING_MAX = 120; => var RING_MAX = 119;
+if (s < 60) { return s + ' с'; } => if (s <= 60) { return s + ' с'; }
+if (s < 3600) { return Math.floor(s / 60) => if (s <= 3600) { return Math.floor(s / 60)
+if (s < 86400) { return Math.floor(s / 3600) => if (s <= 86400) { return Math.floor(s / 3600)
+var s = Math.round(sec); => var s = Math.floor(sec);
+if (!isNum(sec) || sec < 0) { return ND; } => if (!isNum(sec)) { return ND; }
+return Math.floor(s / 86400) + ' сут ' + Math.floor((s % 86400) / 3600) + ' ч'; => return Math.floor(s / 86400) + ' сут ' + Math.floor((s % 86400) / 3600) + ' мин';
+if (!isNum(sec) || sec <= 0) { return ND; } => if (!isNum(sec)) { return ND; }
+pad2(d.getMonth() + 1) => pad2(d.getMonth())
+return s.charAt(0) === '-' && Number(s) === 0 ? s.slice(1) : s; => return s;
+var s = v.toFixed(dec === undefined ? 0 : dec); => var s = v.toFixed(dec === undefined ? 1 : dec);
+return j.ready === true && isObj(j.link) ? 'ok' : 'notready'; => return j.ready === true ? 'ok' : 'notready';
+return j.ready === true && isObj(j.link) ? 'ok' : 'notready'; => return isObj(j.link) ? 'ok' : 'notready';
+if (!isObj(j)) { return 'none'; } => if (!j) { return 'none'; }
+REASON_GROUPS = [['timeout', 'таймаут'], ['remote', 'удалённо'] => REASON_GROUPS = [['remote', 'удалённо'], ['timeout', 'таймаут']
+function yn(v) { return v === true ? 'да' : (v === false ? 'нет' : ND); } => function yn(v) { return v ? 'да' : 'нет'; }
+row('Длительность текущей сессии', b.connected === true ? fmtDur(l.session_s) : 'нет активной сессии'), => row('Длительность текущей сессии', fmtDur(l.session_s)),
+row('Начало текущей сессии', b.connected === true ? fmtUtc(l.session_start_utc) : ND, => row('Начало текущей сессии', fmtUtc(l.session_start_utc),
+l.last_reason_code < 16 ? '0' : '' => l.last_reason_code < 10 ? '0' : ''
+.toString(16).toUpperCase() => .toString(10).toUpperCase()
+isNum(r.last_bad_age_s) ? fmtDur(r.last_bad_age_s) : 'не было' => fmtDur(r.last_bad_age_s)
+row('Доля плохих пакетов, %', num(r.bad_pct, 3)), => row('Доля плохих пакетов, %', num(r.bad_pct, 1)),
+row('Байт в секунду, за сессию', num(r.bps_sess, 1)), => row('Байт в секунду, за сессию', num(r.pps_sess, 1)),
+row('Интервал между пакетами, среднее за сессию, мс', num(r.iv_avg_ms, 1)), => row('Интервал между пакетами, среднее за сессию, мс', num(r.iv10_avg_ms, 1)),
+(p.tx_eff_level === 15 ? ' (P20)' : '') => (p.tx_eff_level === 14 ? ' (P20)' : '')
+p.phy_note.indexOf('n/a') === 0 ? 'API BLE 5.0 выключен в этой сборке' => p.phy_note.indexOf('n/a') === 1 ? 'API BLE 5.0 выключен в этой сборке'
+row('Интервал соединения, мс', num(p.interval_ms, 2)), => row('Интервал соединения, мс', num(p.interval_ms, 0)),
+row('RSSI сейчас, дБм', num(p.rssi_dbm)), => row('RSSI сейчас, дБм', num(p.rssi_avg_dbm)),
+row('Окно сканирования, мс', num(s.window_ms, 1), => row('Окно сканирования, мс', num(s.interval_ms, 1),
+var tail = n > 0 ? 'по последним ' + n : 'нет завершённых сессий'; => var tail = 'по последним ' + n;
+row('Самая длинная', fmtDur(l.longest_session_s)), => row('Самая длинная', fmtDur(l.shortest_session_s)),
+return [cardLink(b), cardRate(b), cardParams(b), cardSessionStats(b), cardScan(b)]; => return [cardLink(b), cardRate(b), cardParams(b), cardScan(b), cardSessionStats(b)];
+if (state(b) !== 'ok') { return []; } => if (!b) { return []; }
+(i === h.length - 1 ? '-100 и ниже' => (i === h.length - 2 ? '-100 и ниже'
+'-' + (30 + 10 * i) + '...-' + (39 + 10 * i) => '-' + (40 + 10 * i) + '...-' + (49 + 10 * i)
+frac: total > 0 ? c / total : 0 => frac: c
+if (isNum(v) && v > 0) { total += v; } => if (isNum(v)) { total += v; }
+var label = i === 0 ? 'выше -40' => var label = i === 0 ? 'ниже -40'
+return j.filter(function (x) { return isObj(x) && isNum(x.idx) && isNum(x.dur_s); }); => return j.filter(function (x) { return isObj(x); });
+idx: String(s.idx + 1), => idx: String(s.idx),
+reason: typeof s.reason === 'string' && s.reason !== '' ? => reason: typeof s.reason === 'string' ?
+if (state(b) !== 'ok') { return { text: '', level: '' }; } => if (false) { return { text: '', level: '' }; }
+var level = !isNum(pct) ? '' : (pct >= 95 ? '' : (pct >= 80 ? 'warn' : 'bad')); => var level = !isNum(pct) ? '' : (pct > 95 ? '' : (pct >= 80 ? 'warn' : 'bad'));
+var level = !isNum(pct) ? '' : (pct >= 95 ? '' : (pct >= 80 ? 'warn' : 'bad')); => var level = !isNum(pct) ? '' : (pct >= 95 ? '' : (pct > 80 ? 'warn' : 'bad'));
+if (list.length > 0 && isNum(nowUtc)) { => if (list.length > 0) {
+nowUtc - s.end_utc <= 86400 && nowUtc - s.end_utc >= 0 => nowUtc - s.end_utc <= 86400
+nowUtc - s.end_utc <= 86400 && nowUtc - s.end_utc >= 0 => nowUtc - s.end_utc < 86400 && nowUtc - s.end_utc >= 0
+r.push(isNum(v) ? v : null); => r.push(v);
+while (r.length > RING_MAX) { r.shift(); } => while (r.length >= RING_MAX) { r.shift(); }
+var r = Array.isArray(ring) ? ring.slice() : []; => var r = Array.isArray(ring) ? ring : [];
+if (vals.length < 2) { return { d: '', min: null, max: null }; } => if (vals.length < 1) { return { d: '', min: null, max: null }; }
+var span = max - min || 1; => var span = max - min;
+var off = (RING_MAX - ring.length) * step; => var off = 0;
+if (!isNum(v)) { pen = false; return; } => if (!isNum(v)) { return; }
+d += (pen ? 'L' : 'M') + x + ' ' + y; => d += 'L' + x + ' ' + y;
+var y = Math.round((h - 1 - (v - min) / span * (h - 2)) * 10) / 10; => var y = Math.round((v - min) / span * (h - 2) * 10) / 10;

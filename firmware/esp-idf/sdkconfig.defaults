@@ -1,0 +1,102 @@
+# atomfast_gw - BLE-шлюз AtomFast на ESP32-S3 N16R8 (форк прошивки водопада)
+
+# Target
+CONFIG_IDF_TARGET="esp32s3"
+
+# Flash / PSRAM
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_SPEED_80M=y
+
+# WiFi
+CONFIG_ESP_WIFI_SOFTAP_SUPPORT=y
+
+# Network — больше сокетов для частого polling Web UI (иначе httpd accept errno 23)
+CONFIG_LWIP_MAX_SOCKETS=24
+# MEMP_NUM_TCP_PCB жёстко ограничивает число TCP pcb (включая TIME_WAIT) при MEMP_MEM_MALLOC, lwip memp.c: должно расти вместе с сокетами
+CONFIG_LWIP_MAX_ACTIVE_TCP=24
+# Имя платы в DHCP (косметика)
+CONFIG_LWIP_LOCAL_HOSTNAME="atomfast-gw"
+
+# #FW-52: default IDF sys_evt stack (2304) overflows on GOT_IP when #FW-50 dbglog vprintf hook is ON (512 B format buf + ring on the event task) and httpd/mDNS/SNTP are already up. Lab board boot-loop evidence 2026-08-05. Keep ≥4096.
+CONFIG_ESP_SYSTEM_EVENT_TASK_STACK_SIZE=4096
+
+# #FW-50: 64 КБ выше действуют на ВСЕ сокеты (11 у httpd). Мелкие pbuf'ы (<16 КБ, SPIRAM_MALLOC_ALWAYSINTERNAL) шли в internal и выедали её под нагрузкой браузера; Wi-Fi не мог выделить буфер крупного кадра -> UI вис, сам не восстанавливался. Замер 29.09 (4 клиента, 75 с): без опции 0/56 ответов, с опцией 2224/2224.
+CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
+# Опция выше меняет умолчания Kconfig (RX 10->16, BA 6->16, OOSEQ 4->0, TX dynamic-> static). Замер шёл со значениями ниже — закрепляем, иначе чистая сборка (CI, INSTALL) получает непроверенный набор.
+CONFIG_ESP_WIFI_STATIC_RX_BUFFER_NUM=10
+# F-11: DYNAMIC_RX — то же значение, что в замере; не отдавать умолчанию Kconfig.
+CONFIG_ESP_WIFI_DYNAMIC_RX_BUFFER_NUM=32
+CONFIG_ESP_WIFI_RX_BA_WIN=6
+CONFIG_LWIP_TCP_OOSEQ_MAX_PBUFS=4
+CONFIG_ESP_WIFI_STATIC_TX_BUFFER=y
+CONFIG_ESP_WIFI_STATIC_TX_BUFFER_NUM=16
+CONFIG_ESP_WIFI_CACHE_TX_BUFFER_NUM=32
+
+# #UI-33: Ctrl+F5 (hard reload) шлёт заголовки >512 Б (Authorization Basic + Sec-Fetch-* + Accept* + no-cache) → httpd отвечал 431 и UI обваливался. Поднимаем лимит блока заголовков и URI до 1024 Б.
+CONFIG_HTTPD_MAX_REQ_HDR_LEN=1024
+CONFIG_HTTPD_MAX_URI_LEN=1024
+
+# Кольца данных - этап Э3
+CONFIG_LITTLEFS_MAX_PARTITIONS=1
+
+# Logging
+CONFIG_LOG_DEFAULT_LEVEL_INFO=y
+# Compile-time max so ESP_LOGD is not a no-op (runtime still filtered by Layer A).
+CONFIG_LOG_MAXIMUM_LEVEL_INFO=y
+
+# Task watchdog
+CONFIG_ESP_TASK_WDT_TIMEOUT_S=30
+
+# Partition table
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# #SEC-1: шифрование NVS (пароль WiFi во flash) — ОПЦИОНАЛЬНО, по умолчанию ВЫКЛ
+# ⚠ ВНИМАНИЕ — НЕОБРАТИМО. Flash encryption прожигает eFuse на чипе ESP32-S3: процесс нельзя откатить, чип нельзя вернуть в исходное состояние; в Release-режиме перепрошивка по UART блокируется навсегда; ошибка в конфигурации может окирпичить плату.
+# Включать ТОЛЬКО осознанно, прочитав официальную документацию Espressif (Security → Flash Encryption, NVS Encryption). Последствия и порядок действий — в INSTALL.md, раздел "9. Безопасность".
+#CONFIG_SECURE_FLASH_ENC_ENABLED=y
+#CONFIG_NVS_ENCRYPTION=y
+
+# #BUILD-1 / issue #9: reproducible app image — strip compile-time date/time from esp_app_desc so two clean Docker builds of the same commit produce identical atomspectra_gw.bin (raw SHA256 comparable without normalization). Forces CONFIG_APP_COMPILE_TIME_DATE=n via Kconfig depends.
+CONFIG_APP_REPRODUCIBLE_BUILD=y
+
+# AWF-4: Wi-Fi OTA (ota_0/ota_1, partitions.csv) — при неуспешном старте нового образа (краш/watchdog до esp_ota_mark_app_valid_cancel_rollback() в main.c) бутлоадер сам откатывает на предыдущий рабочий раздел.
+CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y
+
+# AWF-5: GitHub OTA скачивает образ (~1.6 МБ) по HTTPS -- mbedTLS-буферы (I/O + RX/TX record buffers на TLS-сессию, обычно десятки КБ) держим на PSRAM, не на internal-heap: приём спектра/водопада не должен голодать по памяти на время скачивания. #AH-1: точный размер экономии не измерялся (нет живой платы в этой сессии) -- решение по документации Kconfig (esp-tls "Use SPIRAM for mbedTLS buffers" в MENUCONFIG.in).
+CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC=y
+
+# 1.2.32: аппаратному AES нужна DMA-память во внутренней RAM; при её нехватке TLS к GitHub падал ("esp-aes: Failed to allocate memory" -> sums_download_failed). Софт-AES DMA не требует.
+CONFIG_MBEDTLS_HARDWARE_AES=n
+
+# AWF-5 (2026-09-27): 3584 мало, если включён журнал платы (перехватчик кладёт 512 Б на стек каждой задачи)
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+
+# D1 (feat/d1-channels): загрузка CPU по задачам/ядрам в /api/status. Run-time stats FreeRTOS: GENERATE_RUN_TIME_STATS в Kconfig IDF 5.4 сам выбирает USE_TRACE_FACILITY и USE_STATS_FORMATTING_FUNCTIONS; источник счётчика - esp_timer (RUN_TIME_STATS_USING_ESP_TIMER, умолчание), мкс, uint32.
+CONFIG_FREERTOS_USE_TRACE_FACILITY=y
+CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS=y
+
+# Bluetooth (только BLE, Bluedroid)
+CONFIG_BT_ENABLED=y
+CONFIG_BT_BLUEDROID_ENABLED=y
+CONFIG_BT_CLASSIC_ENABLED=n
+CONFIG_BT_BLE_ENABLED=y
+CONFIG_BT_GATTC_ENABLE=y
+CONFIG_BT_GATTS_ENABLE=n
+CONFIG_BT_BLE_SMP_ENABLE=y
+# набор BLE 4.2 нужен для esp_ble_gattc_open с типом адреса
+CONFIG_BT_BLE_42_FEATURES_SUPPORTED=y
+# BLE 4.2 и 5.0 одновременно нельзя, при обоих gattc_open уходит на extended-connect и после разрыва переподключение ломается
+CONFIG_BT_BLE_50_FEATURES_SUPPORTED=n
+# мощность передатчика BLE +20 dBm (SAFETY-CORE, проверка scripts/check_bt_tx_power.py --strict по сгенерированному sdkconfig)
+CONFIG_BT_CTRL_DFT_TX_POWER_LEVEL_P20=y
+# T-25b: CMN cert bundle (GitHub roots USERTrust ECC, ISRG X1 in CMN) - saves ~53 KB
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_CMN=y
+
+# e16e (perf-audit S1, оператор 2026-10-27): сборка -O2 вместо -Og, тихие assert, CPU 240 МГц, LWIP в IRAM
+CONFIG_COMPILER_OPTIMIZATION_PERF=y
+CONFIG_COMPILER_OPTIMIZATION_ASSERTIONS_SILENT=y
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+CONFIG_LWIP_IRAM_OPTIMIZATION=y

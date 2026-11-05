@@ -1,0 +1,17 @@
+if (vis[defs[i].id] === true) res.push(defs[i]); => if (vis[defs[i].id]) res.push(defs[i]);
+if (vd[i].axis === axis) res.push(vd[i]); => if (vd[i].axis !== axis) res.push(vd[i]);
+if (units.indexOf(u) === -1) units.push(u); => units.push(u);
+return units.join(', '); => return units.join(',');
+if (rows[mid].ts < ts) lo = mid + 1; else hi = mid; => if (rows[mid].ts <= ts) lo = mid + 1; else hi = mid;
+if (lo > 0 && Math.abs(rows[lo - 1].ts - ts) <= Math.abs(rows[lo].ts - ts)) return lo - 1; => if (lo > 0 && Math.abs(rows[lo - 1].ts - ts) < Math.abs(rows[lo].ts - ts)) return lo - 1;
+if (rows[mid].ts < t0) lo = mid + 1; else hi = mid; => if (rows[mid].ts <= t0) lo = mid + 1; else hi = mid;
+if (rows[mid2].ts <= t1) lo = mid2 + 1; else hi = mid2; => if (rows[mid2].ts < t1) lo = mid2 + 1; else hi = mid2;
+var pad = (hi - lo) * 0.05; => var pad = 0;
+return { min: ticks[0], max: ticks[ticks.length - 1], ticks: ticks }; => return { min: lo, max: hi, ticks: ticks };
+if (isFiniteNum(v)) { => if (typeof v === 'number') {
+var idx = nearestIndex(rows, ts); => var idx = nearestIndex(rows, ts + 1);
+value: isFiniteNum(v) ? v : null => value: v === undefined ? null : v
+if (isFiniteNum(rows[i][d.field])) filtered.push(rows[i]); => filtered.push(rows[i]);
+return top + height * (1 - (v - min) / (max - min)); => return top + height * ((v - min) / (max - min));
+if (max <= min) return top + height / 2; => if (max < min) return top + height / 2;
+return left + width * (t - t0) / (t1 - t0); => return left + width * (t - t0) / (t1 - t0) + 1;

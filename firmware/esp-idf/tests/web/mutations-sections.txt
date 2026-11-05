@@ -1,0 +1,29 @@
+if (h.charAt(0) === '#') h = h.slice(1); => if (h.charAt(0) === '#') h = h.slice(2);
+if (IDS.indexOf(h) !== -1) return h; => if (IDS.length && h) return h;
+if (h !== null) return h; => if (h !== null && stored === undefined) return h;
+if (typeof stored === 'string' && IDS.indexOf(stored) !== -1) return stored; => if (typeof stored === 'string') return stored;
+return 'summary'; => return 'status';
+if (IDS.indexOf(id) !== -1) return '#' + id; => if (IDS.indexOf(id) !== -1) return id;
+case 'summary': return ['status', 'sensors']; => case 'summary': return ['status'];
+case 'system': return ['status', 'system']; => case 'system': return ['system'];
+case 'storage': return ['storage']; => case 'storage': return ['status', 'storage'];
+case 'maint': return ['status', 'system']; => case 'maint': return ['status'];
+default: return ['status']; => default: return [];
+if (a === 'bad' || b === 'bad') return 'bad'; => if (a === 'bad') return 'bad';
+if (a === 'warn' || b === 'warn') return 'warn'; => if (a === 'warn') return 'warn';
+if (st.wifi_connected !== true) { => if (st.wifi_connected === false) {
+                out.status.level = 'bad';
+out.system.level = worst(worst(lv(m.heapLevel), lv(m.intLevel)), lv(m.flashLevel)); => out.system.level = worst(lv(m.heapLevel), lv(m.intLevel));
+out.wifi.level = lv(rssiQ.level); => out.wifi.level = '';
+if (typeof n === 'number' && n > 0) { => if (typeof n === 'number' && n > 1) {
+var bleLvl = st.ble_ready === true ? 'warn' : 'bad'; => var bleLvl = 'warn';
+out.sensors.text = String(cards.length); => out.sensors.text = '';
+sLvl = worst(sLvl, lv(cards[i].level)); => sLvl = lv(cards[i].level);
+out.mqtt.level = lv(chip.level); => out.mqtt.level = chip.level === 'bad' ? 'bad' : '';
+st.mqtt.failed > 0) { => st.mqtt.failed > 1) {
+out.storage.text = String(Math.round(hs.persist.flush_errs)); => out.storage.text = '';
+        } else if
+if (p >= 100) { => if (p > 100) {
+} else if (p >= 80) { => } else if (p > 80) {
+{ id: 'firmware', title: 'Прошивки' }, => { id: 'firmwarx', title: 'Прошивки' },
+{ id: 'firmware', title: 'Прошивки' }, => { id: 'firmware', title: 'Прошивка' },

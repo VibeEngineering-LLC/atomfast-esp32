@@ -1,0 +1,11 @@
+if (pushDirty) return; => if (pushFilled && pushDirty) return;
+if (pushDirty) return; => if (false) return;
+if (!force) return; => return;
+continue; // одиночный сбой опроса не обрывает ожидание => break; // одиночный сбой опроса не обрывает ожидание
+pushSay('pushTestResult', 'bad', pushLinkText(pollErr)); => pushSay('pushTestResult', 'bad', 'нет связи с платой');
+pushSay('pushTestResult', 'bad', pushLinkText(e)); => pushSay('pushTestResult', 'bad', 'нет связи с платой');
+if (pollErr) { => if (pollErr && pollErr.status === 401) {
+var cls = (t.err ? 'bad' : 'ok'); => var cls = 'ok';
+e.key === 'Escape' && => true &&
+e.key === 'Escape' && !pEl('pushDlg').hidden => false
+pEl('pushToken').value = ''; => ;

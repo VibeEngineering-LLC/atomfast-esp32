@@ -1,0 +1,1 @@
+{ id: 'pulses', label: 'Импульсы за 2 с', => { id: 'rate_ur', label: 'Мощность дозы', value: live ? fmt(live.rate_urh, 2) : '-', unit: 'мкР/ч' }, { id: 'pulses', label: 'Импульсы за 2 с',

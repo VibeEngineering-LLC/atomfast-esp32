@@ -1,0 +1,5 @@
+Number(en.agg) === 1 && typeof cnt => typeof cnt
+cnt >= 2 => cnt >= 1
+return w === 3600 ? 'raw' : 'agg'; => return 'agg';
+return w === 3600 ? 'raw' : 'agg'; => return 'raw';
+if (en && typeof en === 'object') { => if (false) {

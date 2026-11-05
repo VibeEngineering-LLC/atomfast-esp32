@@ -1,0 +1,5 @@
+text: format(stat.value, t.sigma).text => text: format(stat.value, t.sigma, { k: k }).text
+if (kf !== 1 && isNum(err)) { err = err * kf; } => if (kf !== 1 && isNum(value)) { value = value * kf; }
+return { sigma: kf * Math.sqrt(sigmaStat * sigmaStat + sys * sys), stat: kf * sigmaStat, sys: kf * sys }; => return { sigma: kf * Math.sqrt(sigmaStat * sigmaStat + sys * sys), stat: sigmaStat, sys: kf * sys };
+function kOf(k) { return isNum(k) && k > 0 ? k : 1; } => function kOf(k) { return isNum(k) ? k : 1; }
+var mt = total(m.value, m.sigma, sysPct, k); => var mt = total(m.value, m.sigma, sysPct);

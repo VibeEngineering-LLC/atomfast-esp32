@@ -1,0 +1,29 @@
+fw-board-ui.js | const r = await fetch(AFFB.ROUTES.check, { headers: { 'X-CSRF-Token': token }, cache: 'no-store' }); => const r = await fetch(AFFB.ROUTES.check, { cache: 'no-store' });
+fw-board-ui.js | const r = await fetch(AFFB.ROUTES.install, { method: 'POST', headers: { 'X-CSRF-Token': token } }); => const r = await fetch(AFFB.ROUTES.install, { method: 'POST' });
+fw-board-ui.js | b.disabled = !c.installable; => b.disabled = false;
+fw-board-ui.js | if (fwBusy || !fbRow || !fbRow.installable) return; => if (fwBusy || !fbRow) return;
+fw-board-ui.js | fbEl('fbGo').disabled = fwBusy || !c.ok; => fbEl('fbGo').disabled = fwBusy;
+fw-board-ui.js | fbEl('fbWarn').textContent = AFFB.HEAVY_WARNING; => fbEl('fbWarn').textContent = '';
+fw-board-ui.js | if (AFFB.isStale(baseline, p, seen, polls)) { => if (false) {
+fw-board-ui.js | if (p.state === 'idle' && seen) return 'down'; => if (false) return 'down';
+fw-board-ui.js | say(p.errorText, 'bad'); => say('', 'bad');
+fw-board-ui.js | await fbFinish(before, say, prog); => await fbSleep(1);
+fw-board-ui.js | if (before && fwCurrent === before) { => if (false) {
+fw-board-ui.js | prog.value = 100; => prog.value = 50;
+fw-board-ui.js | say(AFFB.installError(r.status), 'bad'); => say('', 'bad');
+fw-board-ui.js | fbSay('fbStatus', AFFB.checkError(r.status), 'bad'); => fbSay('fbStatus', '', 'bad');
+fw-board-ui.js | fbSay('fbStatus', c.error, 'bad'); => fbSay('fbStatus', '', 'bad');
+fw-board-ui.js | const net = c.reason === 'no_internet' || c.reason === 'network_error'; => const net = false;
+fw-board-ui.js | a.rel = 'noopener noreferrer'; => a.rel = '';
+fw-board-ui.js | if (c.reason === 'up_to_date') c1.appendChild => if (false) c1.appendChild
+fw-board-ui.js | fbEl('fwBrowserBox').hidden = !on; => fbEl('fwBrowserBox').hidden = false;
+fw-board-ui.js | body: JSON.stringify({ prerelease: want }) => body: JSON.stringify({ prerelease: true })
+fw-board-ui.js | el.dataset.level = fbMemInfo.level; => el.dataset.level = 'ok';
+fw-board-ui.js | 'Доступна версия ' + c.latest : c.reasonText => 'Версия ' + c.latest : c.reasonText
+fw-board-ui.js | const maxPolls = Math.ceil(AFFB.CHECK_MAX_MS / AFFB.CHECK_POLL_MS); => const maxPolls = 1;
+fw-board-ui.js | return t && typeof t.token === 'string' ? t.token : ''; => return '';
+fw-board-ui.js | fbEl('fbDowngradeRow').hidden = rel !== 'older'; => fbEl('fbDowngradeRow').hidden = false;
+fw-board-ui.js | ' с GitHub и сверит SHA-256 по ' => ' с GitHub и сверит по '
+fw-board-ui.js | baseline = AFFB.parseProgress(await pb.json()); => baseline = null;
+system-view.html | <input id="fbRepo" type="text" readonly aria-readonly="true"> => <input id="fbRepo" type="text" aria-readonly="true">
+system-view.html | <div class="card" id="fwManualCard"> => <div class="card" id="fwManualCard" hidden>
