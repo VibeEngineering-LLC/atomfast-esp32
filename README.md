@@ -64,6 +64,10 @@ firmware/
 - **Web UI открывается без пароля** и данные идут без шифрования: держите плату только в доверенной домашней сети.
 - Описание, ограничения и методика проверки: [`references/esp-idf-gateway-0.1.0.md`](references/esp-idf-gateway-0.1.0.md); версии и контрольные суммы: [`references/version-history.md`](references/version-history.md); официальный протокол изготовителя (конспект): [`references/atomservice-ble-official-doc.md`](references/atomservice-ble-official-doc.md).
 
+### База данных PostgreSQL: пошаговая инструкция
+
+Чтобы плата писала прямо в вашу базу PostgreSQL, нужна пустая база со схемой из этого репозитория. Пошаговая инструкция для тех, кто ставит PostgreSQL впервые и без помощника ИИ (установка на Windows, Linux, Raspberry Pi, создание базы и логина, `pg_hba.conf`, настройки на плате, проверка, таблица ошибок, резервная копия): [`sql/INSTALL-DATABASE.md`](sql/INSTALL-DATABASE.md). Скрипт создания схемы: [`sql/atomfast_pg_schema.sql`](sql/atomfast_pg_schema.sql); описание таблиц и запросов: [`sql/atomfast_pg_schema.md`](sql/atomfast_pg_schema.md). Данные идут без шифрования канала: только доверенная сеть.
+
 ## Что это решает
 
 Приложение AtomFast красивое, но:
